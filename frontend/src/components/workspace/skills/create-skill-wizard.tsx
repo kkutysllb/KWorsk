@@ -23,10 +23,8 @@ import { Progress } from "@/components/ui/progress";
 import { ScrollArea } from "@/components/ui/scroll-area";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { Textarea } from "@/components/ui/textarea";
-import { ToggleGroup, ToggleGroupItem } from "@/components/ui/toggle-group";
 import { toast } from "sonner";
 import { useI18n } from "@/core/i18n/hooks";
-import { useWorkModes } from "@/core/work-modes/hooks";
 import { openFilePicker } from "@/core/desktop";
 import {
   SKILL_TEMPLATES,
@@ -65,19 +63,11 @@ const SCRIPTS_STEPS = 4;
 interface BasicsForm {
   name: string;
   description: string;
-  workModes: string[];
 }
 
 const INITIAL_BASICS: BasicsForm = {
   name: "",
   description: "",
-  // Start empty — let the user actively choose which work modes to bind.
-  // The previous default of ["task"] made "日常办公 (task)" look mandatory
-  // because the toggle was pre-checked and the onValueChange fallback
-  // re-added "task" whenever the user tried to clear all selections.
-  // The submit path still defaults to ["task"] when the user leaves it
-  // empty, so backend correctness is preserved.
-  workModes: [],
 };
 
 export function CreateSkillWizard({
@@ -90,7 +80,6 @@ export function CreateSkillWizard({
   const { t } = useI18n();
   const router = useRouter();
   const { skills } = useSkills();
-  const { data: workModesData } = useWorkModes();
 
   const [mode, setMode] = useState<CreateMode | null>(null);
   const [step, setStep] = useState(1);
@@ -166,7 +155,6 @@ export function CreateSkillWizard({
         name,
         description: basics.description.trim(),
         content: syncFrontmatterName(content, name),
-        work_modes: basics.workModes.length > 0 ? basics.workModes : ["task"],
       },
       {
         onSuccess: (created) => {
@@ -194,7 +182,7 @@ export function CreateSkillWizard({
   const submitUpload = useCallback(() => {
     if (!uploadFile) return;
     installUpload.mutate(
-      { file: uploadFile, workModes: basics.workModes.length > 0 ? basics.workModes : ["task"] },
+      { file: uploadFile },
       {
         onSuccess: (result) => {
           toast.success(t.settings.createSkillWizard.success.replace("{name}", result.skill_name));
@@ -206,7 +194,7 @@ export function CreateSkillWizard({
         },
       },
     );
-  }, [uploadFile, basics.workModes, installUpload, t, toast, backToHome, onOpenChange]);
+  }, [uploadFile, installUpload, t, toast, backToHome, onOpenChange]);
 
   // ----- Scripts-mode handlers -----
   const handlePickScriptFiles = useCallback(async () => {
@@ -231,7 +219,6 @@ export function CreateSkillWizard({
         name,
         description: basics.description.trim(),
         content: syncFrontmatterName(content, name),
-        work_modes: basics.workModes.length > 0 ? basics.workModes : ["task"],
       },
       {
         onSuccess: () => {
@@ -340,9 +327,9 @@ export function CreateSkillWizard({
     const name = normaliseName(basics.name);
     handleClose(false);
     router.push(
-      `/workspace/chats/new?mode=skill&workMode=${basics.workModes[0] ?? "task"}&skill=${encodeURIComponent(name)}`,
+      `/workspace/chats/new?mode=skill&skill=${encodeURIComponent(name)}`,
     );
-  }, [basics.name, basics.workModes, handleClose, router]);
+  }, [basics.name, handleClose, router]);
 
   return (
     <Dialog open={open} onOpenChange={handleClose}>
@@ -388,7 +375,7 @@ export function CreateSkillWizard({
             {mode === "template" && (
               <>
                 {step === 1 && (
-                  <StepBasics form={basics} setForm={setBasics} workModesData={workModesData} t={t} />
+                  <StepBasics form={basics} setForm={setBasics} t={t} />
                 )}
                 {step === 2 && (
                   <StepTemplate templates={templates} selectedId={templateId} onPick={applyTemplate} t={t} />
@@ -412,9 +399,6 @@ export function CreateSkillWizard({
                     file={uploadFile}
                     onPick={handlePickSkillFile}
                     onClear={() => setUploadFile(null)}
-                    form={basics}
-                    setForm={setBasics}
-                    workModesData={workModesData}
                     t={t}
                   />
                 )}
@@ -436,7 +420,7 @@ export function CreateSkillWizard({
             {mode === "scripts" && (
               <>
                 {step === 1 && (
-                  <StepBasics form={basics} setForm={setBasics} workModesData={workModesData} t={t} />
+                  <StepBasics form={basics} setForm={setBasics} t={t} />
                 )}
                 {step === 2 && (
                   <StepUploadScripts
@@ -558,11 +542,10 @@ function StepHome({
 interface StepBasicsProps {
   form: BasicsForm;
   setForm: React.Dispatch<React.SetStateAction<BasicsForm>>;
-  workModesData: { modes: { id: string; name: string }[] };
   t: ReturnType<typeof useI18n>["t"];
 }
 
-function StepBasics({ form, setForm, workModesData, t }: StepBasicsProps) {
+function StepBasics({ form, setForm, t }: StepBasicsProps) {
   const descriptionLength = form.description.length;
   const normalisedPreview = form.name ? normaliseName(form.name) : "";
 
@@ -599,27 +582,6 @@ function StepBasics({ form, setForm, workModesData, t }: StepBasicsProps) {
         />
         <p className="text-muted-foreground text-xs tabular-nums">
           {t.settings.createSkillWizard.descriptionCount.replace("{count}", String(descriptionLength))}
-        </p>
-      </div>
-
-      <div className="space-y-2">
-        <label className="text-sm font-medium">{t.settings.createSkillWizard.workModesLabel}</label>
-        <ToggleGroup
-          type="multiple"
-          value={form.workModes}
-          onValueChange={(values) => setForm((p) => ({ ...p, workModes: values }))}
-          variant="outline"
-        >
-          {workModesData.modes.map((mode) => (
-            <ToggleGroupItem key={mode.id} value={mode.id} aria-label={mode.name}>
-              {mode.name}
-            </ToggleGroupItem>
-          ))}
-        </ToggleGroup>
-        <p className="text-muted-foreground text-xs">
-          {form.workModes.length === 0
-            ? t.settings.createSkillWizard.workModesEmpty
-            : t.settings.createSkillWizard.workModesHint}
         </p>
       </div>
     </div>
@@ -746,13 +708,10 @@ interface StepUploadSkillProps {
   file: File | null;
   onPick: () => void;
   onClear: () => void;
-  form: BasicsForm;
-  setForm: React.Dispatch<React.SetStateAction<BasicsForm>>;
-  workModesData: { modes: { id: string; name: string }[] };
   t: ReturnType<typeof useI18n>["t"];
 }
 
-function StepUploadSkill({ file, onPick, onClear, form, setForm, workModesData, t }: StepUploadSkillProps) {
+function StepUploadSkill({ file, onPick, onClear, t }: StepUploadSkillProps) {
   return (
     <div className="space-y-5">
       <div className="space-y-3">
@@ -781,27 +740,6 @@ function StepUploadSkill({ file, onPick, onClear, form, setForm, workModesData, 
             <span className="text-muted-foreground text-xs">{t.settings.createSkillWizard.uploadButton}</span>
           </button>
         )}
-      </div>
-
-      <div className="space-y-2">
-        <label className="text-sm font-medium">{t.settings.createSkillWizard.workModesLabel}</label>
-        <ToggleGroup
-          type="multiple"
-          value={form.workModes}
-          onValueChange={(values) => setForm((p) => ({ ...p, workModes: values }))}
-          variant="outline"
-        >
-          {workModesData.modes.map((mode) => (
-            <ToggleGroupItem key={mode.id} value={mode.id} aria-label={mode.name}>
-              {mode.name}
-            </ToggleGroupItem>
-          ))}
-        </ToggleGroup>
-        <p className="text-muted-foreground text-xs">
-          {form.workModes.length === 0
-            ? t.settings.createSkillWizard.workModesEmpty
-            : t.settings.createSkillWizard.workModesHint}
-        </p>
       </div>
 
       {file && (

@@ -78,7 +78,7 @@ KWorks ships with the following public skills:
 
 ### Parsing
 
-`parser.py` reads each `SKILL.md` file and extracts structured metadata: name, description, `work_modes`, `allowed-tools`, and any tool or resource requirements.
+`parser.py` reads each `SKILL.md` file and extracts structured metadata: name, description, `allowed-tools`, and any tool or resource requirements.
 
 ### Security scanning
 
@@ -86,7 +86,7 @@ KWorks ships with the following public skills:
 
 ### Dependency installation
 
-The `.skill` installer safely extracts the ZIP archive, validates `SKILL.md`, injects missing `work_modes` bindings, and scans `SKILL.md`, `references/`, `templates/`, and `scripts/` files that can enter prompts or execution.
+The `.skill` installer safely extracts the ZIP archive, validates `SKILL.md`, and scans `SKILL.md`, `references/`, `templates/`, and `scripts/` files that can enter prompts or execution.
 
 ### Context injection
 

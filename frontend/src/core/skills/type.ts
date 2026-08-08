@@ -4,16 +4,14 @@ export interface Skill {
   category: string;
   license: string;
   enabled: boolean;
-  /** Work mode ids this skill is bound to (e.g. ["task", "coding"]). */
-  work_modes: string[];
 }
 
 /**
  * Request body for `POST /api/skills/custom` (wizard-driven creation).
  *
  * Mirrors the backend `CustomSkillCreateRequest`. The backend normalises
- * the name to hyphen-case, injects `work_modes` frontmatter, validates,
- * runs a security scan, and writes atomically to `skills/custom/<name>/`.
+ * the name to hyphen-case, validates, runs a security scan, and writes
+ * atomically to `skills/custom/<name>/`.
  */
 export interface CreateSkillRequest {
   /** Hyphen-case skill name. The backend normalises uppercase/underscores/spaces. */
@@ -22,8 +20,6 @@ export interface CreateSkillRequest {
   description: string;
   /** Full SKILL.md body, including `---\nname:\ndescription:\n---` frontmatter. */
   content: string;
-  /** Work mode ids to bind (e.g. ["task", "coding"]). Defaults to ["task"]. */
-  work_modes: string[];
 }
 
 /** Skill content response from the backend (includes raw SKILL.md). */

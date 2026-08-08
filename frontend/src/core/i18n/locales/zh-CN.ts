@@ -231,22 +231,6 @@ export const zhCN: Translations = {
     noSession: "当前无活动会话",
   },
 
-  // Work Modes
-  workModes: {
-    label: "工作模式",
-    addCustom: "添加",
-    addCustomTooltip: "创建自定义工作模式",
-    // Legacy alias kept for threads created before the office→task rename.
-    office: {
-      name: "日常办公",
-      description: "通用办公助手，适用于日常问答、写作与分析任务",
-    },
-    task: {
-      name: "日常办公",
-      description: "通用办公助手，适用于日常问答、写作与分析任务",
-    },
-  },
-
   // Toolbar
   toolbar: {
     refresh: "刷新",
@@ -581,7 +565,6 @@ export const zhCN: Translations = {
       config: "系统配置",
       dataSources: "数据源",
       skillModels: "技能模型",
-      workModes: "工作模式",
     },
     memory: {
       title: "记忆",
@@ -698,9 +681,6 @@ export const zhCN: Translations = {
       descriptionLabel: "简短描述",
       descriptionPlaceholder: "这个技能做什么?何时使用?",
       descriptionCount: "{count} / 1024",
-      workModesLabel: "绑定工作模式",
-      workModesHint: "选中的模式会自动加载此技能。不选则默认绑定到日常办公(task)模式。",
-      workModesEmpty: "未选择任何模式,创建时将默认绑定到日常办公(task)模式。",
       templateLabel: "选择一个模板作为起点",
       templateBlank: "空白技能",
       templateTask: "任务技能",
@@ -779,38 +759,6 @@ export const zhCN: Translations = {
     acknowledge: {
       emptyTitle: "致谢",
       emptyDescription: "相关的致谢信息会展示在这里。",
-    },
-    workModes: {
-      title: "工作模式",
-      description: "管理工作模式预设。内置模式为系统默认，自定义模式可创建和编辑。",
-      createMode: "创建工作模式",
-      editMode: "编辑",
-      deleteMode: "删除",
-      modeId: "模式 ID",
-      modeIdPlaceholder: "例如: research、code-review",
-      modeIdHint: "只能包含小写字母、数字、连字符和下划线",
-      modeName: "显示名称",
-      modeNamePlaceholder: "例如: 研究、代码审查",
-      modeIcon: "图标",
-      modeDescription: "描述（给人看）",
-      modeDescriptionPlaceholder: "简短描述该模式的用途",
-      orchestrationHint: "编排提示（给模型看）",
-      orchestrationHintPlaceholder: "注入到系统提示词中的模式编排指导...",
-      orchestrationHintHint: "这段内容会注入到 AI 的系统提示词中，指导模型在该模式下如何工作",
-      focusAreas: "专注领域",
-      focusAreasPlaceholder: "例如: research, documents, analysis",
-      save: "保存",
-      cancel: "取消",
-      confirmDelete: "确定要删除工作模式「{name}」吗？关联的技能绑定不会自动删除。",
-      builtin: "内置",
-      custom: "自定义",
-      noCustomModes: "暂无自定义工作模式。点击「创建工作模式」开始。",
-      goToSkills: "前往技能页绑定",
-      goToSkillsHint: "创建成功！请前往技能页面为该模式创建和绑定技能。",
-      skillCount: "{count} 个技能",
-      createdSuccess: "工作模式「{name}」创建成功",
-      updatedSuccess: "工作模式「{name}」已更新",
-      deletedSuccess: "工作模式「{name}」已删除",
     },
   },
 

@@ -4,7 +4,6 @@ import {
   DEFAULT_LOCAL_SETTINGS,
   applyThreadAgentOverride,
   applyThreadModelOverride,
-  applyThreadWorkModeOverride,
   applyThreadWorkspacePathOverride,
   type LocalSettings,
 } from "./local";
@@ -12,10 +11,8 @@ import {
   getBaseSettingsSnapshot,
   getThreadAgentSnapshot,
   getThreadModelSnapshot,
-  getThreadWorkModeSnapshot,
   getThreadWorkspacePathSnapshot,
   hasThreadAgentOverride,
-  hasThreadWorkModeOverride,
   hasThreadWorkspacePathOverride,
   subscribe,
   updateLocalSettings,
@@ -64,18 +61,6 @@ export function useThreadSettings(
     () => false,
   );
 
-  const threadWorkModeId = useSyncExternalStore(
-    subscribe,
-    () => getThreadWorkModeSnapshot(threadId),
-    () => undefined,
-  );
-
-  const threadHasWorkModeOverride = useSyncExternalStore(
-    subscribe,
-    () => hasThreadWorkModeOverride(threadId),
-    () => false,
-  );
-
   const threadWorkspacePath = useSyncExternalStore(
     subscribe,
     () => getThreadWorkspacePathSnapshot(threadId),
@@ -96,11 +81,6 @@ export function useThreadSettings(
         threadAgentName,
         threadHasAgentOverride,
       );
-      result = applyThreadWorkModeOverride(
-        result,
-        threadWorkModeId,
-        threadHasWorkModeOverride,
-      );
       result = applyThreadWorkspacePathOverride(
         result,
         threadWorkspacePath,
@@ -113,8 +93,6 @@ export function useThreadSettings(
       threadModelName,
       threadAgentName,
       threadHasAgentOverride,
-      threadWorkModeId,
-      threadHasWorkModeOverride,
       threadWorkspacePath,
       threadHasWorkspacePathOverride,
     ],

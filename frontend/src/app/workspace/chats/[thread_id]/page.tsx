@@ -1,7 +1,5 @@
 "use client";
 
-import { SparklesIcon } from "lucide-react";
-import { useSearchParams } from "next/navigation";
 import { useCallback, useEffect, useRef, useState } from "react";
 import { toast } from "sonner";
 
@@ -22,52 +20,28 @@ import {
 import { ThreadContext } from "@/components/workspace/messages/context";
 import { ThreadTitle } from "@/components/workspace/thread-title";
 import { Welcome } from "@/components/workspace/welcome";
-import { WorkModeBadge } from "@/components/workspace/work-mode-badge";
-import { WorkModeDetailDrawer } from "@/components/workspace/work-mode-detail-drawer";
-import { WorkModeSelector } from "@/components/workspace/work-mode-selector";
 import { useI18n } from "@/core/i18n/hooks";
 import { useNotification } from "@/core/notification/hooks";
 import {
   useThreadSettings,
   saveThreadAgentName,
-  saveThreadWorkModeId,
   saveThreadWorkspacePath,
 } from "@/core/settings";
 import { useThreadStream } from "@/core/threads/hooks";
 import type { QueuedMessage } from "@/core/threads/queue-store";
 import { useQueueCoordinator } from "@/core/threads/use-queue-coordinator";
 import { textOfMessage } from "@/core/threads/utils";
-import { useWorkModes } from "@/core/work-modes/hooks";
 import { env } from "@/env";
 import { cn } from "@/lib/utils";
 
 export default function ChatPage() {
   const { t } = useI18n();
   const [showFollowups, setShowFollowups] = useState(false);
-  const [detailModeId, setDetailModeId] = useState<string | null>(null);
   const { threadId, setThreadId, isNewThread, setIsNewThread, isMock } =
     useThreadChat();
   const [settings, setSettings] = useThreadSettings(threadId);
   const mountedRef = useRef(false);
-  const searchParams = useSearchParams();
   useSpecificChatMode();
-
-  // Detect skill-creation mode (?mode=skill) to show the binding banner.
-  const isSkillMode = searchParams.get("mode") === "skill";
-  const { data: workModesData } = useWorkModes();
-
-  // When entering a new chat via ?mode=skill&workMode=X, pre-select that
-  // work mode so skill_manage_tool auto-binds the new skill to it.
-  const workModeInitRef = useRef(false);
-  useEffect(() => {
-    if (isNewThread && !workModeInitRef.current) {
-      workModeInitRef.current = true;
-      const workMode = searchParams.get("workMode");
-      if (workMode) {
-        setSettings("context", { work_mode_id: workMode });
-      }
-    }
-  }, [isNewThread]); // eslint-disable-line react-hooks/exhaustive-deps
 
   useEffect(() => {
     mountedRef.current = true;
@@ -98,13 +72,9 @@ export default function ChatPage() {
       // ! Important: Never use next.js router for navigation in this case, otherwise it will cause the thread to re-mount and lose all states. Use native history API instead.
       const nextPath = `/workspace/chats/${createdThreadId}`;
       history.replaceState(null, "", nextPath);
-      // Lock the work mode for this thread so reopening it always
-      // resolves the same effective skill set. Both the legacy
-      // ``agent_name`` (older contract) and the canonical
-      // ``work_mode_id`` are persisted so either dimension can be
-      // used to restore the thread's mode on remount.
+      // Lock the lead agent for this thread so reopening it always
+      // uses the same AgentConfig preset.
       saveThreadAgentName(createdThreadId, settings.context.agent_name as string | undefined);
-      saveThreadWorkModeId(createdThreadId, settings.context.work_mode_id as string | undefined);
       // Lock the user-selected workspace path so reopening the thread
       // restores the same directory sandbox permissions.
       saveThreadWorkspacePath(
@@ -189,10 +159,7 @@ export default function ChatPage() {
   return (
     <ThreadContext.Provider value={{ thread, isMock }}>
       <FollowupsProvider>
-      <ChatBox
-        threadId={threadId}
-        workModeId={settings.context.work_mode_id as string | undefined}
-      >
+      <ChatBox threadId={threadId}>
         <div className="relative flex size-full min-h-0 justify-between">
           <header
             className={cn(
@@ -206,12 +173,6 @@ export default function ChatPage() {
             )}
           >
             <div className="flex w-full items-center gap-2 text-sm font-medium [-webkit-app-region:no-drag]">
-              {!isNewThread && (
-                <WorkModeBadge
-                  workModeId={settings.context.work_mode_id as string | undefined}
-                  agentName={settings.context.agent_name as string | undefined}
-                />
-              )}
               <ThreadTitle threadId={threadId} thread={thread} />
             </div>
             <div className="flex items-center gap-2 [-webkit-app-region:no-drag]">
@@ -224,7 +185,6 @@ export default function ChatPage() {
                 className={cn("size-full", !isNewThread && "pt-10")}
                 threadId={threadId}
                 thread={thread}
-                workModeId={settings.context.work_mode_id as string | undefined}
                 paddingBottom={messageListPaddingBottom}
                 hasMoreHistory={hasMoreHistory}
                 loadMoreHistory={loadMoreHistory}
@@ -244,21 +204,6 @@ export default function ChatPage() {
                 {isNewThread && (
                   <div className={cn("max-w-(--container-width-sm) mx-auto w-full space-y-6 pb-6")}>
                     <Welcome mode={settings.context.mode} />
-                    {isSkillMode && (
-                      <SkillModeBindingBanner
-                        t={t}
-                        workModeId={settings.context.work_mode_id as string | undefined}
-                        modes={workModesData.modes}
-                      />
-                    )}
-                    <WorkModeSelector
-                      selectedWorkModeId={settings.context.work_mode_id as string | undefined}
-                      selectedAgentName={settings.context.agent_name as string | undefined}
-                      onSelect={(work_mode_id) => {
-                        setSettings("context", { work_mode_id });
-                      }}
-                      onShowDetail={setDetailModeId}
-                    />
                   </div>
                 )}
                 {mountedRef.current ? (
@@ -313,47 +258,6 @@ export default function ChatPage() {
         </div>
       </ChatBox>
       </FollowupsProvider>
-      <WorkModeDetailDrawer
-        modeId={detailModeId}
-        onClose={() => setDetailModeId(null)}
-      />
     </ThreadContext.Provider>
-  );
-}
-
-// ---------------------------------------------------------------------------
-// SkillModeBindingBanner — shown when ?mode=skill to make the work-mode
-// binding explicit. Reminds the user that the new skill will be bound to
-// the currently selected work mode and that switching modes changes the
-// binding target.
-// ---------------------------------------------------------------------------
-function SkillModeBindingBanner({
-  t,
-  workModeId,
-  modes,
-}: {
-  t: ReturnType<typeof useI18n>["t"];
-  workModeId: string | undefined;
-  modes: { id: string; name: string }[];
-}) {
-  const currentMode = modes.find((m) => m.id === workModeId) ?? modes[0];
-  const modeName = currentMode?.name ?? workModeId ?? "task";
-  return (
-    <div className="flex items-start gap-3 rounded-lg border border-violet-500/30 bg-violet-500/5 p-3">
-      <span className="mt-0.5 flex size-7 shrink-0 items-center justify-center rounded-md bg-violet-500/15 text-violet-500">
-        <SparklesIcon className="size-3.5" />
-      </span>
-      <div className="min-w-0 flex-1">
-        <div className="flex items-center gap-2 text-sm font-medium">
-          {t.inputBox.skillModeBanner}
-          <span className="inline-flex items-center rounded-md bg-violet-500/15 px-1.5 py-0.5 text-xs font-semibold text-violet-500">
-            {modeName}
-          </span>
-        </div>
-        <p className="mt-0.5 text-xs text-muted-foreground">
-          {t.inputBox.skillModeBannerHint}
-        </p>
-      </div>
-    </div>
   );
 }

@@ -1,8 +1,6 @@
-"use client";
 
-import { LockIcon, SparklesIcon } from "lucide-react";
+import { SparklesIcon } from "lucide-react";
 import { useRouter } from "next/navigation";
-import { useMemo, useState } from "react";
 
 import { Button } from "@/components/ui/button";
 import {
@@ -21,13 +19,10 @@ import {
   ItemDescription,
 } from "@/components/ui/item";
 import { Switch } from "@/components/ui/switch";
-import { Tabs, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { useI18n } from "@/core/i18n/hooks";
 import { useEnableSkill, useSkills } from "@/core/skills/hooks";
 import type { Skill } from "@/core/skills/type";
-import { useWorkModes } from "@/core/work-modes/hooks";
 import { env } from "@/env";
-import { cn } from "@/lib/utils";
 
 import { SettingsSection } from "./settings-section";
 
@@ -60,28 +55,7 @@ function SkillSettingsList({
 }) {
   const { t } = useI18n();
   const router = useRouter();
-  const [activeTab, setActiveTab] = useState<string>("builtin");
   const { mutate: enableSkill } = useEnableSkill();
-  const { data: workModesData } = useWorkModes();
-
-  const modeTabs = workModesData.modes;
-
-  // A skill is "locked" when its frontmatter declares work_modes
-  // including "core" — these are the always-on bootstrap skills.
-  const isSkillLocked = (skill: Skill): boolean =>
-    skill.work_modes.includes("core");
-
-  const filteredSkills = useMemo(() => {
-    let result = skills;
-    if (activeTab === "builtin") {
-      // The "内置" tab shows only core skills that cannot be turned off.
-      result = result.filter((s) => s.work_modes.includes("core"));
-    } else {
-      // Work-mode tabs show skills whose work_modes includes the active tab.
-      result = result.filter((s) => s.work_modes.includes(activeTab));
-    }
-    return result;
-  }, [skills, activeTab]);
 
   const handleCreateSkill = () => {
     onClose?.();
@@ -92,19 +66,7 @@ function SkillSettingsList({
 
   return (
     <div className="flex w-full flex-col gap-4">
-      <header className="flex justify-between">
-        <div className="flex gap-2">
-          <Tabs defaultValue="builtin" onValueChange={setActiveTab}>
-            <TabsList variant="line">
-              <TabsTrigger value="builtin">{t.common.builtin}</TabsTrigger>
-              {modeTabs.map((mode) => (
-                <TabsTrigger key={mode.id} value={mode.id}>
-                  {mode.name}
-                </TabsTrigger>
-              ))}
-            </TabsList>
-          </Tabs>
-        </div>
+      <header className="flex justify-end">
         <div>
           <Button size="sm" onClick={handleCreateSkill}>
             <SparklesIcon className="size-4" />
@@ -112,49 +74,15 @@ function SkillSettingsList({
           </Button>
         </div>
       </header>
-      {filteredSkills.length === 0 && (
+      {skills.length === 0 && (
         <EmptySkill onCreateSkill={handleCreateSkill} />
       )}
-      {filteredSkills.length > 0 &&
-        filteredSkills.map((skill) => {
-          const locked = isSkillLocked(skill);
+      {skills.length > 0 &&
+        skills.map((skill) => {
           return (
             <Item className="w-full" variant="outline" key={skill.name}>
               <ItemContent>
-                <ItemTitle>
-                  <div className="flex items-center gap-2">
-                    {skill.name}
-                    {locked && (
-                      <span
-                        className={cn(
-                          "inline-flex items-center gap-1 rounded-md px-1.5 py-0.5 text-[10px] font-semibold",
-                          "bg-amber-500/15 text-amber-400",
-                        )}
-                      >
-                        <LockIcon className="size-2.5" />
-                        {t.common.locked}
-                      </span>
-                    )}
-                    {/* Work mode badges */}
-                    {!locked && skill.work_modes.length > 0 && (
-                      <div className="flex items-center gap-1">
-                        {skill.work_modes.map((mode) => (
-                          <span
-                            key={mode}
-                            className={cn(
-                              "inline-flex items-center rounded px-1.5 py-0.5 text-[9px] font-medium",
-                              mode === "core" && "bg-violet-500/15 text-violet-400",
-                              mode === "task" && "bg-cyan-500/15 text-cyan-400",
-                              mode === "coding" && "bg-amber-500/15 text-amber-400",
-                            )}
-                          >
-                            {mode}
-                          </span>
-                        ))}
-                      </div>
-                    )}
-                  </div>
-                </ItemTitle>
+                <ItemTitle>{skill.name}</ItemTitle>
                 <ItemDescription className="line-clamp-4">
                   {skill.description}
                 </ItemDescription>
@@ -162,7 +90,7 @@ function SkillSettingsList({
               <ItemActions>
                 <Switch
                   checked={skill.enabled}
-                  disabled={isStatic || locked}
+                  disabled={isStatic}
                   onCheckedChange={(checked) =>
                     enableSkill({ skillName: skill.name, enabled: checked })
                   }

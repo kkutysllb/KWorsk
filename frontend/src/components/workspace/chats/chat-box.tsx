@@ -35,14 +35,12 @@ function computeLayout(artifactsOpen: boolean): Record<string, number> {
 interface ChatBoxProps {
   children: React.ReactNode;
   threadId: string;
-  workModeId?: string;
   artifactsMode?: "side-panel" | "disabled";
 }
 
 const ChatBoxInner: React.FC<ChatBoxProps> = ({
   children,
   threadId,
-  workModeId,
   artifactsMode = "side-panel",
 }) => {
   const { thread } = useThread();
@@ -104,8 +102,6 @@ const ChatBoxInner: React.FC<ChatBoxProps> = ({
     return artifactsOpen;
   }, [artifactsOpen, artifacts]);
 
-  const effectiveWorkModeId = workModeId ?? thread.values.context?.work_mode_id;
-
   const resizableIdBase = useMemo(() => {
     return pathname.replace(/[^a-zA-Z0-9_-]+/g, "-").replace(/^-+|-+$/g, "");
   }, [pathname]);
@@ -162,7 +158,6 @@ const ChatBoxInner: React.FC<ChatBoxProps> = ({
               className="size-full"
               filepath={selectedArtifact}
               threadId={threadId}
-              workModeId={effectiveWorkModeId}
             />
           ) : (
             <div className="relative flex size-full justify-center">
@@ -193,7 +188,6 @@ const ChatBoxInner: React.FC<ChatBoxProps> = ({
                       className="max-w-(--container-width-sm) p-4 pt-12"
                       files={thread.values.artifacts ?? []}
                       threadId={threadId}
-                      workModeId={effectiveWorkModeId}
                     />
                   </main>
                 </div>

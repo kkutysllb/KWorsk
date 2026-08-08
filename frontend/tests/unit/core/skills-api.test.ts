@@ -22,10 +22,9 @@ describe("skills api", () => {
   test("skills hooks exports useCreateSkill", () => {
     const source = read("src/core/skills/hooks.ts");
     expect(source).toMatch(/export function useCreateSkill/);
-    // The mutation must invalidate both the skills and work-modes queries
-    // so the new skill appears in the management list immediately.
+    // The mutation must invalidate the skills query so the new skill
+    // appears in the management list immediately.
     expect(source).toMatch(/\["skills"\]/);
-    expect(source).toMatch(/\["work-modes"\]/);
   });
 
   test("skills type defines CreateSkillRequest with required fields", () => {
@@ -33,7 +32,6 @@ describe("skills api", () => {
     expect(source).toMatch(/name:\s*string/);
     expect(source).toMatch(/description:\s*string/);
     expect(source).toMatch(/content:\s*string/);
-    expect(source).toMatch(/work_modes:\s*string\[\]/);
   });
 
   test("templates module exports at least blank / task / coding builtins", () => {

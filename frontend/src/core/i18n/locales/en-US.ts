@@ -238,24 +238,6 @@ export const enUS: Translations = {
     noSession: "No active session",
   },
 
-  // Work Modes
-  workModes: {
-    label: "Work Mode",
-    addCustom: "Add",
-    addCustomTooltip: "Create a custom work mode",
-    // Legacy alias kept for threads created before the office→task rename.
-    office: {
-      name: "Office",
-      description:
-        "General-purpose assistant for everyday Q&A, writing, and analysis",
-    },
-    task: {
-      name: "Office",
-      description:
-        "General-purpose assistant for everyday Q&A, writing, and analysis",
-    },
-  },
-
   // Toolbar
   toolbar: {
     refresh: "Refresh",
@@ -600,7 +582,6 @@ export const enUS: Translations = {
       config: "System Config",
       dataSources: "Data Sources",
       skillModels: "Skill Models",
-      workModes: "Work Modes",
     },
     memory: {
       title: "Memory",
@@ -721,9 +702,6 @@ export const enUS: Translations = {
       descriptionLabel: "Short description",
       descriptionPlaceholder: "What does this skill do? When should it be used?",
       descriptionCount: "{count} / 1024",
-      workModesLabel: "Bind to work modes",
-      workModesHint: "Selected modes will auto-load this skill. Leaving empty defaults to the task mode.",
-      workModesEmpty: "No mode selected — the skill will default to the task mode on create.",
       templateLabel: "Choose a template to start from",
       templateBlank: "Blank",
       templateTask: "Task",
@@ -802,38 +780,6 @@ export const enUS: Translations = {
     acknowledge: {
       emptyTitle: "Acknowledgements",
       emptyDescription: "Credits and acknowledgements will show here.",
-    },
-    workModes: {
-      title: "Work Modes",
-      description: "Manage work mode presets. Builtin modes are system defaults; custom modes can be created and edited.",
-      createMode: "Create Work Mode",
-      editMode: "Edit",
-      deleteMode: "Delete",
-      modeId: "Mode ID",
-      modeIdPlaceholder: "e.g. research, code-review",
-      modeIdHint: "Lowercase letters, numbers, hyphens and underscores only",
-      modeName: "Display Name",
-      modeNamePlaceholder: "e.g. Research, Code Review",
-      modeIcon: "Icon",
-      modeDescription: "Description (for humans)",
-      modeDescriptionPlaceholder: "Briefly describe the mode's purpose",
-      orchestrationHint: "Orchestration Hint (for the model)",
-      orchestrationHintPlaceholder: "Mode-specific orchestration guidance injected into the system prompt...",
-      orchestrationHintHint: "This text is injected into the AI's system prompt, guiding how the model operates in this mode.",
-      focusAreas: "Focus Areas",
-      focusAreasPlaceholder: "e.g. research, documents, analysis",
-      save: "Save",
-      cancel: "Cancel",
-      confirmDelete: "Delete work mode '{name}'? Associated skill bindings will not be auto-removed.",
-      builtin: "Builtin",
-      custom: "Custom",
-      noCustomModes: "No custom work modes yet. Click 'Create Work Mode' to get started.",
-      goToSkills: "Go to Skills to bind",
-      goToSkillsHint: "Created! Go to the Skills page to create and bind skills for this mode.",
-      skillCount: "{count} skills",
-      createdSuccess: "Work mode '{name}' created",
-      updatedSuccess: "Work mode '{name}' updated",
-      deletedSuccess: "Work mode '{name}' deleted",
     },
   },
 

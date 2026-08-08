@@ -9,7 +9,6 @@ import {
   GlobeIcon,
   ImageIcon,
   LightbulbIcon,
-  LockIcon,
   MegaphoneIcon,
   MicIcon,
   MonitorIcon,
@@ -41,7 +40,6 @@ import { Switch } from "@/components/ui/switch";
 import { useI18n } from "@/core/i18n/hooks";
 import { useEnableSkill, useSkills } from "@/core/skills/hooks";
 import type { Skill } from "@/core/skills/type";
-import { useWorkModes } from "@/core/work-modes/hooks";
 import { env } from "@/env";
 import { cn } from "@/lib/utils";
 import { CreateSkillWizard } from "./create-skill-wizard";
@@ -299,44 +297,6 @@ function getSkillIcon(name: string): React.ComponentType<{ className?: string }>
   return SKILL_ICON_MAP[name] ?? DEFAULT_ICON;
 }
 
-// ── Mode Tab Pills ───────────────────────────────────────────────────────────
-
-const MODE_TAB_COLORS: Record<string, string> = {
-  builtin: "border-violet-500/50 bg-violet-500/10 text-violet-400",
-  task: "border-cyan-500/50 bg-cyan-500/10 text-cyan-400",
-  coding: "border-amber-500/50 bg-amber-500/10 text-amber-400",
-};
-
-function ModeTabPill({
-  children,
-  active,
-  tabId,
-  onClick,
-}: {
-  children: React.ReactNode;
-  active: boolean;
-  tabId: string;
-  onClick: () => void;
-}) {
-  const activeColors =
-    MODE_TAB_COLORS[tabId] ??
-    "border-primary/50 bg-primary/10 text-primary";
-  return (
-    <button
-      type="button"
-      onClick={onClick}
-      className={cn(
-        "rounded-full border px-4 py-1.5 text-xs font-semibold transition-all duration-200",
-        active
-          ? activeColors + " shadow-sm scale-105"
-          : "border-transparent bg-muted/50 text-muted-foreground hover:bg-muted",
-      )}
-    >
-      {children}
-    </button>
-  );
-}
-
 // ── Empty State ──────────────────────────────────────────────────────────────
 
 function EmptySkill({ onCreateSkill }: { onCreateSkill: () => void }) {
@@ -369,10 +329,8 @@ function EmptySkill({ onCreateSkill }: { onCreateSkill: () => void }) {
 
 function SkillCard({
   skill,
-  locked,
 }: {
   skill: Skill;
-  locked?: boolean;
 }) {
   const { t } = useI18n();
   const { mutate: enableSkill } = useEnableSkill();
@@ -404,47 +362,18 @@ function SkillCard({
       <div className="min-w-0 flex-1">
         <div className="flex items-center gap-2">
           <span className="truncate text-sm font-semibold">{skill.name}</span>
-          {locked && (
-            <span
-              className={cn(
-                "inline-flex items-center gap-1 rounded-md px-1.5 py-0.5 text-[10px] font-semibold",
-                "bg-amber-500/15 text-amber-400",
-              )}
-            >
-              <LockIcon className="size-2.5" />
-              {t.common.locked}
-            </span>
-          )}
         </div>
         <div className="flex items-center gap-1.5 mt-0.5">
           <p className="text-muted-foreground/70 truncate text-xs">
             {description}
           </p>
-          {/* Work mode badges */}
-          {!locked && skill.work_modes.length > 0 && (
-            <div className="flex shrink-0 items-center gap-1">
-              {skill.work_modes.map((mode) => (
-                <span
-                  key={mode}
-                  className={cn(
-                    "inline-flex items-center rounded px-1.5 py-0.5 text-[9px] font-medium",
-                    mode === "core" && "bg-violet-500/15 text-violet-400",
-                    mode === "task" && "bg-cyan-500/15 text-cyan-400",
-                    mode === "coding" && "bg-amber-500/15 text-amber-400",
-                  )}
-                >
-                  {mode}
-                </span>
-              ))}
-            </div>
-          )}
         </div>
       </div>
 
       {/* Switch */}
       <Switch
         checked={skill.enabled}
-        disabled={isStatic || locked}
+        disabled={isStatic}
         onCheckedChange={(checked) =>
           enableSkill({ skillName: skill.name, enabled: checked })
         }
@@ -478,8 +407,6 @@ export function SkillsPage() {
   const { t } = useI18n();
   const router = useRouter();
   const { skills, isLoading, error } = useSkills();
-  const { data: workModesData } = useWorkModes();
-  const [activeTab, setActiveTab] = useState<string>("builtin");
   const [search, setSearch] = useState("");
   const [createWizardOpen, setCreateWizardOpen] = useState(false);
 
@@ -494,35 +421,17 @@ export function SkillsPage() {
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, []);
 
-  // Work mode tabs from the API (task / coding / …).
-  const modeTabs = workModesData.modes;
-
-  // A skill is "locked" when its frontmatter declares work_modes
-  // including "core" — these are the always-on bootstrap skills.
-  const isSkillLocked = (skill: Skill): boolean =>
-    skill.work_modes.includes("core");
-
   const filteredSkills = useMemo(() => {
-    let result = skills;
-    if (activeTab === "builtin") {
-      // The "内置" tab shows only core skills that cannot be turned off.
-      result = result.filter((s) => s.work_modes.includes("core"));
-    } else {
-      // Work-mode tabs show skills whose work_modes includes the active tab.
-      result = result.filter((s) => s.work_modes.includes(activeTab));
-    }
-    if (search.trim()) {
-      const q = search.trim().toLowerCase();
-      result = result.filter(
-        (s) =>
-          s.name.toLowerCase().includes(q) ||
-          (CHINESE_DESCRIPTIONS[s.name] ?? s.description)
-            .toLowerCase()
-            .includes(q),
-      );
-    }
-    return result;
-  }, [skills, activeTab, search]);
+    if (!search.trim()) return skills;
+    const q = search.trim().toLowerCase();
+    return skills.filter(
+      (s) =>
+        s.name.toLowerCase().includes(q) ||
+        (CHINESE_DESCRIPTIONS[s.name] ?? s.description)
+          .toLowerCase()
+          .includes(q),
+    );
+  }, [skills, search]);
 
   const handleCreateSkill = () => {
     setCreateWizardOpen(true);
@@ -573,16 +482,6 @@ export function SkillsPage() {
                   {t.settings.skills.createSkill}
                 </Button>
               </div>
-              {/* Show which work mode the new skill will be bound to */}
-              <div className="text-xs text-muted-foreground">
-                {activeTab === "builtin" ? (
-                  <span>将绑定到 <span className="font-medium text-foreground">日常办公</span> 模式</span>
-                ) : (
-                  <span>
-                    将绑定到 <span className="font-medium text-foreground">{modeTabs.find((m) => m.id === activeTab)?.name ?? activeTab}</span> 模式
-                  </span>
-                )}
-              </div>
             </div>
           </div>
 
@@ -597,25 +496,7 @@ export function SkillsPage() {
                 onChange={(e) => setSearch(e.target.value)}
               />
             </div>
-            <div className="flex items-center gap-2">
-              <ModeTabPill
-                active={activeTab === "builtin"}
-                tabId="builtin"
-                onClick={() => setActiveTab("builtin")}
-              >
-                {t.common.builtin}
-              </ModeTabPill>
-              {modeTabs.map((mode) => (
-                <ModeTabPill
-                  key={mode.id}
-                  active={activeTab === mode.id}
-                  tabId={mode.id}
-                  onClick={() => setActiveTab(mode.id)}
-                >
-                  {mode.name}
-                </ModeTabPill>
-              ))}
-            </div>
+
           </div>
         </div>
       </div>
@@ -652,11 +533,7 @@ export function SkillsPage() {
           <>
             <div className="flex flex-col gap-2">
               {filteredSkills.map((skill) => (
-                <SkillCard
-                  key={skill.name}
-                  skill={skill}
-                  locked={isSkillLocked(skill)}
-                />
+                <SkillCard key={skill.name} skill={skill} />
               ))}
             </div>
             <div className="mt-8 text-center text-muted-foreground text-xs">

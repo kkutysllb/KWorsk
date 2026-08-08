@@ -28,13 +28,11 @@ export function ArtifactFileList({
   files,
   onSelectFile,
   threadId,
-  workModeId,
 }: {
   className?: string;
   files: string[];
   onSelectFile?: (filepath: string) => void;
   threadId: string;
-  workModeId?: string;
 }) {
   const { t } = useI18n();
   const { select: selectArtifact, setOpen } = useArtifacts();
@@ -66,7 +64,6 @@ export function ArtifactFileList({
         const result = await installSkillMutation.mutateAsync({
           thread_id: threadId,
           path: filepath,
-          work_modes: workModeId ? [workModeId] : undefined,
         });
         if (result.success) {
           toast.success(result.message);
@@ -80,7 +77,7 @@ export function ArtifactFileList({
         setInstallingFile(null);
       }
     },
-    [threadId, workModeId, installingFile, installSkillMutation],
+    [threadId, installingFile, installSkillMutation],
   );
 
   const handleDownload = useCallback(

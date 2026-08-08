@@ -19,16 +19,6 @@ export interface AgentThreadContext extends Record<string, unknown> {
   reasoning_effort?: "minimal" | "low" | "medium" | "high";
   agent_name?: string;
   /**
-   * Active work mode preset id (task / coding).
-   *
-   * Forwarded to the agent runtime via the gateway's
-   * ``_CONTEXT_CONFIGURABLE_KEYS`` whitelist. The backend uses it to
-   * resolve the effective skill set for this turn (see
-   * ``resolve_effective_skill_ids``). Falls back to the default mode
-   * ("task") when absent.
-   */
-  work_mode_id?: string;
-  /**
    * Per-thread user-selected workspace directory.
    *
    * When set, the backend's sandbox grants bash/read/write access to

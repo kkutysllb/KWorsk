@@ -3,14 +3,12 @@ import {
   LOCAL_SETTINGS_KEY,
   THREAD_AGENT_KEY_PREFIX,
   THREAD_MODEL_KEY_PREFIX,
-  THREAD_WORK_MODE_KEY_PREFIX,
   THREAD_WORKSPACE_PATH_KEY_PREFIX,
   getLocalSettings,
   getThreadModelName,
   saveLocalSettings,
   saveThreadAgentName,
   saveThreadModelName,
-  saveThreadWorkModeId,
   saveThreadWorkspacePath,
   type LocalSettings,
 } from "./local";
@@ -25,7 +23,6 @@ export type LocalSettingsSetter = <K extends keyof LocalSettings>(
 type ThreadContextSettingsPatch = Partial<LocalSettings["context"]> & {
   model_name?: string | undefined;
   agent_name?: string | undefined;
-  work_mode_id?: string | undefined;
   user_workspace_path?: string | undefined;
 };
 
@@ -33,8 +30,6 @@ const listeners = new Set<Listener>();
 const threadModelNames = new Map<string, string | undefined>();
 const threadAgentNames = new Map<string, string | undefined>();
 const threadAgentHasOverride = new Set<string>();
-const threadWorkModeIds = new Map<string, string | undefined>();
-const threadWorkModeHasOverride = new Set<string>();
 const threadWorkspacePaths = new Map<string, string | undefined>();
 const threadWorkspacePathHasOverride = new Set<string>();
 
@@ -92,8 +87,6 @@ function handleStorage(event: StorageEvent) {
     threadModelNames.clear();
     threadAgentNames.clear();
     threadAgentHasOverride.clear();
-    threadWorkModeIds.clear();
-    threadWorkModeHasOverride.clear();
     threadWorkspacePaths.clear();
     threadWorkspacePathHasOverride.clear();
     emitChange();
@@ -110,12 +103,6 @@ function handleStorage(event: StorageEvent) {
     if (event.key.startsWith(THREAD_AGENT_KEY_PREFIX)) {
       const threadId = event.key.slice(THREAD_AGENT_KEY_PREFIX.length);
       _refreshThreadAgentSnapshot(threadId);
-      emitChange();
-      return;
-    }
-    if (event.key.startsWith(THREAD_WORK_MODE_KEY_PREFIX)) {
-      const threadId = event.key.slice(THREAD_WORK_MODE_KEY_PREFIX.length);
-      _refreshThreadWorkModeSnapshot(threadId);
       emitChange();
       return;
     }
@@ -194,47 +181,7 @@ export function hasThreadAgentOverride(threadId: string): boolean {
 }
 
 // ------------------------------------------------------------------
-// Per-thread work_mode_id snapshot (mirrors agent_name logic)
-// ------------------------------------------------------------------
-
-function _refreshThreadWorkModeSnapshot(threadId: string) {
-  const raw = localStorage.getItem(
-    `${THREAD_WORK_MODE_KEY_PREFIX}${threadId}`,
-  );
-  if (raw === null) {
-    threadWorkModeIds.delete(threadId);
-    threadWorkModeHasOverride.delete(threadId);
-  } else {
-    threadWorkModeHasOverride.add(threadId);
-    // Empty string sentinel = explicit default mode (work_mode_id = undefined).
-    threadWorkModeIds.set(threadId, raw === "" ? undefined : raw);
-  }
-}
-
-export function getThreadWorkModeSnapshot(
-  threadId: string,
-): string | undefined {
-  ensureBaseSettingsLoaded();
-
-  if (!threadWorkModeHasOverride.has(threadId)) {
-    _refreshThreadWorkModeSnapshot(threadId);
-  }
-
-  return threadWorkModeIds.get(threadId);
-}
-
-export function hasThreadWorkModeOverride(threadId: string): boolean {
-  ensureBaseSettingsLoaded();
-
-  if (!threadWorkModeHasOverride.has(threadId)) {
-    _refreshThreadWorkModeSnapshot(threadId);
-  }
-
-  return threadWorkModeHasOverride.has(threadId);
-}
-
-// ------------------------------------------------------------------
-// Per-thread user_workspace_path snapshot (mirrors work_mode_id logic)
+// Per-thread user_workspace_path snapshot
 // ------------------------------------------------------------------
 
 function _refreshThreadWorkspacePathSnapshot(threadId: string) {
@@ -308,13 +255,6 @@ export function updateThreadSettings<K extends keyof LocalSettings>(
       threadAgentHasOverride.add(threadId);
       threadAgentNames.set(threadId, threadAgentName);
       saveThreadAgentName(threadId, threadAgentName);
-    }
-
-    if (Object.prototype.hasOwnProperty.call(value, "work_mode_id")) {
-      const threadWorkModeId = contextValue.work_mode_id;
-      threadWorkModeHasOverride.add(threadId);
-      threadWorkModeIds.set(threadId, threadWorkModeId);
-      saveThreadWorkModeId(threadId, threadWorkModeId);
     }
 
     if (Object.prototype.hasOwnProperty.call(value, "user_workspace_path")) {

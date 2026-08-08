@@ -5,7 +5,6 @@ import {
   enableSkill,
   installSkill,
   installSkillFromUpload,
-  updateSkillWorkModes,
   uploadSupportFiles,
 } from "./api";
 import type { InstallSkillRequest } from "./api";
@@ -39,25 +38,6 @@ export function useEnableSkill() {
   });
 }
 
-export function useUpdateSkillWorkModes() {
-  const queryClient = useQueryClient();
-  return useMutation({
-    mutationFn: async ({
-      skillName,
-      workModes,
-    }: {
-      skillName: string;
-      workModes: string[];
-    }) => {
-      await updateSkillWorkModes(skillName, workModes);
-    },
-    onSuccess: () => {
-      void queryClient.invalidateQueries({ queryKey: ["skills"] });
-      void queryClient.invalidateQueries({ queryKey: ["work-modes"] });
-    },
-  });
-}
-
 export function useInstallSkill() {
   const queryClient = useQueryClient();
   return useMutation({
@@ -67,7 +47,6 @@ export function useInstallSkill() {
     onSuccess: (result) => {
       if (result.success) {
         void queryClient.invalidateQueries({ queryKey: ["skills"] });
-        void queryClient.invalidateQueries({ queryKey: ["work-modes"] });
       }
     },
   });
@@ -77,9 +56,9 @@ export function useInstallSkill() {
  * Mutation for the create-skill wizard.
  *
  * Calls `POST /api/skills/custom` via `createSkill`. On success it
- * invalidates the skills and work-modes queries so the new skill shows up
- * in the management list immediately. The caller is responsible for
- * surfacing `error.message` (the backend `detail` string) in the wizard UI.
+ * invalidates the skills query so the new skill shows up in the
+ * management list immediately. The caller is responsible for surfacing
+ * `error.message` (the backend `detail` string) in the wizard UI.
  */
 export function useCreateSkill() {
   const queryClient = useQueryClient();
@@ -89,7 +68,6 @@ export function useCreateSkill() {
     },
     onSuccess: () => {
       void queryClient.invalidateQueries({ queryKey: ["skills"] });
-      void queryClient.invalidateQueries({ queryKey: ["work-modes"] });
     },
   });
 }
@@ -105,18 +83,11 @@ export function useCreateSkill() {
 export function useInstallSkillFromUpload() {
   const queryClient = useQueryClient();
   return useMutation({
-    mutationFn: async ({
-      file,
-      workModes,
-    }: {
-      file: File;
-      workModes?: string[];
-    }) => {
-      return await installSkillFromUpload(file, workModes);
+    mutationFn: async ({ file }: { file: File }) => {
+      return await installSkillFromUpload(file);
     },
     onSuccess: () => {
       void queryClient.invalidateQueries({ queryKey: ["skills"] });
-      void queryClient.invalidateQueries({ queryKey: ["work-modes"] });
     },
   });
 }
@@ -145,7 +116,6 @@ export function useUploadSupportFiles() {
     },
     onSuccess: () => {
       void queryClient.invalidateQueries({ queryKey: ["skills"] });
-      void queryClient.invalidateQueries({ queryKey: ["work-modes"] });
     },
   });
 }

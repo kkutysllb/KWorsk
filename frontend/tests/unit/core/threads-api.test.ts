@@ -18,33 +18,6 @@ describe("threads api", () => {
     );
   });
 
-  test("AgentThreadContext type includes work_mode_id for runtime forwarding", () => {
-    // Source-level check so this test does not pull in the langgraph SDK
-    // (which is heavy and sometimes mismatched in unit-test environments).
-    const source = read("src/core/threads/types.ts");
-    expect(source).toMatch(/work_mode_id\??\s*:\s*string/);
-  });
-
-  test("thread.submit context includes work_mode_id from settings", () => {
-    // The submit() call in useThreadStream builds the run context from the
-    // LocalSettings.context spread. We assert that the context object
-    // literal passed to thread.submit contains a work_mode_id key so the
-    // backend's _CONTEXT_CONFIGURABLE_KEYS whitelist can pick it up.
-    const source = read("src/core/threads/hooks.ts");
-    expect(source).toMatch(/work_mode_id/);
-  });
-
-  test("LocalSettings.context includes work_mode_id", () => {
-    const source = read("src/core/settings/local.ts");
-    expect(source).toMatch(/work_mode_id/);
-  });
-
-  test("settings local exports saveThreadWorkModeId / getThreadWorkModeId", () => {
-    const source = read("src/core/settings/local.ts");
-    expect(source).toMatch(/export function saveThreadWorkModeId/);
-    expect(source).toMatch(/export function getThreadWorkModeId/);
-  });
-
   test("AgentThreadContext type includes user_workspace_path for runtime forwarding", () => {
     const source = read("src/core/threads/types.ts");
     expect(source).toMatch(/user_workspace_path\??\s*:\s*string/);

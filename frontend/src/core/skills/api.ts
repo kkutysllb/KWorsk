@@ -33,42 +33,12 @@ export async function enableSkill(skillName: string, enabled: boolean) {
 export interface InstallSkillRequest {
   thread_id: string;
   path: string;
-  work_modes?: string[];
 }
 
 export interface InstallSkillResponse {
   success: boolean;
   skill_name: string;
   message: string;
-}
-
-/**
- * Update the work mode bindings for a custom skill.
- *
- * Calls ``PATCH /api/skills/custom/{skillName}/work-modes`` to rewrite the
- * ``work_modes`` field in the skill's SKILL.md frontmatter.
- */
-export async function updateSkillWorkModes(
-  skillName: string,
-  workModes: string[],
-): Promise<void> {
-  const response = await fetch(
-    `${getBackendBaseURL()}/api/skills/custom/${encodeURIComponent(skillName)}/work-modes`,
-    {
-      method: "PATCH",
-      headers: {
-        "Content-Type": "application/json",
-      },
-      body: JSON.stringify({ work_modes: workModes }),
-    },
-  );
-  if (!response.ok) {
-    const detail = await response.json().catch(() => ({}));
-    throw new Error(
-      (detail as { detail?: string }).detail ??
-        `Failed to update work modes for ${skillName}`,
-    );
-  }
 }
 
 export async function installSkill(
@@ -100,10 +70,10 @@ export async function installSkill(
 /**
  * Create a custom skill from raw SKILL.md content via the wizard endpoint.
  *
- * Calls `POST /api/skills/custom`. The backend normalises the name, injects
- * `work_modes` frontmatter, validates, runs a security scan, and writes
- * atomically. This bypasses the Agent entirely — it is an explicit user
- * action driven by the create-skill wizard UI, and is NOT gated by
+ * Calls `POST /api/skills/custom`. The backend normalises the name,
+ * validates, runs a security scan, and writes atomically. This bypasses
+ * the Agent entirely — it is an explicit user action driven by the
+ * create-skill wizard UI, and is NOT gated by
  * `skill_evolution.enabled`.
  *
  * @throws {Error} with `message` set to the backend `detail` string on 4xx/5xx
@@ -144,13 +114,9 @@ export async function createSkill(
  */
 export async function installSkillFromUpload(
   file: File,
-  workModes?: string[],
 ): Promise<InstallSkillResponse> {
   const formData = new FormData();
   formData.append("file", file);
-  if (workModes && workModes.length > 0) {
-    formData.append("work_modes", JSON.stringify(workModes));
-  }
 
   const response = await fetch(`${getBackendBaseURL()}/api/skills/install-upload`, {
     method: "POST",

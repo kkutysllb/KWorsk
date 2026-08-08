@@ -81,7 +81,7 @@ export async function fetch(
   // cookie (the request is proxied via Next.js and only the locale cookie
   // survives), so the Bearer token is the only auth signal the gateway's
   // get_access_token_from_request will find. Without this, /api/models,
-  // /api/work-modes, etc. return 401 in desktop dev.
+  // /api/skills, etc. return 401 in desktop dev.
   const desktopToken = isDesktop()
     ? getDesktopSessionToken()
     : null;

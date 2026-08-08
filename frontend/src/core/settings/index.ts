@@ -1,9 +1,6 @@
 export { useLocalSettings, useThreadSettings } from "./hooks";
 export {
   saveThreadAgentName,
-  saveThreadWorkModeId,
-  getThreadWorkModeId,
-  applyThreadWorkModeOverride,
   saveThreadWorkspacePath,
   getThreadWorkspacePath,
   applyThreadWorkspacePathOverride,

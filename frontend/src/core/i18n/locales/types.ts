@@ -179,22 +179,6 @@ export interface Translations {
     noSession: string;
   };
 
-  // Work Modes
-  workModes: {
-    label: string;
-    addCustom: string;
-    addCustomTooltip: string;
-    /** Legacy alias kept for threads created before the office→task rename. */
-    office: {
-      name: string;
-      description: string;
-    };
-    task: {
-      name: string;
-      description: string;
-    };
-  };
-
   // Toolbar
   toolbar: {
     refresh: string;
@@ -522,7 +506,6 @@ export interface Translations {
       config: string;
       dataSources: string;
       skillModels: string;
-      workModes: string;
     };
     memory: {
       title: string;
@@ -635,9 +618,6 @@ export interface Translations {
       descriptionLabel: string;
       descriptionPlaceholder: string;
       descriptionCount: string;
-      workModesLabel: string;
-      workModesHint: string;
-      workModesEmpty: string;
       // Step 2: template
       templateLabel: string;
       templateBlank: string;
@@ -723,38 +703,6 @@ export interface Translations {
     acknowledge: {
       emptyTitle: string;
       emptyDescription: string;
-    };
-    workModes: {
-      title: string;
-      description: string;
-      createMode: string;
-      editMode: string;
-      deleteMode: string;
-      modeId: string;
-      modeIdPlaceholder: string;
-      modeIdHint: string;
-      modeName: string;
-      modeNamePlaceholder: string;
-      modeIcon: string;
-      modeDescription: string;
-      modeDescriptionPlaceholder: string;
-      orchestrationHint: string;
-      orchestrationHintPlaceholder: string;
-      orchestrationHintHint: string;
-      focusAreas: string;
-      focusAreasPlaceholder: string;
-      save: string;
-      cancel: string;
-      confirmDelete: string;
-      builtin: string;
-      custom: string;
-      noCustomModes: string;
-      goToSkills: string;
-      goToSkillsHint: string;
-      skillCount: string;
-      createdSuccess: string;
-      updatedSuccess: string;
-      deletedSuccess: string;
     };
   };
 

@@ -54,13 +54,11 @@ export function ArtifactFileDetail({
   className,
   filepath: filepathFromProps,
   threadId,
-  workModeId,
   isMock: isMockFromProps = false,
 }: {
   className?: string;
   filepath: string;
   threadId: string;
-  workModeId?: string;
   isMock?: boolean;
 }) {
   const { t } = useI18n();
@@ -129,7 +127,6 @@ export function ArtifactFileDetail({
       const result = await installSkillMutation.mutateAsync({
         thread_id: threadId,
         path: filepath,
-        work_modes: workModeId ? [workModeId] : undefined,
       });
       if (result.success) {
         toast.success(result.message);
@@ -142,7 +139,7 @@ export function ArtifactFileDetail({
     } finally {
       setIsInstalling(false);
     }
-  }, [threadId, filepath, workModeId, isInstalling, installSkillMutation]);
+  }, [threadId, filepath, isInstalling, installSkillMutation]);
   return (
     <Artifact className={cn(className)}>
       <ArtifactHeader className="px-2">

@@ -5,7 +5,6 @@ import {
   BrainIcon,
   DatabaseIcon,
   KeyRoundIcon,
-  LayersIcon,
   PaletteIcon,
   SettingsIcon,
   SlidersHorizontalIcon,
@@ -29,7 +28,6 @@ import { MemorySettingsPage } from "@/components/workspace/settings/memory-setti
 import { NotificationSettingsPage } from "@/components/workspace/settings/notification-settings-page";
 import { SkillModelsSettingsPage } from "@/components/workspace/settings/skill-models-settings-page";
 import { ToolSettingsPage } from "@/components/workspace/settings/tool-settings-page";
-import { WorkModesSettingsPage } from "@/components/workspace/settings/work-modes-settings-page";
 import { isDesktop } from "@/core/config";
 import { useI18n } from "@/core/i18n/hooks";
 import { cn } from "@/lib/utils";
@@ -42,8 +40,7 @@ type SettingsSection =
   | "memory"
   | "tools"
   | "notification"
-  | "skillModels"
-  | "workModes";
+  | "skillModels";
 
 type SettingsDialogProps = React.ComponentProps<typeof Dialog> & {
   defaultSection?: SettingsSection;
@@ -102,12 +99,6 @@ const SECTION_COLORS: Record<
     bar: "from-fuchsia-400 to-violet-500",
     bg: "bg-fuchsia-500/10",
   },
-  workModes: {
-    iconActive: "text-indigo-400",
-    iconInactive: "text-indigo-500",
-    bar: "from-indigo-400 to-violet-500",
-    bg: "bg-indigo-500/10",
-  },
 };
 
 export function SettingsDialog(props: SettingsDialogProps) {
@@ -158,11 +149,6 @@ export function SettingsDialog(props: SettingsDialogProps) {
           label: t.settings.sections.dataSources,
           icon: DatabaseIcon,
         },
-        {
-          id: "workModes" as const,
-          label: t.settings.sections.workModes,
-          icon: LayersIcon,
-        },
       ];
       // 技能模型凭证配置仅在桌面端显示（Web 端用仓库根 .env 配置）。
       if (isDesktop()) {
@@ -183,7 +169,6 @@ export function SettingsDialog(props: SettingsDialogProps) {
       t.settings.sections.config,
       t.settings.sections.dataSources,
       t.settings.sections.skillModels,
-      t.settings.sections.workModes,
     ],
   );
   return (
@@ -258,7 +243,6 @@ export function SettingsDialog(props: SettingsDialogProps) {
               {activeSection === "notification" && <NotificationSettingsPage />}
               {activeSection === "config" && <ConfigSettingsPage />}
               {activeSection === "dataSources" && <DatasourcesSettingsPage />}
-              {activeSection === "workModes" && <WorkModesSettingsPage />}
               {activeSection === "skillModels" && <SkillModelsSettingsPage />}
             </div>
           </ScrollArea>

@@ -7,12 +7,6 @@ import type { SkillTemplate } from "./type";
  * description are folded into the frontmatter before the user enters the
  * editor. The "copy from existing" option is built dynamically at runtime
  * from the loaded skills list (see `buildCopyTemplate` below).
- *
- * NOTE: the frontmatter here intentionally omits `work_modes` — the backend
- * `POST /api/skills/custom` endpoint injects it via `inject_work_modes_frontmatter`,
- * so including it here would just be rewritten. Keeping it out makes the
- * template bodies shorter and avoids confusion about which source of truth
- * for work_modes wins.
  */
 export const SKILL_TEMPLATES: readonly SkillTemplate[] = [
   {

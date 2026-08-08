@@ -14,7 +14,6 @@ export const DEFAULT_LOCAL_SETTINGS: LocalSettings = {
 export const LOCAL_SETTINGS_KEY = "kworks.local-settings";
 export const THREAD_MODEL_KEY_PREFIX = "kworks.thread-model.";
 export const THREAD_AGENT_KEY_PREFIX = "kworks.thread-agent.";
-export const THREAD_WORK_MODE_KEY_PREFIX = "kworks.thread-work-mode.";
 export const THREAD_WORKSPACE_PATH_KEY_PREFIX = "kworks.thread-workspace-path.";
 export const RECENT_WORKSPACE_PATHS_KEY = "kworks.recent-workspace-paths";
 
@@ -98,12 +97,11 @@ export function applyThreadModelOverride(
 }
 
 // ------------------------------------------------------------------
-// Per-thread agent_name (work mode) persistence
+// Per-thread agent_name persistence
 // ------------------------------------------------------------------
-// Once a thread is created under a specific work mode, the agent_name
+// Once a thread is created with a specific lead agent, the agent_name
 // is "locked" for that thread so reopening it always uses the same
-// Lead Agent preset — even if the user later switches the global
-// default work mode.
+// Lead Agent preset.
 
 function getThreadAgentStorageKey(threadId: string): string {
   return `${THREAD_AGENT_KEY_PREFIX}${threadId}`;
@@ -156,74 +154,10 @@ export function applyThreadAgentOverride(
 }
 
 // ------------------------------------------------------------------
-// Per-thread work_mode_id persistence
-// ------------------------------------------------------------------
-// Mirrors the per-thread agent_name persistence above. Once a thread is
-// created under a specific work mode, the work_mode_id is "locked" for
-// that thread so reopening it always resolves the same effective skill
-// set — even if the user later switches the global default work mode.
-//
-// The empty string is a sentinel meaning "explicitly the default mode"
-// (mirroring the "__default__" trick used by agent_name) so that a thread
-// created under the default mode can be distinguished from an old thread
-// that pre-dates the work_mode_id contract.
-
-function getThreadWorkModeStorageKey(threadId: string): string {
-  return `${THREAD_WORK_MODE_KEY_PREFIX}${threadId}`;
-}
-
-export function getThreadWorkModeId(threadId: string): string | undefined {
-  if (!isBrowser()) {
-    return undefined;
-  }
-  const raw = localStorage.getItem(getThreadWorkModeStorageKey(threadId));
-  // ``null`` = no stored value → fall back to global settings.
-  // The empty string "" represents the explicit default mode
-  // (work_mode_id = undefined) so it can be distinguished from "no value".
-  if (raw === null) return undefined;
-  return raw === "" ? undefined : raw;
-}
-
-export function saveThreadWorkModeId(
-  threadId: string,
-  workModeId: string | undefined,
-) {
-  if (!isBrowser()) {
-    return;
-  }
-  const key = getThreadWorkModeStorageKey(threadId);
-  if (workModeId === undefined) {
-    // Store a sentinel so we know the thread was explicitly created
-    // in the default mode (vs. an old thread with no override).
-    localStorage.setItem(key, "");
-  } else {
-    localStorage.setItem(key, workModeId);
-  }
-}
-
-export function applyThreadWorkModeOverride(
-  settings: LocalSettings,
-  threadWorkModeId: string | undefined,
-  hasThreadWorkModeOverride: boolean,
-): LocalSettings {
-  if (!hasThreadWorkModeOverride) {
-    return settings;
-  }
-  return {
-    ...settings,
-    context: {
-      ...settings.context,
-      work_mode_id: threadWorkModeId,
-    },
-  };
-}
-
-// ------------------------------------------------------------------
 // Per-thread user_workspace_path persistence
 // ------------------------------------------------------------------
-// Mirrors the per-thread work_mode_id persistence above. Stores the
-// user-selected workspace directory so the sandbox can grant bash/read/
-// write access to it for the current thread.
+// Stores the user-selected workspace directory so the sandbox can grant
+// bash/read/write access to it for the current thread.
 
 function getThreadWorkspacePathStorageKey(threadId: string): string {
   return `${THREAD_WORKSPACE_PATH_KEY_PREFIX}${threadId}`;
