@@ -11,19 +11,18 @@ export function Footer({ className }: FooterProps) {
   return (
     <footer
       className={cn(
-        "container-md mx-auto mt-32 flex flex-col items-center justify-center",
+        "container-md mx-auto mt-4 flex flex-col items-center justify-center",
         className,
       )}
     >
       <hr className="from-border/0 to-border/0 m-0 h-px w-full border-none bg-linear-to-r via-white/20" />
-      <div className="text-muted-foreground container flex h-20 flex-col items-center justify-center text-sm">
-        <p className="text-center font-serif text-lg md:text-xl">
+      <div className="text-muted-foreground container flex h-12 flex-col items-center justify-center text-sm">
+        <p className="text-center font-serif text-sm md:text-base">
           「为自主智能体而生，以开源为基石。」
         </p>
       </div>
-      <div className="text-muted-foreground container mb-8 flex flex-col items-center justify-center text-xs">
-        <p>基于 MIT 协议开源</p>
-        <p>&copy; {year} KWorks</p>
+      <div className="text-muted-foreground container mb-4 flex flex-col items-center justify-center text-xs">
+        <p>基于 MIT 协议开源 · &copy; {year} KWorks</p>
       </div>
     </footer>
   );
