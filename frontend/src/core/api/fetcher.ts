@@ -1,0 +1,140 @@
+import { getDesktopSessionToken } from "@/core/auth/session";
+import { buildLoginUrl } from "@/core/auth/types";
+import { isDesktop, isDesktopBackendManagedMode } from "@/core/config";
+
+/** HTTP methods that the gateway's CSRFMiddleware checks. */
+export type StateChangingMethod = "POST" | "PUT" | "DELETE" | "PATCH";
+
+export const STATE_CHANGING_METHODS: ReadonlySet<StateChangingMethod> = new Set(
+  ["POST", "PUT", "DELETE", "PATCH"],
+);
+
+/** Mirror of the gateway's ``should_check_csrf`` decision. */
+export function isStateChangingMethod(method: string): boolean {
+  return (STATE_CHANGING_METHODS as ReadonlySet<string>).has(
+    method.toUpperCase(),
+  );
+}
+
+const CSRF_COOKIE_PREFIX = "csrf_token=";
+
+/**
+ * Read the ``csrf_token`` cookie set by the gateway at login.
+ *
+ * SSR-safe: returns ``null`` when ``document`` is undefined so the same
+ * helper can be imported from server components without a guard.
+ *
+ * Uses `String.split` instead of a regex to side-step ESLint's
+ * `prefer-regexp-exec` rule and the cookie value's reliable `; `
+ * separator (set by the gateway, not the browser, so format is stable).
+ */
+export function readCsrfCookie(): string | null {
+  if (typeof document === "undefined") return null;
+  for (const pair of document.cookie.split("; ")) {
+    if (pair.startsWith(CSRF_COOKIE_PREFIX)) {
+      return decodeURIComponent(pair.slice(CSRF_COOKIE_PREFIX.length));
+    }
+  }
+  return null;
+}
+
+/**
+ * Fetch with credentials and automatic CSRF protection.
+ *
+ * Two centralized contracts every API call needs:
+ *
+ * 1. ``credentials: "include"`` so the HttpOnly access_token cookie
+ *    accompanies cross-origin SSR-routed requests.
+ * 2. ``X-CSRF-Token`` header on state-changing methods (POST/PUT/
+ *    DELETE/PATCH), echoed from the ``csrf_token`` cookie. The gateway's
+ *    CSRFMiddleware enforces Double Submit Cookie comparison and returns
+ *    403 if the header is missing — silently breaking every call site
+ *    that uses raw ``fetch()`` instead of this wrapper.
+ *
+ * Auto-redirects to ``/login`` on 401. Caller-supplied headers are
+ * preserved; the helper only ADDS the CSRF header when it isn't already
+ * present, so explicit overrides win.
+ */
+export async function fetch(
+  input: RequestInfo | string,
+  init?: RequestInit,
+): Promise<Response> {
+  const url = typeof input === "string" ? input : input.url;
+
+  // Inject CSRF for state-changing methods. GET/HEAD/OPTIONS/TRACE skip
+  // it to mirror the gateway's ``should_check_csrf`` logic exactly.
+  let headers = init?.headers;
+  if (isStateChangingMethod(init?.method ?? "GET")) {
+    const token = readCsrfCookie();
+    if (token) {
+      // Fresh Headers instance so we don't mutate caller-supplied objects.
+      const merged = new Headers(headers);
+      if (!merged.has("X-CSRF-Token")) {
+        merged.set("X-CSRF-Token", token);
+      }
+      headers = merged;
+    }
+  }
+
+  // Inject the desktop session token for BOTH managed (production) and dev
+  // desktop modes. In dev mode the gateway does not receive an access_token
+  // cookie (the request is proxied via Next.js and only the locale cookie
+  // survives), so the Bearer token is the only auth signal the gateway's
+  // get_access_token_from_request will find. Without this, /api/models,
+  // /api/work-modes, etc. return 401 in desktop dev.
+  const desktopToken = isDesktop()
+    ? getDesktopSessionToken()
+    : null;
+  const mergedHeaders = new Headers(headers);
+  if (desktopToken && !mergedHeaders.has("Authorization")) {
+    mergedHeaders.set("Authorization", `Bearer ${desktopToken}`);
+  }
+
+  // DIAG: trace Authorization header injection for desktop API calls
+  if (typeof url === "string" && url.includes("/api/")) {
+    console.log(
+      `[DIAG:fetcher] ${init?.method ?? "GET"} ${url}`,
+      `isDesktop=${isDesktop()} desktopManaged=${isDesktopBackendManagedMode()} port=${typeof window !== "undefined" ? window.location.port : "<ssr>"}`,
+      `tokenPresent=${!!desktopToken} authzHeader=${!!mergedHeaders.get("Authorization")}`,
+    );
+  }
+
+  const res = await globalThis.fetch(url, {
+    ...init,
+    headers: mergedHeaders,
+    // Credentials strategy:
+    // - Desktop production (managed mode, static dist): direct gateway, no
+    //   cookies needed.
+    // - Desktop dev mode: proxied via Next.js, cookies ARE needed alongside
+    //   the Bearer token.
+    // - Web mode: cookies for session auth.
+    ...(isDesktop() && !isDesktopBackendManagedMode()
+      ? { credentials: "include" as RequestCredentials }
+      : isDesktopBackendManagedMode()
+        ? {}
+        : { credentials: "include" as RequestCredentials }),
+  });
+
+  if (res.status === 401 && !isDesktop()) {
+    // Only redirect to login in web mode; desktop runs its own auth flow
+    window.location.href = buildLoginUrl(window.location.pathname);
+    throw new Error("Unauthorized");
+  }
+
+  return res;
+}
+
+/**
+ * Build headers for CSRF-protected requests.
+ *
+ * **Prefer :func:`fetchWithAuth`** for new code — it injects the header
+ * automatically on state-changing methods. This helper exists for legacy
+ * call sites that need to compose headers manually (e.g. inside
+ * `next/server` route handlers that build their own ``Headers`` object).
+ *
+ * Per RFC-001: Double Submit Cookie pattern.
+ */
+export function getCsrfHeaders(): HeadersInit {
+  const token = readCsrfCookie();
+  return token ? { "X-CSRF-Token": token } : {};
+}
