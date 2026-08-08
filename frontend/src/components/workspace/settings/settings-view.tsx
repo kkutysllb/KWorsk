@@ -148,7 +148,7 @@ export function SettingsView({
         <aside
           aria-label={t.settings.title}
           style={{ width: sidebarWidth }}
-          className="bg-sidebar flex shrink-0 flex-col"
+          className="bg-sidebar flex shrink-0 flex-col pt-10"
         >
           <button
             type="button"
