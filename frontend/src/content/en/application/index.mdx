@@ -1,19 +1,19 @@
 ---
-title: KKOCLAW App
-description: KKOCLAW App is the reference implementation of what a production KKOCLAW experience looks like. It assembles the Harness runtime, a web-based conversation workspace, an API gateway, and a reverse proxy into a single deployable system.
+title: KWorks App
+description: KWorks App is the reference implementation of what a production KWorks experience looks like. It assembles the Harness runtime, a web-based conversation workspace, an API gateway, and a reverse proxy into a single deployable system.
 ---
 
 import { Callout, Cards } from "nextra/components";
 
-# KKOCLAW App
+# KWorks App
 
 <Callout type="info" emoji="🚀">
-  KKOCLAW App is a complete Super Agent application built on top of KKOCLAW
+  KWorks App is a complete Super Agent application built on top of KWorks
   Harness. It packages the runtime capabilities into a ready-to-deploy product
   with a web UI, API gateway, and operational tooling.
 </Callout>
 
-KKOCLAW App is the reference implementation of what a production KKOCLAW experience looks like. It assembles the Harness runtime, a web-based conversation workspace, an API gateway, and a reverse proxy into a single deployable system.
+KWorks App is the reference implementation of what a production KWorks experience looks like. It assembles the Harness runtime, a web-based conversation workspace, an API gateway, and a reverse proxy into a single deployable system.
 
 ## What the App provides
 
@@ -29,7 +29,7 @@ KKOCLAW App is the reference implementation of what a production KKOCLAW experie
 
 ## Architecture
 
-The KKOCLAW App runs as three services behind a single nginx reverse proxy:
+The KWorks App runs as three services behind a single nginx reverse proxy:
 
 ```
                 ┌──────────────────┐
@@ -54,7 +54,7 @@ The KKOCLAW App runs as three services behind a single nginx reverse proxy:
 | ----------------- | -------------------------------------------------------------------- |
 | Frontend          | Next.js 16, React 19, TypeScript, pnpm                               |
 | Gateway           | FastAPI, Python 3.12, uvicorn                                        |
-| Agent runtime     | LangGraph, LangChain, KKOCLAW Harness                               |
+| Agent runtime     | LangGraph, LangChain, Qilin Harness                               |
 | Reverse proxy     | nginx                                                                |
 | State persistence | LangGraph Server (default) + optional SQLite/PostgreSQL checkpointer |
 

@@ -1,13 +1,13 @@
 ---
 title: Agents and Threads
-description: KKOCLAW App supports multiple named agents and maintains conversation state across sessions through threads and checkpointing.
+description: KWorks App supports multiple named agents and maintains conversation state across sessions through threads and checkpointing.
 ---
 
 import { Callout, Cards, Steps } from "nextra/components";
 
 # Agents and Threads
 
-KKOCLAW App supports multiple named agents and maintains conversation state across sessions through threads and checkpointing.
+KWorks App supports multiple named agents and maintains conversation state across sessions through threads and checkpointing.
 
 ## Agents
 
@@ -107,14 +107,14 @@ checkpointer:
 # PostgreSQL (multi-process, production)
 # checkpointer:
 #   type: postgres
-#   connection_string: postgresql://user:password@localhost:5432/kkoclaw
+#   connection_string: postgresql://user:password@localhost:5432/kworks
 ```
 
 <Callout type="info">
   The LangGraph Server manages its own state separately. The
   <code>checkpointer</code> setting in <code>config.yaml</code> applies to the
-  embedded <code>KKOCLAWHarnessClient</code> (used in direct Python integrations), not
-  to the LangGraph Server deployment used by KKOCLAW App.
+  embedded <code>QilinHarnessClient</code> (used in direct Python integrations), not
+  to the LangGraph Server deployment used by KWorks App.
 </Callout>
 
 ### Thread data storage
@@ -122,12 +122,12 @@ checkpointer:
 Working files produced during a thread (uploads, intermediate files, output artifacts) are stored under:
 
 ```
-backend/.oclaw/threads/{thread_id}/user-data/
+backend/.qilin/threads/{thread_id}/user-data/
 ```
 
 This directory is mounted into the sandbox as `/mnt/user-data/` for the agent to read and write.
 
-In Docker deployments, this path is bind-mounted from the host so that thread data persists across container restarts. Set `KKOCLAW_ROOT` to the absolute path of your kkoclaw repository root to ensure the correct host path is used.
+In Docker deployments, this path is bind-mounted from the host so that thread data persists across container restarts. Set `QILIN_ROOT` to the absolute path of your KWorks repository root to ensure the correct host path is used.
 
 <Cards num={2}>
   <Cards.Card

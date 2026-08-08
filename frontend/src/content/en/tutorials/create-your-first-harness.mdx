@@ -1,19 +1,19 @@
 ---
 title: Create Your First Harness
-description: This tutorial shows you how to use the KKOCLAW Harness programmatically — importing and using KKOCLAW directly in your Python code rather than through the web interface.
+description: This tutorial shows you how to use the Qilin Harness programmatically — importing and using KWorks directly in your Python code rather than through the web interface.
 ---
 
 import { Callout, Steps } from "nextra/components";
 
 # Create Your First Harness
 
-This tutorial shows you how to use the KKOCLAW Harness programmatically — importing and using KKOCLAW directly in your Python code rather than through the web interface.
+This tutorial shows you how to use the Qilin Harness programmatically — importing and using KWorks directly in your Python code rather than through the web interface.
 
 ## Prerequisites
 
 - Python 3.12+
 - `uv` installed
-- KKOCLAW repository cloned
+- KWorks repository cloned
 
 ## Install
 
@@ -36,12 +36,12 @@ models:
     api_key: $OPENAI_API_KEY
 
 sandbox:
-  use: kkoclaw.sandbox.local:LocalSandboxProvider
+  use: qilin.sandbox.local:LocalSandboxProvider
 
 tools:
-  - use: kkoclaw.community.ddg_search.tools:web_search_tool
-  - use: kkoclaw.sandbox.tools:read_file_tool
-  - use: kkoclaw.sandbox.tools:write_file_tool
+  - use: qilin.community.ddg_search.tools:web_search_tool
+  - use: qilin.sandbox.tools:read_file_tool
+  - use: qilin.sandbox.tools:write_file_tool
 ```
 
 ## Write the code
@@ -55,15 +55,15 @@ Create `my_agent.py` in the `backend/` directory:
 ```python
 import asyncio
 import os
-from kkoclaw.client import KKOCLAWHarnessClient
-from kkoclaw.config import load_config
+from qilin.client import QilinHarnessClient
+from qilin.config import load_config
 
 os.environ["OPENAI_API_KEY"] = "sk-..."
 
 # Load config.yaml
 load_config()
 
-client = KKOCLAWHarnessClient()
+client = QilinHarnessClient()
 
 async def main():
     async for event in client.astream(

@@ -24,7 +24,7 @@ import {
   type WriteStream,
 } from "node:fs";
 import { randomBytes } from "node:crypto";
-import { platform } from "node:os";
+import { homedir, platform } from "node:os";
 import { join } from "node:path";
 import { EventEmitter } from "node:events";
 
@@ -38,7 +38,7 @@ import {
   getDesktopExtensionsConfigPath,
   getGatewayExecutable,
   getGatewayLogPath,
-  getKkoclawHome,
+  getKworksHome,
   getLogsDir,
   getSkillsDir,
   getSkillModelsEnvPath,
@@ -231,7 +231,7 @@ export class BackendManager extends EventEmitter {
     // resolves the `uvicorn` executable on PATH, which may point at a
     // system/conda uvicorn linked to the wrong interpreter. Running the
     // module via the project venv's Python guarantees we load the uvicorn
-    // installed inside `.venv` together with `kkoclaw` and its deps.
+    // installed inside `.venv` together with `qilin` and its deps.
     const uvArgs = [
       "run",
       "python",
@@ -254,26 +254,23 @@ export class BackendManager extends EventEmitter {
   /**
    * Build the isolated child-process environment.
    *
-   * `KKOCLAW_HOME` points at `~/.oclaw` so desktop state lives in
+   * `QILIN_HOME` points at `~/.kworks` so desktop state lives in
    * the user's home folder (discoverable + backup-friendly) and stays isolated
-   * from a co-located web deployment's `~/.oclaw` / `<repo>/backend/.kkoclaw`.
+   * from any co-located QiLin deployment.
    *
-   * `KKOCLAW_SKILLS_PATH` points at `~/.oclaw/skills`, seeded with
-   * bundled `public/` skills on first run. The `custom/` directory is created
-   * empty so users can author their own skills at runtime — we do NOT set
-   * `KKOCLAW_PUBLIC_SKILLS_ONLY` because that flag was meant to skip stale
-   * custom skills during *bundling*, not to forbid users from creating them.
+   * `QILIN_SKILLS_PATH` points at `~/.kworks/skills`, seeded with
+   * bundled builtin skills on first run. The `custom/` directory is created
+   * empty so users can author their own skills at runtime.
    *
-   * `KKOCLAW_PROJECT_ROOT` is only set in development, where the repo source
-   * tree exists. The packaged gateway bundles its own source via PyInstaller
-   * and would raise `ValueError` if pointed at a non-existent project root
-   * (see backend `runtime_paths.project_root()`).
+   * `QILIN_PROJECT_ROOT` is only set in development, where the qilin/ submodule
+   * exists. The packaged gateway bundles its own source via PyInstaller and
+   * would raise `ValueError` if pointed at a non-existent project root
+   * (see `qilin.config.runtime_paths.project_root()`).
    */
   private buildEnv(port: number): NodeJS.ProcessEnv {
     // Skill model credentials (GEMINI_API_KEY, MINIMAX_API_KEY, …) parsed from
-    // `<KKOCLAW_HOME>/.env`. These are the desktop equivalent of the web
-    // deployment's repo-root `.env`; without them, image/video/music skills
-    // abort with "No provider configured" / "*_API_KEY is not set".
+    // `<QILIN_HOME>/.env`. Without them, image/video/music skills abort with
+    // "No provider configured" / "*_API_KEY is not set".
     const skillModelVars = this.loadSkillModelsEnv();
 
     // 用户登录 shell 的完整环境变量（TUSHARE_TOKEN / ZHIPU_API_KEY / 自定义 PATH 等）。
@@ -286,24 +283,22 @@ export class BackendManager extends EventEmitter {
       ...process.env,
       ...loginShellEnv,
       ...skillModelVars,
-      // Isolation: desktop state lives under ~/.oclaw.
-      KKOCLAW_HOME: getKkoclawHome(),
-      KKOCLAW_DATA_DIR: join(getKkoclawHome(), "data"),
+      // Isolation: desktop state lives under ~/.kworks.
+      QILIN_HOME: getKworksHome(),
+      // QiLin uses QILIN_HOST_BASE_DIR to locate the per-thread data root
+      // (threads/, users/, integrations/, etc.).
+      QILIN_HOST_BASE_DIR: getKworksHome(),
       // Desktop config is copied into the home dir on first run and never
-      // reads the local web service's config.yaml.
-      KKOCLAW_CONFIG_PATH: getDesktopConfigPath(),
+      // reads the QiLin repo-root config.yaml.
+      QILIN_CONFIG_PATH: getDesktopConfigPath(),
       // Desktop extensions config starts empty so MCP/custom skill state never
-      // leaks in from the web/repo extensions_config.json.
-      KKOCLAW_EXTENSIONS_CONFIG_PATH: getDesktopExtensionsConfigPath(),
-      // Skills root: bundled public skills + user-created custom skills.
-      KKOCLAW_SKILLS_PATH: getSkillsDir(),
+      // leaks in from the repo extensions_config.json.
+      QILIN_EXTENSIONS_CONFIG_PATH: getDesktopExtensionsConfigPath(),
+      // Skills root: bundled builtin skills + user-created custom skills.
+      QILIN_SKILLS_PATH: getSkillsDir(),
       // Desktop static export talks to the gateway from the app:// origin.
       GATEWAY_CORS_ORIGINS: "app://-",
       CORS_ORIGINS: "app://-",
-      // Python backend writes its own rotating log files here too
-      // (gateway.log + langgraph.log), so all backend logs are co-located
-      // with the Electron-captured stdout logs under ~/.oclaw/logs.
-      KKOCLAW_LOG_DIR: getLogsDir(),
       // Persisted JWT signing secret — prevents session invalidation on
       // every gateway restart. Without this, the gateway generates a new
       // ephemeral AUTH_JWT_SECRET on each launch and all existing tokens
@@ -318,11 +313,11 @@ export class BackendManager extends EventEmitter {
       PYTHONDONTWRITEBYTECODE: "1",
     };
 
-    // Only expose the repo source root in development. The packaged gateway
-    // resolves its source from the PyInstaller bundle, and an invalid
+    // Only expose the qilin submodule root in development. The packaged
+    // gateway resolves its source from the PyInstaller bundle, and an invalid
     // project root would crash the backend on import.
     if (!isPackaged()) {
-      env.KKOCLAW_PROJECT_ROOT = REPO_ROOT;
+      env.QILIN_PROJECT_ROOT = join(REPO_ROOT, "qilin");
     }
 
     return env;
@@ -506,24 +501,36 @@ export class BackendManager extends EventEmitter {
   // ── Data dir bootstrap ────────────────────────────────────────────────
 
   /**
-   * One-time migration from the legacy `<userData>/.kkoclaw` layout to the
-   * new `~/.oclaw` home.
+   * One-time migration from legacy data layouts to the new `~/.kworks` home.
    *
-   * Triggered when the legacy dir exists AND the new home has not been
-   * marked as migrated (`.migrated_v2` sentinel). Asks the user via a native
-   * dialog; on accept, recursively copies the old home into the new location.
-   * On decline, the new home starts empty and the old data is left untouched.
+   * Two legacy locations are checked (newest first):
+   *   1. `~/.oclaw` — the previous KWorks desktop home (pre-QiLin era)
+   *   2. `<userData>/.kkoclaw` — the original Tauri-era layout
    *
-   * Idempotent: the `.migrated_v2` marker is written on completion (accept or
+   * Triggered when a legacy dir exists AND the new home has not been marked
+   * as migrated (`.migrated_v3` sentinel). Asks the user via a native dialog;
+   * on accept, recursively copies the old home into the new location. On
+   * decline, the new home starts empty and the old data is left untouched.
+   *
+   * Idempotent: the `.migrated_v3` marker is written on completion (accept or
    * decline) so the user is only prompted once per machine.
    */
   private migrateLegacyUserData(): void {
-    const newHome = getKkoclawHome();
-    const marker = join(newHome, ".migrated_v2");
+    const newHome = getKworksHome();
+    const marker = join(newHome, ".migrated_v3");
     if (existsSync(marker)) return; // already handled on this machine
 
-    const legacyHome = join(app.getPath("userData"), ".kkoclaw");
-    if (!existsSync(legacyHome)) {
+    // Find the newest existing legacy home (prefer ~/.oclaw over the older
+    // <userData>/.kkoclaw layout).
+    const legacyOclawHome = join(homedir(), ".oclaw");
+    const legacyKkoclawHome = join(app.getPath("userData"), ".kkoclaw");
+    const legacyHome = existsSync(legacyOclawHome)
+      ? legacyOclawHome
+      : existsSync(legacyKkoclawHome)
+        ? legacyKkoclawHome
+        : null;
+
+    if (!legacyHome) {
       // Nothing to migrate — write the marker so we never check again.
       try {
         mkdirSync(newHome, { recursive: true });
@@ -539,7 +546,7 @@ export class BackendManager extends EventEmitter {
       buttons: ["迁移旧数据", "从零开始", "稍后再问"],
       defaultId: 0,
       title: "检测到旧版本数据",
-      message: "检测到旧版本的 OClaw 桌面端数据",
+      message: "检测到旧版本的 KWorks 桌面端数据",
       detail:
         `旧数据位置：${legacyHome}\n` +
         `新位置：${newHome}\n\n` +
@@ -553,7 +560,7 @@ export class BackendManager extends EventEmitter {
     }
 
     if (choice === 0) {
-      // Migrate the main home: <userData>/.kkoclaw → ~/.oclaw
+      // Migrate the legacy home → ~/.kworks
       try {
         mkdirSync(newHome, { recursive: true });
         cpSync(legacyHome, newHome, { recursive: true });
@@ -579,7 +586,7 @@ export class BackendManager extends EventEmitter {
   }
 
   private ensureDataDirs(): void {
-    const home = getKkoclawHome();
+    const home = getKworksHome();
     const subdirs = ["", "logs", "data", "threads", "agents"];
     for (const sub of subdirs) {
       const dir = join(home, sub);
@@ -755,7 +762,7 @@ export class BackendManager extends EventEmitter {
   /**
    * Load or create a persistent JWT signing secret.
    *
-   * The secret is stored in ``<KKOCLAW_HOME>/.auth_jwt_secret`` and reused
+   * The secret is stored in ``<QILIN_HOME>/.auth_jwt_secret`` and reused
    * across gateway restarts so that JWTs issued during a previous session
    * remain valid. If the file does not exist (first launch or after cache
    * clear), a new cryptographically random secret is generated and persisted.

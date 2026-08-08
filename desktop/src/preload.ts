@@ -2,7 +2,7 @@
  * Electron preload script.
  *
  * Runs in an isolated context with Node access and exposes a typed
- * `window.oclawDesktop` bridge to the renderer via `contextBridge`. The
+ * `window.kworksDesktop` bridge to the renderer via `contextBridge`. The
  * renderer never imports Electron directly — it only calls these methods,
  * which forward to the corresponding `ipcMain.handle` channels.
  *
@@ -87,7 +87,7 @@ interface SkillModelsConfig {
 // main process responds.
 const DEFAULT_GATEWAY_PORT = 29987;
 
-contextBridge.exposeInMainWorld("oclawDesktop", {
+contextBridge.exposeInMainWorld("kworksDesktop", {
   gatewayPort: DEFAULT_GATEWAY_PORT,
 
   // ── Backend lifecycle ──────────────────────────────────────────────

@@ -82,7 +82,7 @@ function providerIcon(provider: SkillModelProvider) {
 }
 
 export function SkillModelsSettingsPage() {
-  const desktop = typeof window !== "undefined" ? window.oclawDesktop : undefined;
+  const desktop = typeof window !== "undefined" ? window.kworksDesktop : undefined;
   const [config, setConfig] = useState<SkillModelsConfig | null>(null);
   const [edits, setEdits] = useState<Record<string, string>>({});
   const [loading, setLoading] = useState(true);

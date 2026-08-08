@@ -29,7 +29,7 @@ export function warnUnsupportedStreamModes(
   }
 
   warn(
-    `[kkoclaw] Dropped unsupported LangGraph stream mode(s): ${unseenModes.join(", ")}`,
+    `[kworks] Dropped unsupported LangGraph stream mode(s): ${unseenModes.join(", ")}`,
   );
 }
 

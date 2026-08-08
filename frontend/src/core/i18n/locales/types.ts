@@ -156,6 +156,29 @@ export interface Translations {
     customModes: string;
   };
 
+  // Topbar
+  topbar: {
+    toggleSidebar: string;
+    toggleRightPanel: string;
+    backendConnected: string;
+    backendDisconnected: string;
+    backendChecking: string;
+    tokens: string;
+    noActiveSession: string;
+  };
+
+  // Right Panel
+  rightPanel: {
+    title: string;
+    todos: string;
+    subagents: string;
+    skills: string;
+    uploads: string;
+    artifacts: string;
+    empty: string;
+    noSession: string;
+  };
+
   // Work Modes
   workModes: {
     label: string;

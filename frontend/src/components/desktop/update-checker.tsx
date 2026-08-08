@@ -105,7 +105,7 @@ export function UpdateChecker() {
   // Manual check via app menu "Check for Updates…" (desktop only).
   useEffect(() => {
     if (!isDesktop()) return;
-    const bridge = window.oclawDesktop;
+    const bridge = window.kworksDesktop;
     if (!bridge?.onCheckUpdateRequest) return;
     const unsubscribe = bridge.onCheckUpdateRequest(() => {
       void doCheck(false);
@@ -162,7 +162,7 @@ export function UpdateChecker() {
           <DialogHeader>
             <DialogTitle>更新已就绪 v{version}</DialogTitle>
             <DialogDescription>
-              新版本已下载完成，重启 OClaw 即可完成安装。
+              新版本已下载完成，重启 KWorks 即可完成安装。
               {update?.body && (
                 <span className="mt-2 block whitespace-pre-wrap text-xs opacity-80">
                   {update.body}
@@ -223,7 +223,7 @@ export function UpdateChecker() {
           <DialogHeader>
             <DialogTitle>已是最新版本</DialogTitle>
             <DialogDescription>
-              OClaw 当前版本已是最新，无需更新。
+              KWorks 当前版本已是最新，无需更新。
             </DialogDescription>
           </DialogHeader>
           <DialogFooter>

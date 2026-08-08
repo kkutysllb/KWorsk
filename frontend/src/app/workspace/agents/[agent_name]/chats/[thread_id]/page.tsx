@@ -19,12 +19,9 @@ import {
 } from "@/components/workspace/messages";
 import { ThreadContext } from "@/components/workspace/messages/context";
 import { ThreadTitle } from "@/components/workspace/thread-title";
-import { TodoTrigger } from "@/components/workspace/todo-trigger";
-import { TokenUsageIndicator } from "@/components/workspace/token-usage-indicator";
 import { Tooltip } from "@/components/workspace/tooltip";
 import { useAgent } from "@/core/agents";
 import { useI18n } from "@/core/i18n/hooks";
-import { useModels } from "@/core/models/hooks";
 import { useNotification } from "@/core/notification/hooks";
 import { useThreadSettings } from "@/core/settings";
 import { useThreadStream } from "@/core/threads/hooks";
@@ -61,7 +58,6 @@ export default function AgentChatPage() {
   const { threadId, setThreadId, isNewThread, setIsNewThread } =
     useThreadChat();
   const [settings, setSettings] = useThreadSettings(threadId);
-  const { tokenUsageEnabled } = useModels();
 
   const { showNotification } = useNotification();
   const {
@@ -169,24 +165,26 @@ export default function AgentChatPage() {
         <div className="relative flex size-full min-h-0 justify-between">
           <header
             className={cn(
-              "absolute top-0 right-0 left-0 z-30 flex h-12 shrink-0 items-center gap-2 px-4",
+              // [-webkit-app-region:drag] makes the header a window-drag
+              // zone on Electron so double-click toggles macOS maximize.
+              "absolute top-0 right-0 left-0 z-30 flex h-12 shrink-0 items-center gap-2 px-4 [-webkit-app-region:drag]",
               isNewThread
                 ? "bg-background/0 backdrop-blur-none"
                 : "bg-background/80 shadow-xs backdrop-blur",
             )}
           >
             {/* Agent badge */}
-            <div className="flex shrink-0 items-center gap-1.5 rounded-md border px-2 py-1">
+            <div className="flex shrink-0 items-center gap-1.5 rounded-md border px-2 py-1 [-webkit-app-region:no-drag]">
               <BotIcon className="text-primary h-3.5 w-3.5" />
               <span className="text-xs font-medium">
                 {agent?.name ?? agent_name}
               </span>
             </div>
 
-            <div className="flex w-full items-center text-sm font-medium">
+            <div className="flex w-full items-center text-sm font-medium [-webkit-app-region:no-drag]">
               <ThreadTitle threadId={threadId} thread={thread} />
             </div>
-            <div className="mr-4 flex items-center">
+            <div className="mr-4 flex items-center [-webkit-app-region:no-drag]">
               <Tooltip content={t.agents.newChat}>
                 <Button
                   size="sm"
@@ -198,11 +196,6 @@ export default function AgentChatPage() {
                   <PlusSquare /> {t.agents.newChat}
                 </Button>
               </Tooltip>
-              <TokenUsageIndicator
-                enabled={tokenUsageEnabled}
-                messages={thread.messages}
-              />
-              <TodoTrigger todos={thread.values.todos} />
               <ArtifactTrigger />
             </div>
           </header>

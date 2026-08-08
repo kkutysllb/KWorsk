@@ -100,7 +100,7 @@ describe("queue-store", () => {
 
   it("persists pending messages to localStorage", () => {
     enqueue(THREAD_ID, "persisted", undefined);
-    const stored = localStorage.getItem("oclaw.queuedMsgs." + THREAD_ID);
+    const stored = localStorage.getItem("kworks.queuedMsgs." + THREAD_ID);
     expect(stored).toBeTruthy();
     const parsed = JSON.parse(stored!);
     expect(parsed.messages[0].content).toBe("persisted");
@@ -126,7 +126,7 @@ describe("queue-store", () => {
   });
 
   it("loadFromStorage handles corrupt JSON gracefully", () => {
-    localStorage.setItem("oclaw.queuedMsgs." + THREAD_ID, "{not json");
+    localStorage.setItem("kworks.queuedMsgs." + THREAD_ID, "{not json");
     const loaded = loadFromStorage(THREAD_ID);
     expect(loaded).toBeNull();
   });

@@ -8,7 +8,7 @@ import { useCallback, useSyncExternalStore } from "react";
  * 作用：当模型正在执行任务时，用户新发送的消息默认进入此队列（而非打断任务）。
  * 任务结束后由协调器自动按序发送；用户也可对某条点"立即注入"。
  *
- * 持久化：localStorage 按 thread_id 隔离（key: oclaw.queuedMsgs.<thread_id>）。
+ * 持久化：localStorage 按 thread_id 隔离（key: kworks.queuedMsgs.<thread_id>）。
  * 仅持久化 pending 状态；injected 丢弃；injecting/sending/error 加载时降级回 pending。
  *
  * 模式：模块级 Map + useSyncExternalStore（仿 runtime-store.ts）。
@@ -36,7 +36,7 @@ interface ThreadQueueState {
   messages: QueuedMessage[];
 }
 
-const STORAGE_PREFIX = "oclaw.queuedMsgs.";
+const STORAGE_PREFIX = "kworks.queuedMsgs.";
 const MAX_QUEUED_PER_THREAD = 20;
 const SAVE_DEBOUNCE_MS = 300;
 

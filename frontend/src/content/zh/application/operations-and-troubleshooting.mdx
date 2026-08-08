@@ -1,17 +1,17 @@
 ---
 title: 运维与排障
-description: 本页面涵盖运行 KKOCLAW 应用的操作信息：日志记录、常见问题和维护任务。
+description: 本页面涵盖运行 KWorks 应用的操作信息：日志记录、常见问题和维护任务。
 ---
 
 import { Callout, Cards } from "nextra/components";
 
 # 运维与排障
 
-本页面涵盖运行 KKOCLAW 应用的操作信息：日志记录、常见问题和维护任务。
+本页面涵盖运行 KWorks 应用的操作信息：日志记录、常见问题和维护任务。
 
 ## 日志
 
-KKOCLAW 应用在 `logs/` 目录中写入每个服务的日志：
+KWorks 应用在 `logs/` 目录中写入每个服务的日志：
 
 | 文件                 | 内容                                   |
 | -------------------- | -------------------------------------- |
@@ -36,7 +36,7 @@ log_level: debug # debug | info | warning | error
 
 ## 健康检查
 
-KKOCLAW 暴露健康检查端点：
+KWorks 暴露健康检查端点：
 
 ```bash
 # Gateway 健康状态
@@ -88,13 +88,13 @@ grep -i "error\|apikey\|unauthorized" logs/langgraph.log | tail -20
 
 ```bash
 # 检查线程用户数据目录是否存在且可写
-ls -la backend/.oclaw/threads/
+ls -la backend/.qilin/threads/
 ```
 
 **解决**：
 
-1. 确保 `backend/.oclaw/` 对运行 KKOCLAW 的进程可写。
-2. 在 Docker 部署中，验证卷挂载路径正确（`KKOCLAW_ROOT` 设置为绝对路径）。
+1. 确保 `backend/.qilin/` 对运行 KWorks 的进程可写。
+2. 在 Docker 部署中，验证卷挂载路径正确（`QILIN_ROOT` 设置为绝对路径）。
 3. 如果使用基于容器的沙箱，确认 Docker 已运行并且容器镜像已拉取。
 
 ---
@@ -147,11 +147,11 @@ grep -i "mcp\|timeout" logs/langgraph.log | tail -20
 
 ## 数据备份
 
-KKOCLAW 将持久化数据存储在：
+KWorks 将持久化数据存储在：
 
-- **线程数据**：`backend/.oclaw/threads/` — 每个线程的上传文件、输出和工作区文件
-- **检查点**：取决于检查点器配置（SQLite：`backend/.oclaw/checkpoints.db`，Redis：外部存储）
-- **记忆**：`backend/.oclaw/memory.json`（以及 `agents/*/memory.json`）
+- **线程数据**：`backend/.qilin/threads/` — 每个线程的上传文件、输出和工作区文件
+- **检查点**：取决于检查点器配置（SQLite：`backend/.qilin/checkpoints.db`，Redis：外部存储）
+- **记忆**：`backend/.qilin/memory.json`（以及 `agents/*/memory.json`）
 - **自定义 Agent 配置**：`backend/agents/*/config.yaml`
 
 对于生产部署，定期备份这些目录。Docker 部署中，确保这些目录绑定挂载到持久卷，而不是容器内部。

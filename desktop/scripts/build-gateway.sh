@@ -3,7 +3,7 @@
 # build-gateway.sh — Bundle the Python gateway backend via PyInstaller.
 #
 # This script MUST be run before `electron-builder`. It:
-#   1. Runs PyInstaller from backend/ using oclaw-gateway.spec
+#   1. Runs PyInstaller from backend/ using kworks-gateway.spec
 #   2. Copies the output directory to desktop-electron/resources/gateway/
 #
 # electron-builder then bundles everything in resources/gateway/ into the
@@ -15,7 +15,7 @@ SCRIPT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
 DESKTOP_DIR="$(cd "$SCRIPT_DIR/.." && pwd)"
 REPO_ROOT="$(cd "$DESKTOP_DIR/.." && pwd)"
 BACKEND_DIR="$REPO_ROOT/backend"
-SPEC_FILE="$DESKTOP_DIR/backend-build/oclaw-gateway.spec"
+SPEC_FILE="$DESKTOP_DIR/backend-build/kworks-gateway.spec"
 RESOURCES_DIR="$DESKTOP_DIR/resources/gateway"
 
 # ── Colours ───────────────────────────────────────────────────────────────
@@ -33,7 +33,7 @@ fail()  { echo -e "${RED}[FAIL]${NC}  $*"; exit 1; }
 # ── Pre-flight checks ────────────────────────────────────────────────────
 echo ""
 echo "=========================================="
-echo "  Building OClaw Gateway (PyInstaller)"
+echo "  Building KWorks Gateway (PyInstaller)"
 echo "=========================================="
 echo ""
 
@@ -62,10 +62,10 @@ echo ""
 echo ""
 
 # ── Verify output ────────────────────────────────────────────────────────
-PYINSTALLER_OUTPUT="$BACKEND_DIR/dist/oclaw-gateway"
+PYINSTALLER_OUTPUT="$BACKEND_DIR/dist/kworks-gateway"
 
 [[ -d "$PYINSTALLER_OUTPUT" ]] || fail "PyInstaller output not found: $PYINSTALLER_OUTPUT"
-[[ -f "$PYINSTALLER_OUTPUT/oclaw-gateway" || -f "$PYINSTALLER_OUTPUT/oclaw-gateway.exe" ]] || \
+[[ -f "$PYINSTALLER_OUTPUT/kworks-gateway" || -f "$PYINSTALLER_OUTPUT/kworks-gateway.exe" ]] || \
     fail "Gateway executable not found in output"
 
 OUTPUT_SIZE=$(du -sh "$PYINSTALLER_OUTPUT" | cut -f1)

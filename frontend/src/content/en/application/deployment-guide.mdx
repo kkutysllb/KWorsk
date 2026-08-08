@@ -1,17 +1,17 @@
 ---
 title: Deployment Guide
-description: "This guide covers all supported deployment methods for KKOCLAW App: local development, Docker Compose, and production with Kubernetes-managed sandboxes."
+description: "This guide covers all supported deployment methods for KWorks App: local development, Docker Compose, and production with Kubernetes-managed sandboxes."
 ---
 
 import { Callout, Cards, Steps, Tabs } from "nextra/components";
 
 # Deployment Guide
 
-This guide covers all supported deployment methods for KKOCLAW App: local development, Docker Compose, and production with Kubernetes-managed sandboxes.
+This guide covers all supported deployment methods for KWorks App: local development, Docker Compose, and production with Kubernetes-managed sandboxes.
 
 ## Local development deployment
 
-The local workflow is the fastest way to run KKOCLAW. All services run as native processes on your machine.
+The local workflow is the fastest way to run KWorks. All services run as native processes on your machine.
 
 <Tabs items={["Start", "Stop", "Logs"]}>
   <Tabs.Tab>
@@ -67,8 +67,8 @@ Docker Compose runs all services in containers. Use this for a more production-l
 ### Development compose
 
 ```bash
-# Set the absolute path to your kkoclaw repo root
-export KKOCLAW_ROOT=/path/to/kkoclaw
+# Set the absolute path to your KWorks repo root
+export QILIN_ROOT=/path/to/KWorks
 
 docker compose -f docker/docker-compose-dev.yaml up --build
 ```
@@ -84,7 +84,7 @@ Create a `.env` file in the repo root for secrets and runtime configuration:
 ```bash
 # .env
 OPENAI_API_KEY=sk-...
-KKOCLAW_ROOT=/absolute/path/to/kkoclaw
+QILIN_ROOT=/absolute/path/to/KWorks
 BETTER_AUTH_SECRET=your-secret-here-min-32-chars
 ```
 
@@ -98,11 +98,11 @@ The `docker-compose*.yaml` files include an `env_file: ../.env` directive that l
 
 ### Data persistence
 
-Thread data is stored in `backend/.oclaw/threads/`. In Docker deployments, this directory is bind-mounted into the langgraph container.
+Thread data is stored in `backend/.qilin/threads/`. In Docker deployments, this directory is bind-mounted into the langgraph container.
 
 To avoid data loss when containers are recreated:
 
-1. Set `KKOCLAW_ROOT` to the absolute repo root path (or a stable host path).
+1. Set `QILIN_ROOT` to the absolute repo root path (or a stable host path).
 2. Verify the `threads/` and `skills/` directories are mounted correctly.
 
 For production, use a named volume or a Persistent Volume Claim (PVC) instead of a host bind-mount.
@@ -130,9 +130,9 @@ The provisioner manages sandbox Pods in a Kubernetes cluster. It is included in 
 Set required environment variables in your `.env` or compose override:
 
 ```bash
-K8S_NAMESPACE=kkoclaw
+K8S_NAMESPACE=kworks
 SANDBOX_IMAGE=enterprise-public-cn-beijing.cr.volces.com/vefaas-public/all-in-one-sandbox:latest
-KKOCLAW_ROOT=/absolute/path/to/kkoclaw
+QILIN_ROOT=/absolute/path/to/KWorks
 ```
 
 #### Configure the sandbox provider
@@ -140,7 +140,7 @@ KKOCLAW_ROOT=/absolute/path/to/kkoclaw
 ```yaml
 # config.yaml
 sandbox:
-  use: kkoclaw.community.aio_sandbox:AioSandboxProvider
+  use: qilin.community.aio_sandbox:AioSandboxProvider
   provisioner_url: http://provisioner:9194
 ```
 
@@ -150,8 +150,8 @@ For production, use PVCs instead of hostPath volumes:
 
 ```bash
 # In .env or compose environment
-USERDATA_PVC_NAME=kkoclaw-userdata-pvc
-SKILLS_PVC_NAME=kkoclaw-skills-pvc
+USERDATA_PVC_NAME=kworks-userdata-pvc
+SKILLS_PVC_NAME=kworks-skills-pvc
 ```
 
 When `USERDATA_PVC_NAME` is set, the provisioner automatically uses subPath (`threads/{thread_id}/user-data`) so each thread gets its own directory in the PVC.
@@ -171,7 +171,7 @@ These are set in the Docker Compose environment and processed by `envsubst` at c
 
 ### Authentication
 
-KKOCLAW App uses [Better Auth](https://www.better-auth.com/) for session management. In production:
+KWorks App uses [Better Auth](https://www.better-auth.com/) for session management. In production:
 
 1. Set `BETTER_AUTH_SECRET` to a strong random string (minimum 32 characters).
 2. Set `BETTER_AUTH_URL` to your public-facing URL (e.g., `https://your-domain.com`).

@@ -26,7 +26,7 @@ interface DatabaseConfig {
 
 const defaultConfig: DatabaseConfig = {
   backend: "sqlite",
-  sqlite_dir: ".oclaw/data",
+  sqlite_dir: ".kworks/data",
 };
 
 export function DatabaseForm() {

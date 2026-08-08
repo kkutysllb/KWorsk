@@ -71,9 +71,9 @@ function makeBridge(overrides: Partial<DesktopBridge> = {}): DesktopBridge {
 function setDesktopMode(enabled: boolean, bridge?: DesktopBridge) {
   const w = window as unknown as Record<string, unknown>;
   if (enabled && bridge) {
-    w.oclawDesktop = bridge;
+    w.kworksDesktop = bridge;
   } else {
-    delete w.oclawDesktop;
+    delete w.kworksDesktop;
   }
 }
 

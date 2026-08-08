@@ -14,7 +14,7 @@ export async function openExternalUrl(url: string): Promise<void> {
     return;
   }
   try {
-    await window.oclawDesktop!.openExternal(url);
+    await window.kworksDesktop!.openExternal(url);
   } catch (e) {
     console.warn("[desktop] openExternal failed:", e);
   }

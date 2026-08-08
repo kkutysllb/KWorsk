@@ -77,11 +77,11 @@ export const enUS: Translations = {
   welcome: {
     greeting: "Hello, again!",
     description:
-      "Welcome to KKOCLAW, an open source super agent. With built-in and custom skills, KKOCLAW helps you search on the web, analyze data, and generate artifacts like slides, web pages and do almost anything.",
+      "Welcome to KWorks, an open source super agent. With built-in and custom skills, KWorks helps you search on the web, analyze data, and generate artifacts like slides, web pages and do almost anything.",
 
     createYourOwnSkill: "Create Your Own Skill",
     createYourOwnSkillDescription:
-      "Create your own skill to release the power of KKOCLAW. With customized skills,\nKKOCLAW can help you search on the web, analyze data, and generate\n artifacts like slides, web pages and do almost anything.",
+      "Create your own skill to release the power of KWorks. With customized skills,\nKWorks can help you search on the web, analyze data, and generate\n artifacts like slides, web pages and do almost anything.",
     createCronJob: "Create Cron Job",
     createCronJobDescription:
       "Describe the cron job you want through conversation. The agent will help you set up the schedule, choose an agent and prompt. For example, generate a daily summary at 9 AM, send weekly reports every Friday, etc.",
@@ -140,7 +140,7 @@ export const enUS: Translations = {
     // Workspace selector (per-thread local directory)
     workspace: "Workspace",
     workspaceDefault: "Default workspace",
-    workspaceDefaultDescription: "User data directory (~/.oclaw)",
+    workspaceDefaultDescription: "User data directory (~/.kworks)",
     workspaceSelectDirectory: "Select directory...",
     workspaceEnterPath: "Enter path...",
     workspaceEnterPathPlaceholder: "/Users/you/Documents/Projects",
@@ -215,6 +215,29 @@ export const enUS: Translations = {
     customModes: "Custom modes",
   },
 
+  // Topbar
+  topbar: {
+    toggleSidebar: "Toggle sidebar",
+    toggleRightPanel: "Toggle context panel",
+    backendConnected: "Backend connected",
+    backendDisconnected: "Backend disconnected",
+    backendChecking: "Connecting…",
+    tokens: "tokens",
+    noActiveSession: "No active session",
+  },
+
+  // Right Panel
+  rightPanel: {
+    title: "Task Context",
+    todos: "Todos",
+    subagents: "Sub-agents",
+    skills: "Skills",
+    uploads: "Uploads",
+    artifacts: "Artifacts",
+    empty: "No content",
+    noSession: "No active session",
+  },
+
   // Work Modes
   workModes: {
     label: "Work Mode",
@@ -273,13 +296,13 @@ export const enUS: Translations = {
     save: "Save agent",
     saving: "Saving agent...",
     saveRequested:
-      "Save requested. KKOCLAW is generating and saving an initial version now.",
+      "Save requested. KWorks is generating and saving an initial version now.",
     saveHint:
       "You can save this agent at any time from the top-right menu, even if this is only a first draft.",
     saveCommandMessage:
       "Please save this custom agent now based on everything we have discussed so far. Treat this as my explicit confirmation to save. If some details are still missing, make reasonable assumptions, generate a concise first SOUL.md in English, and call setup_agent immediately without asking me for more confirmation.",
     agentCreatedPendingRefresh:
-      "The agent was created, but KKOCLAW could not load it yet. Please refresh this page in a moment.",
+      "The agent was created, but KWorks could not load it yet. Please refresh this page in a moment.",
     more: "More actions",
     agentCreated: "Agent created!",
     startChatting: "Start chatting",
@@ -307,7 +330,7 @@ export const enUS: Translations = {
   // Channels
   channels: {
     title: "IM Channel Management",
-    description: "Manage external messaging platform integrations. Once configured, users can interact with KKOCLAW via Feishu, DingTalk, WeChat, and other IM tools.",
+    description: "Manage external messaging platform integrations. Once configured, users can interact with KWorks via Feishu, DingTalk, WeChat, and other IM tools.",
     enabled: "Enabled",
     disabled: "Disabled",
     running: "Running",
@@ -320,7 +343,7 @@ export const enUS: Translations = {
     help: "Setup Guide",
     saveSuccess: "Channel config saved",
     emptyTitle: "No channels configured",
-    emptyDescription: "Configure IM channels to let users interact with KKOCLAW via Feishu, DingTalk, and other platforms.",
+    emptyDescription: "Configure IM channels to let users interact with KWorks via Feishu, DingTalk, and other platforms.",
     credentials: "Credentials",
     status: "Status",
     guide: "Setup Guide",
@@ -329,7 +352,7 @@ export const enUS: Translations = {
   // MCP
   mcp: {
     title: "MCP Management",
-    description: "Manage Model Context Protocol (MCP) servers to extend KKOCLAW with additional tools and data access capabilities.",
+    description: "Manage Model Context Protocol (MCP) servers to extend KWorks with additional tools and data access capabilities.",
     addServer: "Add Server",
     editServer: "Edit Server",
     deleteServer: "Delete Server",
@@ -364,11 +387,11 @@ export const enUS: Translations = {
     clientSecret: "Client Secret",
     scope: "Scope",
     emptyTitle: "No MCP servers yet",
-    emptyDescription: "Add MCP servers to extend KKOCLAW with external tools like GitHub, filesystem, and database access.",
+    emptyDescription: "Add MCP servers to extend KWorks with external tools like GitHub, filesystem, and database access.",
     guide: "Setup Guide",
-    guideIntro: "Model Context Protocol (MCP) is an open protocol that enables AI applications to securely access local and remote data sources. By configuring MCP servers, KKOCLAW gains additional tool capabilities such as filesystem access, web search, and database queries.",
+    guideIntro: "Model Context Protocol (MCP) is an open protocol that enables AI applications to securely access local and remote data sources. By configuring MCP servers, KWorks gains additional tool capabilities such as filesystem access, web search, and database queries.",
     guideStdioTitle: "STDIO Transport",
-    guideStdioSteps: "1. Select STDIO type for locally-running MCP servers.\n2. Enter the launch command (e.g. npx, python) and required arguments.\n3. Configure environment variables if needed (e.g. API keys).\n4. After saving, KKOCLAW will automatically start and manage the MCP server process.",
+    guideStdioSteps: "1. Select STDIO type for locally-running MCP servers.\n2. Enter the launch command (e.g. npx, python) and required arguments.\n3. Configure environment variables if needed (e.g. API keys).\n4. After saving, KWorks will automatically start and manage the MCP server process.",
     guideSseTitle: "SSE / HTTP Transport",
     guideSseSteps: "1. Select SSE or HTTP type for remote MCP servers.\n2. Enter the server's SSE or HTTP endpoint URL.\n3. Add authentication headers (e.g. Authorization) if the server requires it.\n4. OAuth 2.0 is supported — configure Token URL for automatic token acquisition and refresh.",
     guideLinks: "Popular MCP Servers",
@@ -403,7 +426,7 @@ export const enUS: Translations = {
     promptHint: "The prompt/message sent to the agent when triggered",
     promptPlaceholder: "e.g. Generate a daily summary based on today's conversations.",
     emptyTitle: "No cron jobs yet",
-    emptyDescription: "Create cron jobs to let KKOCLAW run scheduled AI conversations automatically, such as daily summaries and periodic reports.",
+    emptyDescription: "Create cron jobs to let KWorks run scheduled AI conversations automatically, such as daily summaries and periodic reports.",
     guide: "Help",
     guideIntro: "Cron jobs use cron expressions to schedule AI conversations at specific times. Ideal for daily summaries, periodic data checks, and automated report generation.",
     guideCronSyntax: "Cron Expression Syntax",
@@ -427,7 +450,7 @@ export const enUS: Translations = {
 
   // Page titles (document title)
   pages: {
-    appName: "OClaw",
+    appName: "KWorks",
     chats: "Chats",
     newChat: "New chat",
     untitled: "Untitled",
@@ -513,7 +536,7 @@ export const enUS: Translations = {
     actions: "Actions",
     keyboardShortcuts: "Keyboard Shortcuts",
     keyboardShortcutsDescription:
-      "Navigate KKOCLAW faster with keyboard shortcuts.",
+      "Navigate KWorks faster with keyboard shortcuts.",
     openCommandPalette: "Open Command Palette",
     toggleSidebar: "Toggle Sidebar",
   },
@@ -565,7 +588,7 @@ export const enUS: Translations = {
   },
   settings: {
     title: "Settings",
-    description: "Adjust how KKOCLAW looks and behaves for you.",
+    description: "Adjust how KWorks looks and behaves for you.",
     sections: {
       account: "Account",
       appearance: "Appearance",
@@ -582,7 +605,7 @@ export const enUS: Translations = {
     memory: {
       title: "Memory",
       description:
-        "KKOCLAW automatically learns from your conversations in the background. These memories help KKOCLAW understand you better and deliver a more personalized experience.",
+        "KWorks automatically learns from your conversations in the background. These memories help KWorks understand you better and deliver a more personalized experience.",
       empty: "No memory data to display.",
       rawJson: "Raw JSON",
       exportButton: "Export memory",
@@ -682,7 +705,7 @@ export const enUS: Translations = {
       createSkill: "Create skill",
       emptyTitle: "No agent skill yet",
       emptyDescription:
-        "Put your agent skill folders under the `/skills/custom` folder under the root folder of KKOCLAW.",
+        "Put your agent skill folders under the `/skills/custom` folder under the root folder of KWorks.",
       emptyButton: "Create Your First Skill",
     },
     createSkillWizard: {
@@ -750,12 +773,12 @@ export const enUS: Translations = {
     notification: {
       title: "Notification",
       description:
-        "KKOCLAW only sends a completion notification when the window is not active. This is especially useful for long-running tasks so you can switch to other work and get notified when done.",
+        "KWorks only sends a completion notification when the window is not active. This is especially useful for long-running tasks so you can switch to other work and get notified when done.",
       requestPermission: "Request notification permission",
       deniedHint:
         "Notification permission was denied. You can enable it in your browser's site settings to receive completion alerts.",
       testButton: "Send test notification",
-      testTitle: "KKOCLAW",
+      testTitle: "KWorks",
       testBody: "This is a test notification.",
       notSupported: "Your browser does not support notifications.",
       disableNotification: "Disable notification",

@@ -1,0 +1,100 @@
+# =============================================================================
+# KWorks Desktop — QiLin 引擎嵌入式配置模板
+# =============================================================================
+# 本文件在首次启动时被复制到 ~/.kworks/config.yaml，是桌面端 QiLin gateway
+# 的默认配置。用户可在运行时通过 Settings UI 或直接编辑该文件调整。
+#
+# 注意：
+#   - database.sqlite_dir 由 desktop config-migration 在运行时动态注入绝对
+#     路径（~/.kworks/data），此处保持注释占位即可。
+#   - models 段首次启动留空，请在 Settings UI 中配置（避免硬性 env 依赖）。
+#   - orchestration.mode: multi 启用多智能体编排（QiLin v2.0.0）。
+# =============================================================================
+
+config_version: 32
+
+# ── 模型配置 ──────────────────────────────────────────────────────────────
+# 桌面端首次启动不带任何预置模型：QiLin 的 $VAR 解析（app_config.py
+# resolve_env_variables）对缺失环境变量会直接抛 ValueError，若在此预置带
+# $DEEPSEEK_API_KEY 的模型，会导致 gateway 在用户未配置凭证前就无法启动。
+# 请在 gateway 起来后，通过桌面端 Settings UI 配置模型与 API Key（写入
+# ~/.kworks/config.yaml 与 ~/.kworks/.env）。
+#
+# 如需手动编辑 config.yaml，可参照下方注释示例：
+#
+# models:
+#   - name: deepseek
+#     display_name: DeepSeek
+#     use: qilin.models.patched_deepseek:PatchedChatDeepSeek
+#     model: deepseek-chat
+#     api_base: https://api.deepseek.com
+#     api_key: $DEEPSEEK_API_KEY
+#     timeout: 600.0
+#     max_retries: 2
+#     supports_thinking: false
+#     supports_vision: false
+#
+#   # 示例：Anthropic Claude（取消注释并在 .env 配置 ANTHROPIC_API_KEY 后启用）
+#   - name: claude-sonnet
+#     display_name: Claude Sonnet
+#     use: qilin.models.patched_anthropic:PatchedChatAnthropic
+#     model: claude-sonnet-4-5
+#     api_key: $ANTHROPIC_API_KEY
+#     timeout: 600.0
+#     max_retries: 2
+#     supports_thinking: true
+#     supports_vision: true
+
+# ── 数据库 ────────────────────────────────────────────────────────────────
+# sqlite_dir 由 config-migration.ts 动态注入为 ~/.kworks/data 绝对路径。
+# 此处保留 backend: sqlite 确保 checkpointer + 应用数据共享同一 .db 文件。
+database:
+  backend: sqlite
+  # sqlite_dir: <由桌面端运行时注入>
+
+# ── 多智能体编排 ──────────────────────────────────────────────────────────
+# QiLin v2.0.0 引擎原生支持多智能体编排：
+#   single（默认）：lead agent + task_tool 委派
+#   multi：OrchestratorGraph 编排，workers 注册参与编排的子代理
+orchestration:
+  mode: multi
+  max_concurrency: 3
+  # workers 列表留空时使用引擎内置默认 worker 集（coder/researcher 等）。
+  # 用户可在 Settings 中自定义 worker 配置。
+  # workers:
+  #   - name: coder
+  #     description: 编写代码的 worker
+  #     tools: [read_file, bash]
+  #     model: inherit
+  #     role: worker
+  #     max_turns: 80
+  #     timeout_seconds: 900
+
+# ── 沙箱 ──────────────────────────────────────────────────────────────────
+# 桌面端使用 LocalSandboxProvider（本地文件系统，无容器隔离）。
+# allow_host_bash: true 允许 agent 执行宿主机 shell 命令（桌面端可信环境）。
+sandbox:
+  use: qilin.sandbox.local:LocalSandboxProvider
+  allow_host_bash: true
+  bash_output_max_chars: 20000
+  read_file_output_max_chars: 50000
+  ls_output_max_chars: 20000
+  bash_command_timeout: 600
+
+# ── 认证 ──────────────────────────────────────────────────────────────────
+# 桌面端启用本地认证（用户名/密码注册），禁用 OIDC SSO。
+auth:
+  local:
+    allow_registration: true
+  oidc:
+    enabled: false
+    providers: {}
+
+# ── 自定义 Agent 管理 API ─────────────────────────────────────────────────
+agents_api:
+  enabled: true
+
+# ── 记忆 ──────────────────────────────────────────────────────────────────
+# 启用记忆中间件模式（agent 自动读写长期记忆，数据落在 ~/.kworks/ 下）。
+memory:
+  mode: middleware

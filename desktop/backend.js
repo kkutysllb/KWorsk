@@ -9,14 +9,16 @@
  *  - Capture stdout/stderr into a rotating in-memory log buffer + log file
  *  - Kill the child cleanly on shutdown (SIGTERM → SIGKILL)
  */
-import { spawn } from "node:child_process";
+import { app, dialog } from "electron";
+import { spawn, spawnSync } from "node:child_process";
 import { copyFileSync, cpSync, createWriteStream, existsSync, mkdirSync, readdirSync, readFileSync, writeFileSync, } from "node:fs";
 import { randomBytes } from "node:crypto";
-import { platform } from "node:os";
+import { homedir, platform } from "node:os";
 import { join } from "node:path";
 import { EventEmitter } from "node:events";
-import { getAuthJwtSecretPath, getBackendDir, getBundledConfigTemplatePath, getBundledSkillsDir, getDesktopConfigPath, getDesktopExtensionsConfigPath, getGatewayExecutable, getGatewayLogPath, getKkoclawHome, getLogsDir, getSkillsDir, isPackaged, REPO_ROOT, } from "./paths.js";
+import { getAuthJwtSecretPath, getBackendDir, getBundledConfigTemplatePath, getBundledBuiltinSkillRoots, getDesktopConfigPath, getDesktopExtensionsConfigPath, getGatewayExecutable, getGatewayLogPath, getKworksHome, getLogsDir, getSkillsDir, getSkillModelsEnvPath, isPackaged, REPO_ROOT, } from "./paths.js";
 import { migrateDesktopConfigYaml } from "./config-migration.js";
+import { initSkillModelsEnv, parseEnvFile } from "./skill-models-env.js";
 // ── Constants ────────────────────────────────────────────────────────────
 /** Default gateway port (distinct from the web deployment's 9987). */
 export const DEFAULT_GATEWAY_PORT = 29987;
@@ -76,10 +78,14 @@ export class BackendManager extends EventEmitter {
             return this.getStatus();
         }
         const port = resolveGatewayPort();
+        // Migrate legacy <userData>/.kkoclaw → ~/.oclaw before creating
+        // the new home dirs. Runs at most once (guarded by a marker file).
+        this.migrateLegacyUserData();
         this.ensureDataDirs();
         this.initConfig();
         this.migrateConfig();
         this.initExtensionsConfig();
+        this.initSkillModelsEnv();
         this.initSkills();
         this.openLogStream();
         const cmd = this.resolveCommand(port);
@@ -155,8 +161,15 @@ export class BackendManager extends EventEmitter {
         if (!backendDir)
             return null;
         // 2. Project venv via `uv run`.
+        // Use `python -m uvicorn` (NOT `uvicorn` directly): `uv run uvicorn`
+        // resolves the `uvicorn` executable on PATH, which may point at a
+        // system/conda uvicorn linked to the wrong interpreter. Running the
+        // module via the project venv's Python guarantees we load the uvicorn
+        // installed inside `.venv` together with `qilin` and its deps.
         const uvArgs = [
             "run",
+            "python",
+            "-m",
             "uvicorn",
             "app.gateway.app:app",
             "--host",
@@ -172,39 +185,49 @@ export class BackendManager extends EventEmitter {
     /**
      * Build the isolated child-process environment.
      *
-     * `KKOCLAW_HOME` points at the app's userData dir so desktop state never
-     * collides with a local web deployment's `.kkoclaw`.
+     * `QILIN_HOME` points at `~/.kworks` so desktop state lives in
+     * the user's home folder (discoverable + backup-friendly) and stays isolated
+     * from any co-located QiLin deployment.
      *
-     * `KKOCLAW_SKILLS_PATH` points at `<userData>/skills`, which is seeded with
-     * bundled public skills on first run (see `initSkills`). Desktop does not
-     * create or copy `custom` skills, so it starts as a clean terminal.
+     * `QILIN_SKILLS_PATH` points at `~/.kworks/skills`, seeded with
+     * bundled builtin skills on first run. The `custom/` directory is created
+     * empty so users can author their own skills at runtime.
      *
-     * `KKOCLAW_PROJECT_ROOT` is only set in development, where the repo source
-     * tree exists. The packaged gateway bundles its own source via PyInstaller
-     * and would raise `ValueError` if pointed at a non-existent project root
-     * (see backend `runtime_paths.project_root()`).
+     * `QILIN_PROJECT_ROOT` is only set in development, where the qilin/ submodule
+     * exists. The packaged gateway bundles its own source via PyInstaller and
+     * would raise `ValueError` if pointed at a non-existent project root
+     * (see `qilin.config.runtime_paths.project_root()`).
      */
     buildEnv(port) {
+        // Skill model credentials (GEMINI_API_KEY, MINIMAX_API_KEY, …) parsed from
+        // `<QILIN_HOME>/.env`. Without them, image/video/music skills abort with
+        // "No provider configured" / "*_API_KEY is not set".
+        const skillModelVars = this.loadSkillModelsEnv();
+        // 用户登录 shell 的完整环境变量（TUSHARE_TOKEN / ZHIPU_API_KEY / 自定义 PATH 等）。
+        // macOS GUI app 由 launchd 启动，不 source ~/.zshrc/~/.bash_profile，导致用户在
+        // shell rc 里 export 的凭证对 gateway 进程不可见——agent 跑脚本读 os.environ
+        // 时 KeyError，被误判成"bash/python3 不可用"。这里通过登录 shell 加载补齐。
+        const loginShellEnv = this.loadLoginShellEnv();
         const env = {
             ...process.env,
-            // Isolation: desktop state lives under userData, not the repo.
-            KKOCLAW_HOME: getKkoclawHome(),
-            KKOCLAW_DATA_DIR: join(getKkoclawHome(), "data"),
-            // Desktop config is copied into userData on first run and never reads
-            // the local web service's config.yaml.
-            KKOCLAW_CONFIG_PATH: getDesktopConfigPath(),
+            ...loginShellEnv,
+            ...skillModelVars,
+            // Isolation: desktop state lives under ~/.kworks.
+            QILIN_HOME: getKworksHome(),
+            // QiLin uses QILIN_HOST_BASE_DIR to locate the per-thread data root
+            // (threads/, users/, integrations/, etc.).
+            QILIN_HOST_BASE_DIR: getKworksHome(),
+            // Desktop config is copied into the home dir on first run and never
+            // reads the QiLin repo-root config.yaml.
+            QILIN_CONFIG_PATH: getDesktopConfigPath(),
             // Desktop extensions config starts empty so MCP/custom skill state never
-            // leaks in from the web/repo extensions_config.json.
-            KKOCLAW_EXTENSIONS_CONFIG_PATH: getDesktopExtensionsConfigPath(),
-            // Skills root: bundled public skills + user-created custom skills.
-            KKOCLAW_SKILLS_PATH: getSkillsDir(),
+            // leaks in from the repo extensions_config.json.
+            QILIN_EXTENSIONS_CONFIG_PATH: getDesktopExtensionsConfigPath(),
+            // Skills root: bundled builtin skills + user-created custom skills.
+            QILIN_SKILLS_PATH: getSkillsDir(),
             // Desktop static export talks to the gateway from the app:// origin.
             GATEWAY_CORS_ORIGINS: "app://-",
             CORS_ORIGINS: "app://-",
-            // Python backend writes its own rotating log files here too
-            // (gateway.log + langgraph.log), so all backend logs are co-located
-            // with the Electron-captured stdout logs under userData/logs.
-            KKOCLAW_LOG_DIR: getLogsDir(),
             // Persisted JWT signing secret — prevents session invalidation on
             // every gateway restart. Without this, the gateway generates a new
             // ephemeral AUTH_JWT_SECRET on each launch and all existing tokens
@@ -218,11 +241,11 @@ export class BackendManager extends EventEmitter {
             PYTHONUNBUFFERED: "1",
             PYTHONDONTWRITEBYTECODE: "1",
         };
-        // Only expose the repo source root in development. The packaged gateway
-        // resolves its source from the PyInstaller bundle, and an invalid
+        // Only expose the qilin submodule root in development. The packaged
+        // gateway resolves its source from the PyInstaller bundle, and an invalid
         // project root would crash the backend on import.
         if (!isPackaged()) {
-            env.KKOCLAW_PROJECT_ROOT = REPO_ROOT;
+            env.QILIN_PROJECT_ROOT = join(REPO_ROOT, "qilin");
         }
         return env;
     }
@@ -262,6 +285,10 @@ export class BackendManager extends EventEmitter {
             return;
         try {
             mkdirSync(getLogsDir(), { recursive: true });
+            // ``flags: "w"`` truncates the file on each app start so the log
+            // always reflects the current session only. This avoids unbounded
+            // growth across restarts and makes it easier to find the most recent
+            // launch's output without scrolling through days of history.
             this.logStream = createWriteStream(getGatewayLogPath(), {
                 flags: "w",
             });
@@ -389,8 +416,83 @@ export class BackendManager extends EventEmitter {
         });
     }
     // ── Data dir bootstrap ────────────────────────────────────────────────
+    /**
+     * One-time migration from legacy data layouts to the new `~/.kworks` home.
+     *
+     * Two legacy locations are checked (newest first):
+     *   1. `~/.oclaw` — the previous KWorks desktop home (pre-QiLin era)
+     *   2. `<userData>/.kkoclaw` — the original Tauri-era layout
+     *
+     * Triggered when a legacy dir exists AND the new home has not been marked
+     * as migrated (`.migrated_v3` sentinel). Asks the user via a native dialog;
+     * on accept, recursively copies the old home into the new location. On
+     * decline, the new home starts empty and the old data is left untouched.
+     *
+     * Idempotent: the `.migrated_v3` marker is written on completion (accept or
+     * decline) so the user is only prompted once per machine.
+     */
+    migrateLegacyUserData() {
+        const newHome = getKworksHome();
+        const marker = join(newHome, ".migrated_v3");
+        if (existsSync(marker))
+            return; // already handled on this machine
+        // Find the newest existing legacy home (prefer ~/.oclaw over the older
+        // <userData>/.kkoclaw layout).
+        const legacyOclawHome = join(homedir(), ".oclaw");
+        const legacyKkoclawHome = join(app.getPath("userData"), ".kkoclaw");
+        const legacyHome = existsSync(legacyOclawHome)
+            ? legacyOclawHome
+            : existsSync(legacyKkoclawHome)
+                ? legacyKkoclawHome
+                : null;
+        if (!legacyHome) {
+            // Nothing to migrate — write the marker so we never check again.
+            try {
+                mkdirSync(newHome, { recursive: true });
+                writeFileSync(marker, "no-legacy\n", "utf8");
+            }
+            catch {
+                // ignore — ensureDataDirs will create the home shortly
+            }
+            return;
+        }
+        const choice = dialog.showMessageBoxSync({
+            type: "question",
+            buttons: ["迁移旧数据", "从零开始", "稍后再问"],
+            defaultId: 0,
+            title: "检测到旧版本数据",
+            message: "检测到旧版本的 KWorks 桌面端数据",
+            detail: `旧数据位置：${legacyHome}\n` +
+                `新位置：${newHome}\n\n` +
+                "是否将旧数据（配置、会话、技能等）迁移到新位置？\n" +
+                "选择「从零开始」将以空状态启动，旧数据保留但不再使用。",
+        });
+        if (choice === 2) {
+            // "稍后再问" — don't write the marker, prompt again next launch
+            return;
+        }
+        if (choice === 0) {
+            // Migrate the legacy home → ~/.kworks
+            try {
+                mkdirSync(newHome, { recursive: true });
+                cpSync(legacyHome, newHome, { recursive: true });
+                this.appendLog(`[backend] migrated legacy data: ${legacyHome} → ${newHome}`);
+            }
+            catch (e) {
+                this.appendLog(`[backend] WARNING: legacy data migration failed: ${e instanceof Error ? e.message : String(e)}`);
+            }
+        }
+        // Write marker (for both "migrate" and "start fresh" choices).
+        try {
+            mkdirSync(newHome, { recursive: true });
+            writeFileSync(marker, choice === 0 ? "migrated\n" : "skipped\n", "utf8");
+        }
+        catch {
+            // Non-fatal — we'll just re-prompt next launch if the marker is missing.
+        }
+    }
     ensureDataDirs() {
-        const home = getKkoclawHome();
+        const home = getKworksHome();
         const subdirs = ["", "logs", "data", "threads", "agents"];
         for (const sub of subdirs) {
             const dir = join(home, sub);
@@ -444,9 +546,109 @@ export class BackendManager extends EventEmitter {
         }
     }
     /**
+     * Seed the skill-model credentials `.env` on first run.
+     *
+     * Creates an empty template so the user can discover & edit it manually;
+     * the Settings UI populates it via IPC. The gateway loads these vars in
+     * `buildEnv()` below so skill scripts inherit them via `os.environ`.
+     */
+    initSkillModelsEnv() {
+        const envPath = getSkillModelsEnvPath();
+        if (existsSync(envPath))
+            return;
+        try {
+            initSkillModelsEnv();
+            this.appendLog(`[backend] initialized skill models env at ${envPath}`);
+        }
+        catch (e) {
+            this.appendLog(`[backend] failed to initialize skill models env: ${e instanceof Error ? e.message : String(e)}`);
+        }
+    }
+    /**
+     * Parse the skill-model `.env` and return every key/value pair it defines.
+     *
+     * Used by `buildEnv()` to inject credentials into the gateway environment.
+     * Missing or unreadable file yields an empty object (non-fatal).
+     */
+    loadSkillModelsEnv() {
+        const envPath = getSkillModelsEnvPath();
+        if (!existsSync(envPath))
+            return {};
+        try {
+            return parseEnvFile(readFileSync(envPath, "utf8"));
+        }
+        catch (e) {
+            this.appendLog(`[backend] failed to read skill models env: ${e instanceof Error ? e.message : String(e)}`);
+            return {};
+        }
+    }
+    /**
+     * 通过登录+交互式 shell 加载用户的完整环境变量。
+     *
+     * macOS GUI app（从 Dock/Finder 启动）由 launchd 拉起，默认不 source
+     * ~/.zshrc / ~/.bash_profile，所以用户在 shell rc 里 export 的凭证
+     * （TUSHARE_TOKEN、ZHIPU_API_KEY、自定义 PATH 等）对 gateway 进程不可见。
+     * 这会导致 agent 跑脚本时 `os.environ['XXX']` KeyError，被误判为
+     * "bash/python3 不可用"。
+     *
+     * 本方法同步执行 `$SHELL -l -i -c 'env'`（或 bash/dash 回退），解析输出
+     * 得到登录交互式 shell 的全部变量，合并进 gateway 环境。失败时静默返回空
+     * 对象（非致命——仅意味着凭证仍需手动在 ~/.oclaw/.env 配置）。
+     *
+     * 仅在 macOS/Linux 上执行；Windows 走注册表机制，此处跳过。
+     */
+    loadLoginShellEnv() {
+        // Windows 的环境变量机制不同（注册表 + 系统属性），launchd 问题不存在，跳过。
+        if (platform() === "win32")
+            return {};
+        const shell = process.env.SHELL ?? "/bin/zsh";
+        try {
+            // -l: 登录 shell（source ~/.zprofile / ~/.bash_profile）
+            // -i: 交互式（source ~/.zshrc / ~/.bashrc）
+            // -c 'env': 打印所有环境变量
+            // 注意：交互式 shell 可能打印额外噪音到 stderr，我们只解析 stdout。
+            const result = spawnSync(shell, ["-l", "-i", "-c", "env"], {
+                encoding: "utf8",
+                timeout: 10_000, // 防止 rc 里有交互式阻塞命令（如 powerlevel10k 向终端等待输入）
+                // 不传 env，让 shell 用自己的默认环境 + rc
+            });
+            if (result.error || result.status !== 0) {
+                // 常见原因：rc 里有阻塞命令、shell 不支持 -i、超时
+                const reason = result.error
+                    ? result.error.message
+                    : `exit ${result.status}`;
+                this.appendLog(`[backend] loadLoginShellEnv: ${shell} -l -i -c env failed (${reason}), skipping shell env inheritance`);
+                return {};
+            }
+            const stdout = result.stdout ?? "";
+            const vars = {};
+            for (const line of stdout.split("\n")) {
+                // 形如 KEY=VALUE；跳过无 = 的行（shell 可能混入非 env 输出）
+                const eqIdx = line.indexOf("=");
+                if (eqIdx <= 0)
+                    continue;
+                const key = line.slice(0, eqIdx).trim();
+                const value = line.slice(eqIdx + 1);
+                // 过滤掉明显非环境变量的噪音行（key 含空格/特殊字符）
+                if (!/^[A-Za-z_][A-Za-z0-9_]*$/.test(key))
+                    continue;
+                vars[key] = value;
+            }
+            const count = Object.keys(vars).length;
+            if (count > 0) {
+                this.appendLog(`[backend] loadLoginShellEnv: inherited ${count} vars from ${shell} (incl. ${Object.keys(vars).filter((k) => k.includes("TOKEN") || k.includes("KEY") || k.includes("API")).length} credential-like keys)`);
+            }
+            return vars;
+        }
+        catch (e) {
+            this.appendLog(`[backend] loadLoginShellEnv: unexpected error (${e instanceof Error ? e.message : String(e)}), skipping`);
+            return {};
+        }
+    }
+    /**
      * Load or create a persistent JWT signing secret.
      *
-     * The secret is stored in ``<KKOCLAW_HOME>/.auth_jwt_secret`` and reused
+     * The secret is stored in ``<QILIN_HOME>/.auth_jwt_secret`` and reused
      * across gateway restarts so that JWTs issued during a previous session
      * remain valid. If the file does not exist (first launch or after cache
      * clear), a new cryptographically random secret is generated and persisted.
@@ -477,48 +679,64 @@ export class BackendManager extends EventEmitter {
         return secret;
     }
     /**
-     * Seed the user-writable skills directory from the bundled public skills.
+     * Seed the user-writable skills directory from the bundled built-in skills.
      *
-     * On first run, copies every bundled `public/<skill>` into
-     * `<userData>/skills/public/`. On subsequent runs, syncs any new bundled
-     * skills that are missing locally WITHOUT overwriting ones the user has
-     * modified or deleted — matching the old Tauri `init_app_data()` behaviour.
+     * Copies every bundled `builtin/<sub>/<skill>` into
+     * `<userData>/skills/builtin/<sub>/<skill>/` where `<sub>` is one of
+     * `core`, `task`. Also creates an empty `custom/` directory
+     * for user-authored skills.
+     *
+     * On subsequent runs, syncs any new bundled skills that are missing
+     * locally WITHOUT overwriting ones the user has modified or deleted.
+     *
+     * Falls back to the legacy flat `public/` layout if the bundled source
+     * doesn't have the new `builtin/` directory structure yet.
      */
     initSkills() {
-        const bundled = getBundledSkillsDir();
         const skillsRoot = getSkillsDir();
-        const publicTarget = join(skillsRoot, "public");
-        // Desktop starts with bundled public skills only.
-        mkdirSync(publicTarget, { recursive: true });
-        if (!bundled) {
+        const customTarget = join(skillsRoot, "custom");
+        // Create the target directory tree.
+        mkdirSync(customTarget, { recursive: true });
+        const builtinRoots = getBundledBuiltinSkillRoots();
+        if (builtinRoots.length === 0) {
             this.appendLog("[backend] no bundled skills source found");
             return;
         }
-        const bundledPublic = join(bundled, "public");
-        if (!existsSync(bundledPublic)) {
-            this.appendLog(`[backend] bundled skills/public not found at ${bundledPublic}`);
-            return;
-        }
-        // Sync: copy each bundled skill that doesn't already exist locally.
-        let copied = 0;
-        const existing = existsSync(publicTarget)
-            ? new Set(readdirSync(publicTarget))
-            : new Set();
-        for (const name of readdirSync(bundledPublic)) {
-            if (existing.has(name))
-                continue; // don't overwrite user's copy
-            const src = join(bundledPublic, name);
-            const dst = join(publicTarget, name);
-            try {
-                cpSync(src, dst, { recursive: true });
-                copied++;
+        let totalCopied = 0;
+        for (const bundledRoot of builtinRoots) {
+            // Determine the target sub-directory. New layout: builtinRoot ends
+            // with builtin/core or builtin/task. Legacy: ends with public/ (flat).
+            const rootBasename = bundledRoot.split(/[\\/]/).pop();
+            let targetSub;
+            if (rootBasename === "core" || rootBasename === "task") {
+                targetSub = join("builtin", rootBasename);
             }
-            catch (e) {
-                this.appendLog(`[backend] failed to copy skill '${name}': ${e instanceof Error ? e.message : String(e)}`);
+            else {
+                // Legacy flat public/ — copy to builtin/task/ as the default bucket
+                targetSub = join("builtin", "task");
+            }
+            const targetDir = join(skillsRoot, targetSub);
+            mkdirSync(targetDir, { recursive: true });
+            // Sync: copy each bundled skill that doesn't already exist locally.
+            const existing = existsSync(targetDir)
+                ? new Set(readdirSync(targetDir))
+                : new Set();
+            for (const name of readdirSync(bundledRoot)) {
+                if (existing.has(name))
+                    continue; // don't overwrite user's copy
+                const src = join(bundledRoot, name);
+                const dst = join(targetDir, name);
+                try {
+                    cpSync(src, dst, { recursive: true });
+                    totalCopied++;
+                }
+                catch (e) {
+                    this.appendLog(`[backend] failed to copy skill '${name}': ${e instanceof Error ? e.message : String(e)}`);
+                }
             }
         }
-        if (copied > 0) {
-            this.appendLog(`[backend] synced ${copied} bundled public skill(s) to ${publicTarget}`);
+        if (totalCopied > 0) {
+            this.appendLog(`[backend] synced ${totalCopied} bundled builtin skill(s) to ${skillsRoot}`);
         }
     }
     // ── Status ────────────────────────────────────────────────────────────

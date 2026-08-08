@@ -4,12 +4,12 @@
  * Boots three processes and wires them together:
  *   1. The Python gateway via `uv run uvicorn` (backend venv)
  *   2. The Next.js dev server on port 28569
- *   3. Electron, pointed at the dev server via OCLAW_DEV_SERVER=1
+ *   3. Electron, pointed at the dev server via KWORKS_DEV_SERVER=1
  *
  * Ctrl-C tears everything down cleanly.
  */
 
-import { spawn } from "node:child_process";
+import { spawn, spawnSync } from "node:child_process";
 import { appendFileSync, copyFileSync, cpSync, existsSync, mkdirSync, readdirSync, readFileSync, writeFileSync } from "node:fs";
 import { dirname, join, resolve } from "node:path";
 import { fileURLToPath } from "node:url";
@@ -18,10 +18,11 @@ const __dirname = dirname(fileURLToPath(import.meta.url));
 const DESKTOP_DIR = resolve(__dirname, "..");
 const REPO_ROOT = resolve(DESKTOP_DIR, "..");
 const FRONTEND_DIR = resolve(REPO_ROOT, "frontend");
-const BACKEND_DIR = resolve(REPO_ROOT, "backend");
+// The QiLin engine is a git submodule at <repo>/qilin.
+const BACKEND_DIR = resolve(REPO_ROOT, "qilin");
 const EMBEDDED_CONFIG = resolve(
   REPO_ROOT,
-  "desktop-electron",
+  "desktop",
   "backend-build",
   "config.embedded.yaml",
 );
@@ -47,12 +48,12 @@ let migrateDesktopConfigYaml = null;
 // signal we have when "dev environment disappeared" is whatever happens to
 // still be on the user's terminal scrollback — usually nothing, especially
 // when the IDE / Terminal.app window was the trigger. Writing to a file
-// under ~/.oclaw/logs keeps the audit trail next to main.log / renderer.log
+// under ~/.kworks/logs keeps the audit trail next to main.log / renderer.log
 // so we can tell SIGTERM (deliberate Cmd+Q) from SIGHUP (terminal window
 // closed) after the fact.
 const DEV_LOG_DIR =
-  process.env.KKOCLAW_LOG_DIR ??
-  join(process.env.HOME ?? "", ".oclaw", "logs");
+  process.env.QILIN_LOG_DIR ??
+  join(process.env.HOME ?? "", ".kworks", "logs");
 const DEV_LOG_PATH = join(DEV_LOG_DIR, "dev-exits.log");
 
 /** Append a single line to the dev-exits log; never throws. */
@@ -61,7 +62,7 @@ function appendDevExitLog(line) {
     mkdirSync(DEV_LOG_DIR, { recursive: true });
     appendFileSync(DEV_LOG_PATH, line, "utf8");
   } catch {
-    // A missing ~/.oclaw or read-only FS shouldn't kill the launcher.
+    // A missing ~/.kworks or read-only FS shouldn't kill the launcher.
   }
 }
 
@@ -204,14 +205,14 @@ process.on("SIGHUP", () => teardown("SIGHUP"));
 // ── 1. Gateway (venv) ────────────────────────────────────────────────────
 // In dev mode the gateway is launched here (not via backend.ts), so this
 // script must inject the SAME isolation env vars that backend.ts does in
-// production: KKOCLAW_HOME, KKOCLAW_CONFIG_PATH, KKOCLAW_SKILLS_PATH.
+// production: QILIN_HOME, QILIN_CONFIG_PATH, QILIN_SKILLS_PATH.
 //
 // IMPORTANT: dev mode paths must mirror paths.ts — the desktop app home is
-// ~/.oclaw (NOT the legacy ~/Library/Application Support/...).
+// ~/.kworks (NOT the legacy ~/Library/Application Support/...).
 // This is critical for verifying the new directory layout, granted_paths.json
 // authorization flow without a full package build.
 const DESKTOP_HOME =
-  process.env.HOME && join(process.env.HOME, ".oclaw");
+  process.env.HOME && join(process.env.HOME, ".kworks");
 
 function initDesktopExtensionsConfig(configPath) {
   if (!configPath || existsSync(configPath)) return;
@@ -228,9 +229,17 @@ function syncDesktopBuiltinSkills(skillsPath) {
   const customTarget = join(skillsPath, "custom");
   mkdirSync(customTarget, { recursive: true });
 
-  const builtinRoot = join(REPO_ROOT, "skills", "builtin");
+  // Look for bundled builtin skills in the qilin/ submodule first (the engine
+  // is the source of builtin skills now), then fall back to the legacy
+  // repo-root skills/ directory.
+  let builtinRoot = join(REPO_ROOT, "qilin", "skills", "builtin");
   if (!existsSync(builtinRoot)) {
-    console.warn(`[dev] bundled skills/builtin not found at ${builtinRoot}`);
+    builtinRoot = join(REPO_ROOT, "skills", "builtin");
+  }
+  if (!existsSync(builtinRoot)) {
+    // No bundled skills shipped — this is expected when the QiLin submodule
+    // does not include a skills tree yet. The user can still create custom
+    // skills under ~/.kworks/skills/custom/.
     return;
   }
 
@@ -259,18 +268,18 @@ function startGateway() {
     return;
   }
 
-  // Mirror backend.ts buildEnv(): flat layout under ~/.oclaw
-  // (same as paths.ts getAppDataDir / getKkoclawHome).
-  const kkoclawHome = DESKTOP_HOME;
-  const configPath = kkoclawHome ? join(kkoclawHome, "config.yaml") : undefined;
-  const extensionsConfigPath = kkoclawHome ? join(kkoclawHome, "extensions_config.json") : undefined;
-  const dataDir = kkoclawHome ? join(kkoclawHome, "data") : undefined;
-  const skillsPath = kkoclawHome ? join(kkoclawHome, "skills") : undefined;
+  // Mirror backend.ts buildEnv(): flat layout under ~/.kworks
+  // (same as paths.ts getAppDataDir / getKworksHome).
+  const kworksHome = DESKTOP_HOME;
+  const configPath = kworksHome ? join(kworksHome, "config.yaml") : undefined;
+  const extensionsConfigPath = kworksHome ? join(kworksHome, "extensions_config.json") : undefined;
+  const dataDir = kworksHome ? join(kworksHome, "data") : undefined;
+  const skillsPath = kworksHome ? join(kworksHome, "skills") : undefined;
 
   // Ensure the isolated state dir exists (matches backend.ts ensureDataDirs).
-  if (kkoclawHome) {
+  if (kworksHome) {
     for (const sub of ["", "logs", "data", "threads", "agents"]) {
-      mkdirSync(join(kkoclawHome, sub), { recursive: true });
+      mkdirSync(join(kworksHome, sub), { recursive: true });
     }
     if (configPath && !existsSync(configPath) && existsSync(EMBEDDED_CONFIG)) {
       copyFileSync(EMBEDDED_CONFIG, configPath);
@@ -281,11 +290,11 @@ function startGateway() {
   }
 
   console.log(`[dev] starting gateway on port ${GATEWAY_PORT}...`);
-  console.log(`[dev]   KKOCLAW_HOME=${kkoclawHome}`);
-  console.log(`[dev]   KKOCLAW_CONFIG_PATH=${configPath}`);
-  console.log(`[dev]   KKOCLAW_EXTENSIONS_CONFIG_PATH=${extensionsConfigPath}`);
-  console.log(`[dev]   KKOCLAW_DATA_DIR=${dataDir}`);
-  console.log(`[dev]   KKOCLAW_SKILLS_PATH=${skillsPath}`);
+  console.log(`[dev]   QILIN_HOME=${kworksHome}`);
+  console.log(`[dev]   QILIN_CONFIG_PATH=${configPath}`);
+  console.log(`[dev]   QILIN_EXTENSIONS_CONFIG_PATH=${extensionsConfigPath}`);
+  console.log(`[dev]   QILIN_HOST_BASE_DIR=${dataDir}`);
+  console.log(`[dev]   QILIN_SKILLS_PATH=${skillsPath}`);
   gatewayProcess = start("uv", ["run", "python", "-m", "uvicorn", "app.gateway.app:app", "--host", "127.0.0.1", "--port", GATEWAY_PORT], {
     cwd: BACKEND_DIR,
     env: {
@@ -294,14 +303,15 @@ function startGateway() {
       GATEWAY_PORT,
       GATEWAY_CORS_ORIGINS: DESKTOP_DEV_ORIGINS,
       CORS_ORIGINS: DESKTOP_DEV_ORIGINS,
-      KKOCLAW_DESKTOP_DEV: "1",
+      QILIN_DESKTOP_DEV: "1",
       PYTHONUNBUFFERED: "1",
-      // Isolation: desktop state under ~/.oclaw (matching paths.ts).
-      ...(kkoclawHome ? { KKOCLAW_HOME: kkoclawHome } : {}),
-      ...(configPath ? { KKOCLAW_CONFIG_PATH: configPath } : {}),
-      ...(extensionsConfigPath ? { KKOCLAW_EXTENSIONS_CONFIG_PATH: extensionsConfigPath } : {}),
-      ...(dataDir ? { KKOCLAW_DATA_DIR: dataDir } : {}),
-      ...(skillsPath ? { KKOCLAW_SKILLS_PATH: skillsPath } : {}),
+      // Isolation: desktop state under ~/.kworks (matching paths.ts).
+      ...(kworksHome ? { QILIN_HOME: kworksHome } : {}),
+      // QiLin locates per-thread data roots via QILIN_HOST_BASE_DIR.
+      ...(kworksHome ? { QILIN_HOST_BASE_DIR: kworksHome } : {}),
+      ...(configPath ? { QILIN_CONFIG_PATH: configPath } : {}),
+      ...(extensionsConfigPath ? { QILIN_EXTENSIONS_CONFIG_PATH: extensionsConfigPath } : {}),
+      ...(skillsPath ? { QILIN_SKILLS_PATH: skillsPath } : {}),
     },
     onExit: () => {
       gatewayProcess = null;
@@ -318,12 +328,41 @@ function startGateway() {
 //
 // In dev we run the normal SSR dev server with rewrites proxying /api/* to the
 // desktop gateway on 29987. Desktop detection (`isDesktop()`) still works
-// because it checks `window.oclawDesktop` (injected by the preload), not the
+// because it checks `window.kworksDesktop` (injected by the preload), not the
 // DESKTOP_BUILD env var. Cookie-based auth flows through the Next.js proxy,
 // matching fetcher.ts's `port === "28569"` credentials branch.
 let frontendReadyPromise = null;
 
+function ensureFrontendDeps() {
+  // Frontend deps live in frontend/node_modules; if missing (fresh clone,
+  // or after pnpm store prune), `pnpm exec next` fails with a confusing
+  // "Command next not found" (ERR_PNPM_RECURSIVE_EXEC_FIRST_FAIL). Install
+  // automatically so a fresh checkout boots with `pnpm run dev` alone.
+  const nextBin = join(FRONTEND_DIR, "node_modules", ".bin", "next");
+  if (existsSync(nextBin)) return;
+  if (!existsSync(join(FRONTEND_DIR, "package.json"))) {
+    console.error(`[dev] frontend/package.json not found at ${FRONTEND_DIR}`);
+    process.exit(1);
+  }
+  console.log(
+    `[dev] frontend deps missing — running 'pnpm install' in ${FRONTEND_DIR} (may take a minute)...`,
+  );
+  const installResult = spawnSync(
+    process.platform === "win32" ? "pnpm.cmd" : "pnpm",
+    ["install"],
+    { cwd: FRONTEND_DIR, stdio: "inherit" },
+  );
+  if (installResult.status !== 0) {
+    console.error(
+      `[dev] pnpm install failed (exit ${installResult.status}); aborting.`,
+    );
+    process.exit(1);
+  }
+  console.log("[dev] frontend deps installed.");
+}
+
 function startFrontend() {
+  ensureFrontendDeps();
   console.log(`[dev] starting Next.js dev server on port ${DEV_SERVER_PORT}...`);
   let markReady;
   frontendReadyPromise = new Promise((resolve) => {
@@ -338,7 +377,7 @@ function startFrontend() {
         ...process.env,
         // Route Next.js rewrites (/api/*) to the desktop gateway, NOT the web
         // gateway. next.config.js reads this env var (default 9193).
-        KKOCLAW_INTERNAL_GATEWAY_BASE_URL: `http://127.0.0.1:${GATEWAY_PORT}`,
+        KWORKS_INTERNAL_GATEWAY_BASE_URL: `http://127.0.0.1:${GATEWAY_PORT}`,
         // Force same-origin rewrites even when the shell has web/desktop build
         // public URL env vars loaded.
         NEXT_PUBLIC_BACKEND_BASE_URL: "",
@@ -386,9 +425,17 @@ function startElectron() {
       cwd: DESKTOP_DIR,
       env: {
         ...process.env,
-        OCLAW_DEV_SERVER: "1",
-        OCLAW_SKIP_BACKEND_AUTOLAUNCH: "1",
+        KWORKS_DEV_SERVER: "1",
+        KWORKS_SKIP_BACKEND_AUTOLAUNCH: "1",
         GATEWAY_PORT,
+      },
+      onExit: () => {
+        // When Electron exits (tray Quit, Cmd+Q, or crash), tear down the
+        // entire dev environment so the gateway and Next.js don't linger.
+        if (!shuttingDown) {
+          console.log("[dev] Electron exited — tearing down dev environment");
+          teardown("SIGTERM");
+        }
       },
     },
   );

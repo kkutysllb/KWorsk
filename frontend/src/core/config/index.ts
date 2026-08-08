@@ -1,30 +1,30 @@
 import { env } from "@/env";
 
-// Side-effect import: registers the global `Window.oclawDesktop` augmentation
+// Side-effect import: registers the global `Window.kworksDesktop` augmentation
 // so this module can read the bridge in a type-safe way.
 import "@/core/desktop/types";
 
 /**
- * The preload bridge exposed on `window.oclawDesktop` by Electron.
+ * The preload bridge exposed on `window.kworksDesktop` by Electron.
  *
  * Detection is intentionally a single existence check so the rest of the
  * frontend can branch on `isDesktop()` without importing any Electron
  * surface directly. When this property is absent we are in the web build.
  */
-const DESKTOP_BRIDGE_KEY = "oclawDesktop";
+const DESKTOP_BRIDGE_KEY = "kworksDesktop";
 // Historical Electron dev port; kept only as a final fallback for shells that
 // never set `frontendPort` on the bridge (e.g. older desktop-electron builds).
 const LEGACY_ELECTRON_DEV_PORT = "28569";
 
 let _desktopPort: number =
-  typeof window !== "undefined" && window.oclawDesktop?.gatewayPort != null
-    ? window.oclawDesktop.gatewayPort
+  typeof window !== "undefined" && window.kworksDesktop?.gatewayPort != null
+    ? window.kworksDesktop.gatewayPort
     : 29987;
 
 export async function initGatewayPort(): Promise<void> {
   if (!isDesktop()) return;
   try {
-    const cfg = await window.oclawDesktop?.getGatewayConfig();
+    const cfg = await window.kworksDesktop?.getGatewayConfig();
     if (cfg?.port) _desktopPort = cfg.port;
   } catch {
     // fallback to default port
@@ -41,7 +41,7 @@ export function isDesktop(): boolean {
  * Resolve the dev-server port the current shell is loading the renderer from.
  *
  * Priority:
- * 1. `window.oclawDesktop.frontendPort` — Electron shells can report the
+ * 1. `window.kworksDesktop.frontendPort` — Electron shells can report the
  *    actual dev-server port so this stays port-independent.
  * 2. `28569` — default Electron dev port.
  *
@@ -50,7 +50,7 @@ export function isDesktop(): boolean {
  */
 function getDesktopDevPort(): string | null {
   if (typeof window === "undefined") return null;
-  const fromBridge = window.oclawDesktop?.frontendPort;
+  const fromBridge = window.kworksDesktop?.frontendPort;
   if (fromBridge != null && Number.isFinite(fromBridge)) {
     return String(fromBridge);
   }

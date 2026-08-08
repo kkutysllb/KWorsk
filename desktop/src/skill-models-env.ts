@@ -3,7 +3,7 @@
  *
  * Public skills (image/video/music generation) hardcode environment variable
  * names like `GEMINI_API_KEY` and `MINIMAX_API_KEY`. The desktop shell stores
- * these in `<KKOCLAW_HOME>/.env`; this module parses/serializes that file and
+ * these in `<QILIN_HOME>/.env`; this module parses/serializes that file and
  * applies secret redaction so the renderer never receives raw API keys.
  *
  * Read returns redacted values (UI display); write accepts either plain
@@ -179,7 +179,7 @@ export function parseEnvFile(content: string): Record<string, string> {
 export function serializeEnvFile(vars: Record<string, string>): string {
   const lines: string[] = [
     "# =============================================================================",
-    "# OClaw Desktop — Skill Model Credentials",
+    "# KWorks Desktop — Skill Model Credentials",
     "# =============================================================================",
     "# Provider credentials for public skills (image / video / music generation).",
     "# The gateway reads this file on launch and injects every variable into its",

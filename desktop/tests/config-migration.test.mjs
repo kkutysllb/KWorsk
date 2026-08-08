@@ -7,20 +7,23 @@ test("desktop config migration pins sqlite storage to the desktop data dir", () 
   const migrated = migrateDesktopConfigYaml(`config_version: 8
 database:
   backend: sqlite
-  sqlite_dir: .oclaw/data
+  sqlite_dir: some/legacy/path
 agents_api:
   enabled: false
 `);
 
-  assert.match(migrated, /database:\n\s+backend:\s+sqlite\n\s+sqlite_dir:\s+\$KKOCLAW_DATA_DIR/);
+  // config-migration injects an absolute path (~/.kworks/data), not a $VAR.
+  assert.match(migrated, /database:\n\s+backend:\s+sqlite\n\s+sqlite_dir:\s+.*\.kworks\/data/);
   assert.match(migrated, /agents_api:\n\s+enabled:\s+true/);
 });
 
 test("desktop config migration is idempotent for existing defaults", () => {
+  const home = process.env.HOME ?? process.env.USERPROFILE ?? "";
+  const sqliteDir = home ? `${home}/.kworks/data` : ".kworks/data";
   const original = `config_version: 8
 database:
   backend: sqlite
-  sqlite_dir: $KKOCLAW_DATA_DIR
+  sqlite_dir: ${sqliteDir}
 agents_api:
   enabled: true
 `;

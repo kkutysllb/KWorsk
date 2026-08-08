@@ -1,4 +1,17 @@
-const DESKTOP_SQLITE_DIR = "$KKOCLAW_DATA_DIR";
+/**
+ * Resolve the desktop SQLite directory under ~/.kworks/data.
+ *
+ * QiLin's ``database.sqlite_dir`` is resolved via
+ * ``Path(self.sqlite_dir).resolve()`` — a relative path would be anchored at
+ * the gateway process CWD (the qilin/ submodule), which is NOT where desktop
+ * user data should live. We therefore emit an absolute path so the SQLite
+ * database always lands under the stable ``~/.kworks/data`` home regardless
+ * of where ``uv run`` is invoked.
+ */
+function desktopSqliteDir(): string {
+  const home = process.env.HOME ?? process.env.USERPROFILE ?? "";
+  return home ? `${home}/.kworks/data` : ".kworks/data";
+}
 
 interface SectionRange {
   start: number;
@@ -57,8 +70,9 @@ function replaceOrAppendAgentsApi(source: string): string {
 }
 
 function replaceOrAppendDesktopDatabase(source: string): string {
+  const sqliteDir = desktopSqliteDir();
   const ranges = findTopLevelSections(source, "database");
-  const desktopDatabaseSection = `database:\n  backend: sqlite\n  sqlite_dir: ${DESKTOP_SQLITE_DIR}\n`;
+  const desktopDatabaseSection = `database:\n  backend: sqlite\n  sqlite_dir: ${sqliteDir}\n`;
 
   if (ranges.length === 0) {
     return appendSection(source, desktopDatabaseSection);
@@ -83,7 +97,7 @@ function replaceOrAppendDesktopDatabase(source: string): string {
       hasBackend = true;
     }
     if (/^[ \t]+sqlite_dir:\s*/.test(line)) {
-      lines[i] = `  sqlite_dir: ${DESKTOP_SQLITE_DIR}`;
+      lines[i] = `  sqlite_dir: ${sqliteDir}`;
       hasSqliteDir = true;
     }
   }
@@ -97,7 +111,7 @@ function replaceOrAppendDesktopDatabase(source: string): string {
     insertAt += 1;
   }
   if (!hasSqliteDir) {
-    lines.splice(insertAt, 0, `  sqlite_dir: ${DESKTOP_SQLITE_DIR}`);
+    lines.splice(insertAt, 0, `  sqlite_dir: ${sqliteDir}`);
   }
 
   const migratedSection = lines.join("\n");

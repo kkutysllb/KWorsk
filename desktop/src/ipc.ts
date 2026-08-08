@@ -1,7 +1,7 @@
 /**
  * IPC handler registration.
  *
- * Wires the renderer-side `window.oclawDesktop.*` calls (forwarded by the
+ * Wires the renderer-side `window.kworksDesktop.*` calls (forwarded by the
  * preload) to the `BackendManager` and native Electron APIs. The channel
  * names and payload shapes mirror the previous Tauri commands so the
  * frontend's desktop abstraction layer stays unchanged.
@@ -150,7 +150,7 @@ function ensureNodePtySpawnHelperExecutable(): string | null {
     chmodSync(helper, 0o755);
     accessSync(helper, constants.X_OK);
     console.warn(
-      `[oclaw-desktop] Repaired node-pty spawn-helper permissions at ${helper}`,
+      `[kworks-desktop] Repaired node-pty spawn-helper permissions at ${helper}`,
     );
     return helper;
   } catch (error) {
@@ -160,7 +160,7 @@ function ensureNodePtySpawnHelperExecutable(): string | null {
     // so it's grep-friendly.
     const message = error instanceof Error ? error.message : String(error);
     console.warn(
-      `[oclaw-desktop] Could not chmod spawn-helper at ${helper}: ${message}. ` +
+      `[kworks-desktop] Could not chmod spawn-helper at ${helper}: ${message}. ` +
         `If "posix_spawnp failed." persists, run: chmod +x "${helper}"`,
     );
     return null;
@@ -405,7 +405,7 @@ export function registerIpc(): BackendManager {
   );
 
   // ── Skill model credentials (.env read/write) ───────────────────────
-  // Returns the redacted snapshot of <KKOCLAW_HOME>/.env. Secrets are masked
+  // Returns the redacted snapshot of <QILIN_HOME>/.env. Secrets are masked
   // so the renderer never receives raw API keys.
   ipcMain.handle(
     "skill-models:get",

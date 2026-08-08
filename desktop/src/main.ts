@@ -76,7 +76,7 @@ if (!gotSingleInstanceLock) {
 }
 
 function isBackendAutolaunchEnabled(): boolean {
-  return process.env.OCLAW_SKIP_BACKEND_AUTOLAUNCH !== "1";
+  return process.env.KWORKS_SKIP_BACKEND_AUTOLAUNCH !== "1";
 }
 
 // ── Icon resolution ──────────────────────────────────────────────────────
@@ -134,9 +134,19 @@ function createAppWindow(options: AppWindowOptions = {}): BrowserWindow {
     minHeight: 600,
     center: true,
     show: false,
-    title: "OClaw",
+    title: "KWorks",
     icon: resolveIcon(),
-    backgroundColor: "#1f1f1f",
+    // Match the landing page's #0a0a0a so the pre-paint background and the
+    // post-paint deep hero blend seamlessly under the hidden title bar.
+    backgroundColor: "#0a0a0a",
+    // macOS: hide the native title bar text but keep the traffic-light
+    // buttons, insetting them into the page. The landing hero then extends
+    // to the very top of the window, eliminating the visible boundary
+    // between the system title bar and the page. Windows/Linux keep the
+    // default frame (hiddenInset is a macOS-only option).
+    ...(process.platform === "darwin"
+      ? { titleBarStyle: "hiddenInset" as const }
+      : {}),
     webPreferences: {
       // Security: keep Node out of the renderer; expose only the typed bridge.
       contextIsolation: true,
@@ -214,7 +224,7 @@ function createAppWindow(options: AppWindowOptions = {}): BrowserWindow {
 }
 
 async function loadContent(win: BrowserWindow, path = "/"): Promise<void> {
-  const isDev = !app.isPackaged && process.env.OCLAW_DEV_SERVER === "1";
+  const isDev = !app.isPackaged && process.env.KWORKS_DEV_SERVER === "1";
   if (isDev) {
     const base = DEV_SERVER_URL.endsWith("/") ? DEV_SERVER_URL.slice(0, -1) : DEV_SERVER_URL;
     await win.loadURL(`${base}${path}`);
@@ -349,15 +359,15 @@ function buildAppMenu(): Menu {
   const macAppMenu: Electron.MenuItemConstructorOptions = {
     label: app.name,
     submenu: [
-      item({ role: "about", label: "关于 OClaw" }),
+      item({ role: "about", label: "关于 KWorks" }),
       item({ type: "separator" }),
       item({ role: "services" }),
       item({ type: "separator" }),
-      item({ role: "hide", label: "隐藏 OClaw" }),
+      item({ role: "hide", label: "隐藏 KWorks" }),
       item({ role: "hideOthers" }),
       item({ role: "unhide" }),
       item({ type: "separator" }),
-      item({ role: "quit", label: "退出 OClaw" }),
+      item({ role: "quit", label: "退出 KWorks" }),
     ],
   };
 
@@ -445,8 +455,8 @@ function buildAppMenu(): Menu {
         }),
         item({ type: "separator" }),
         item({
-          label: "OClaw 文档",
-          click: () => void shell.openExternal("https://github.com/kkutysllb/OClaw"),
+          label: "KWorks 文档",
+          click: () => void shell.openExternal("https://github.com/kkutysllb/KWorks"),
         }),
         item({ type: "separator" }),
         item({
@@ -478,7 +488,7 @@ function buildTrayMenu(status: BackendStatus): Menu {
           : "后端状态：已停止";
 
   return Menu.buildFromTemplate([
-    { label: "显示 OClaw", click: () => showLastActiveWindow() },
+    { label: "显示 KWorks", click: () => showLastActiveWindow() },
     { label: "新建聊天窗口", click: () => createNewTaskWindow("/workspace/chats/new") },
     { type: "separator" },
     { label: statusLabel, enabled: false },
@@ -491,7 +501,7 @@ function buildTrayMenu(status: BackendStatus): Menu {
     },
     { type: "separator" },
     {
-      label: "退出 OClaw",
+      label: "退出 KWorks",
       click: () => quitApp(),
     },
   ]);
@@ -500,7 +510,7 @@ function buildTrayMenu(status: BackendStatus): Menu {
 function createTray(): Tray {
   const icon = resolveTrayIcon() ?? nativeImage.createEmpty();
   tray = new Tray(icon);
-  tray.setToolTip("OClaw");
+  tray.setToolTip("KWorks");
 
   // Initialize with a placeholder status, refresh on next tick.
   tray.setContextMenu(buildTrayMenu({ status: "starting", port: 0 }));
@@ -512,7 +522,7 @@ function createTray(): Tray {
 /** Navigate the active window to an in-app path (e.g. /workspace/chats/new). */
 function navigateTo(path: string): void {
   const win = getMostRecentWindow() ?? createAppWindow();
-  const isDev = !app.isPackaged && process.env.OCLAW_DEV_SERVER === "1";
+  const isDev = !app.isPackaged && process.env.KWORKS_DEV_SERVER === "1";
   if (isDev) {
     const base = DEV_SERVER_URL.endsWith("/") ? DEV_SERVER_URL.slice(0, -1) : DEV_SERVER_URL;
     void win.loadURL(`${base}${path}`);
@@ -573,7 +583,7 @@ void app.whenReady().then(async () => {
     return;
   }
 
-  log.info(`OClaw desktop starting (isPackaged=${app.isPackaged}, version=${app.getVersion()})`);
+  log.info(`KWorks desktop starting (isPackaged=${app.isPackaged}, version=${app.getVersion()})`);
   log.info(`userData dir: ${app.getPath("userData")}`);
   log.info(`logs dir: ${getLogsDir()}`);
 
@@ -597,7 +607,7 @@ void app.whenReady().then(async () => {
   backend.onStatusChange((status) => {
     log.info(`backend status: ${status.status} (port=${status.port}${status.error ? `, error=${status.error}` : ""})`);
     tray?.setContextMenu(buildTrayMenu(status));
-    tray?.setToolTip(`OClaw — ${status.status}`);
+    tray?.setToolTip(`KWorks — ${status.status}`);
   });
 
   // Auto-update channels (no-op in development).
@@ -608,11 +618,11 @@ void app.whenReady().then(async () => {
     log.info("launching embedded gateway...");
     void backend.launch();
   } else {
-    log.info("backend auto-launch disabled (OCLAW_SKIP_BACKEND_AUTOLAUNCH=1)");
+    log.info("backend auto-launch disabled (KWORKS_SKIP_BACKEND_AUTOLAUNCH=1)");
   }
 
   registerShortcuts();
-  log.info("OClaw desktop ready");
+  log.info("KWorks desktop ready");
 });
 
 function handleSecondInstance(): void {

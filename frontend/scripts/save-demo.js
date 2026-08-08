@@ -40,7 +40,7 @@ export async function main() {
   );
   const backendRootPath = path.resolve(
     process.cwd(),
-    "../backend/.kkoclaw/threads",
+    "../backend/.kworks/threads",
     threadId,
   );
   copyFolder("user-data/outputs", rootPath, backendRootPath);

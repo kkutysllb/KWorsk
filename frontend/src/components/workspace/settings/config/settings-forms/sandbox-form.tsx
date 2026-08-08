@@ -29,7 +29,7 @@ interface SandboxConfig {
 }
 
 const defaultConfig: SandboxConfig = {
-  use: "kkoclaw.sandbox.local:LocalSandboxProvider",
+  use: "kworks.sandbox.local:LocalSandboxProvider",
   allow_host_bash: true,
   bash_output_max_chars: 20000,
   read_file_output_max_chars: 50000,
@@ -59,9 +59,9 @@ export function SandboxForm() {
   const handleProviderChange = (key: string) => {
     setProviderKey(key);
     if (key === "local") {
-      update("use", "kkoclaw.sandbox.local:LocalSandboxProvider");
+      update("use", "kworks.sandbox.local:LocalSandboxProvider");
     } else {
-      update("use", "kkoclaw.sandbox.docker:DockerSandboxProvider");
+      update("use", "kworks.sandbox.docker:DockerSandboxProvider");
     }
   };
 

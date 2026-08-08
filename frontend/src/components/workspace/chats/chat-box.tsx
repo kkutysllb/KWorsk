@@ -10,7 +10,6 @@ import {
   ResizablePanel,
   ResizablePanelGroup,
 } from "@/components/ui/resizable";
-import { TodosProvider, useTodos } from "@/core/todos/context";
 import { env } from "@/env";
 import { cn } from "@/lib/utils";
 
@@ -20,35 +19,17 @@ import {
   useArtifacts,
 } from "../artifacts";
 import { useThread } from "../messages/context";
-import { TodoList } from "../todo-list";
 
 // 布局比例（值的数量必须等于实际渲染的 panel 数，否则 setLayout 会报
-// "Invalid N panel layout: ..."）。三栏 chat | todos | artifacts 用 *_3，
-// 两栏 chat | todos（artifactsMode="disabled"）用 *_2。
-const LAYOUT_3 = {
-  allClosed: { chat: 100, todos: 0, artifacts: 0 },
-  todosOpen: { chat: 75, todos: 25, artifacts: 0 },
-  artifactsOpen: { chat: 60, todos: 0, artifacts: 40 },
-  bothOpen: { chat: 50, todos: 22, artifacts: 28 },
+// "Invalid N panel layout: ..."）。todos 面板已移至右侧上下文面板，
+// 这里只剩 chat | artifacts 两栏。
+const LAYOUT = {
+  chatOnly: { chat: 100, artifacts: 0 },
+  artifactsOpen: { chat: 60, artifacts: 40 },
 } as const;
 
-const LAYOUT_2 = {
-  allClosed: { chat: 100, todos: 0 },
-  todosOpen: { chat: 75, todos: 25 },
-} as const;
-
-function computeLayout(
-  todosOpen: boolean,
-  artifactsOpen: boolean,
-  hasArtifactsPanel: boolean,
-): Record<string, number> {
-  if (!hasArtifactsPanel) {
-    return todosOpen ? LAYOUT_2.todosOpen : LAYOUT_2.allClosed;
-  }
-  if (todosOpen && artifactsOpen) return LAYOUT_3.bothOpen;
-  if (todosOpen) return LAYOUT_3.todosOpen;
-  if (artifactsOpen) return LAYOUT_3.artifactsOpen;
-  return LAYOUT_3.allClosed;
+function computeLayout(artifactsOpen: boolean): Record<string, number> {
+  return artifactsOpen ? LAYOUT.artifactsOpen : LAYOUT.chatOnly;
 }
 
 interface ChatBoxProps {
@@ -78,8 +59,6 @@ const ChatBoxInner: React.FC<ChatBoxProps> = ({
     deselect,
     selectedArtifact,
   } = useArtifacts();
-
-  const { open: todosOpen, setOpen: setTodosOpen } = useTodos();
 
   const [autoSelectFirstArtifact, setAutoSelectFirstArtifact] = useState(true);
   useEffect(() => {
@@ -134,98 +113,27 @@ const ChatBoxInner: React.FC<ChatBoxProps> = ({
   const hasArtifactsPanel = artifactsMode !== "disabled";
 
   useEffect(() => {
-    if (layoutRef.current) {
+    if (layoutRef.current && hasArtifactsPanel) {
       layoutRef.current.setLayout(
-        computeLayout(
-          todosOpen,
-          artifactPanelOpen,
-          hasArtifactsPanel,
-        ) as Record<string, number>,
+        computeLayout(artifactPanelOpen) as Record<string, number>,
       );
     }
-  }, [todosOpen, artifactPanelOpen, hasArtifactsPanel]);
+  }, [artifactPanelOpen, hasArtifactsPanel]);
 
   if (artifactsMode === "disabled") {
-    // artifacts 被禁用时,仍然渲染 chat | todos 两栏,使 todos 面板可用
-    return (
-      <ResizablePanelGroup
-        id={`${resizableIdBase}-panels`}
-        orientation="horizontal"
-        defaultLayout={LAYOUT_2.allClosed}
-        groupRef={layoutRef}
-      >
-        <ResizablePanel className="relative" defaultSize={100} id="chat">
-          {children}
-        </ResizablePanel>
-        <ResizableHandle
-          id={`${resizableIdBase}-todos-separator`}
-          className={cn(
-            "opacity-33 hover:opacity-100",
-            !todosOpen && "pointer-events-none opacity-0",
-          )}
-        />
-        <ResizablePanel
-          className={cn(
-            "transition-all duration-300 ease-in-out",
-            !todosOpen && "opacity-0",
-          )}
-          id="todos"
-        >
-          <div
-            className={cn(
-              "h-full transition-transform duration-300 ease-in-out",
-              todosOpen ? "translate-x-0" : "translate-x-full",
-            )}
-          >
-            <TodoList
-              todos={thread?.values?.todos ?? []}
-              collapsed={false}
-              onToggle={() => setTodosOpen(false)}
-            />
-          </div>
-        </ResizablePanel>
-      </ResizablePanelGroup>
-    );
+    // artifacts 被禁用时,只渲染 chat 单栏
+    return <div className="relative size-full">{children}</div>;
   }
 
   return (
     <ResizablePanelGroup
       id={`${resizableIdBase}-panels`}
       orientation="horizontal"
-      defaultLayout={LAYOUT_3.allClosed}
+      defaultLayout={LAYOUT.chatOnly}
       groupRef={layoutRef}
     >
       <ResizablePanel className="relative" defaultSize={100} id="chat">
         {children}
-      </ResizablePanel>
-
-      <ResizableHandle
-        id={`${resizableIdBase}-todos-separator`}
-        className={cn(
-          "opacity-33 hover:opacity-100",
-          !todosOpen && "pointer-events-none opacity-0",
-        )}
-      />
-
-      <ResizablePanel
-        className={cn(
-          "transition-all duration-300 ease-in-out",
-          !todosOpen && "opacity-0",
-        )}
-        id="todos"
-      >
-        <div
-          className={cn(
-            "h-full transition-transform duration-300 ease-in-out",
-            todosOpen ? "translate-x-0" : "translate-x-full",
-          )}
-        >
-          <TodoList
-            todos={thread?.values?.todos ?? []}
-            collapsed={false}
-            onToggle={() => setTodosOpen(false)}
-          />
-        </div>
       </ResizablePanel>
 
       <ResizableHandle
@@ -235,6 +143,7 @@ const ChatBoxInner: React.FC<ChatBoxProps> = ({
           !artifactPanelOpen && "pointer-events-none opacity-0",
         )}
       />
+
       <ResizablePanel
         className={cn(
           "transition-all duration-300 ease-in-out",

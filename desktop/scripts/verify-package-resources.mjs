@@ -11,10 +11,10 @@ const REPO_ROOT = resolve(DESKTOP_DIR, "..");
 const GATEWAY_DIR = join(DESKTOP_DIR, "resources", "gateway");
 const FRONTEND_DIR = join(REPO_ROOT, "frontend");
 const FRONTEND_OUT_DIR = join(FRONTEND_DIR, "out");
-const BACKEND_DIR = join(REPO_ROOT, "backend");
+const BACKEND_DIR = join(REPO_ROOT, "qilin");
 const SKILLS_DIR = join(REPO_ROOT, "skills");
 const BACKEND_BUILD_DIR = join(DESKTOP_DIR, "backend-build");
-const SPEC_FILE = join(BACKEND_BUILD_DIR, "oclaw-gateway.spec");
+const SPEC_FILE = join(BACKEND_BUILD_DIR, "kworks-gateway.spec");
 
 // `--source-only` skips the PyInstaller / Next.js build artifacts and instead
 // validates the *source contract*: every file the spec collects as `datas` and
@@ -69,7 +69,7 @@ function requireExecutable(path, label) {
 function gatewayExecutablePath() {
   return join(
     GATEWAY_DIR,
-    process.platform === "win32" ? "oclaw-gateway.exe" : "oclaw-gateway",
+    process.platform === "win32" ? "kworks-gateway.exe" : "kworks-gateway",
   );
 }
 
@@ -78,15 +78,15 @@ function gatewayExecutablePath() {
 // will produce a bundle that satisfies the product-mode checks below.
 function runSourceChecks() {
   // PyInstaller spec + entrypoint exist.
-  requirePath(SPEC_FILE, "source spec oclaw-gateway.spec");
-  requirePath(join(BACKEND_DIR, "gateway_main.py"), "source backend gateway_main.py");
+  requirePath(SPEC_FILE, "source spec kworks-gateway.spec");
+  requirePath(join(BACKEND_DIR, "app", "gateway", "app.py"), "source backend gateway app.py");
 
   // Spec must still wire the critical datas; catches accidental edits that
   // would silently drop skills / config / harness from the frozen bundle.
   requireFileContains(SPEC_FILE, "spec datas wiring", [
     "skills/builtin",
     "config.embedded.yaml",
-    "kkoclaw",
+    "qilin",
   ]);
 
   // config.embedded.yaml source (copied into _internal by the spec).
@@ -101,20 +101,18 @@ function runSourceChecks() {
   requirePath(join(SKILLS_DIR, "builtin", "core"), "source skills/builtin/core");
   requirePath(join(SKILLS_DIR, "builtin", "task"), "source skills/builtin/task");
 
-  // local_skill_storage.py source + public-only guard (desktop sets
-  // KKOCLAW_PUBLIC_SKILLS_ONLY=1 so only bundled public/builtin skills show).
+  // local_skill_storage.py source — the SkillStorage implementation the
+  // desktop gateway uses for builtin/custom skill discovery.
   requireFileContains(
     join(
       BACKEND_DIR,
-      "packages",
-      "harness",
-      "kkoclaw",
+      "qilin",
       "skills",
       "storage",
       "local_skill_storage.py",
     ),
     "source local_skill_storage.py",
-    ["KKOCLAW_PUBLIC_SKILLS_ONLY", "public_only"],
+    ["class LocalSkillStorage"],
   );
 
   // frontend desktop static-export wiring.
@@ -153,9 +151,9 @@ function runProductChecks() {
     "resources/gateway skills/builtin/task",
   );
   requireFileContains(
-    join(GATEWAY_DIR, "_internal", "kkoclaw", "skills", "storage", "local_skill_storage.py"),
+    join(GATEWAY_DIR, "_internal", "qilin", "skills", "storage", "local_skill_storage.py"),
     "resources/gateway local_skill_storage.py",
-    ["KKOCLAW_PUBLIC_SKILLS_ONLY", "public_only"],
+    ["class LocalSkillStorage"],
   );
 }
 

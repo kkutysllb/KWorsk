@@ -9,7 +9,7 @@ const mainSource = readFileSync(
 
 test("Electron main skips BackendManager launch when the dev launcher owns the gateway", () => {
   assert.match(mainSource, /function isBackendAutolaunchEnabled\(\): boolean/);
-  assert.match(mainSource, /OCLAW_SKIP_BACKEND_AUTOLAUNCH/);
+  assert.match(mainSource, /KWORKS_SKIP_BACKEND_AUTOLAUNCH/);
   assert.match(mainSource, /if \(isBackendAutolaunchEnabled\(\)\) \{/);
   assert.match(mainSource, /void backend\.launch\(\)/);
 });

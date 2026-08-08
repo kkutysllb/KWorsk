@@ -13,11 +13,11 @@ export function getGatewayConfig(): GatewayConfig {
   if (_cached) return _cached;
 
   const internalGatewayUrl =
-    process.env.KKOCLAW_INTERNAL_GATEWAY_BASE_URL?.trim()?.replace(/\/+$/, "") ??
+    process.env.KWORKS_INTERNAL_GATEWAY_BASE_URL?.trim()?.replace(/\/+$/, "") ??
     "http://localhost:9987";
 
-  const trustedOrigins = process.env.KKOCLAW_TRUSTED_ORIGINS?.trim()
-    ? process.env.KKOCLAW_TRUSTED_ORIGINS?.trim()
+  const trustedOrigins = process.env.KWORKS_TRUSTED_ORIGINS?.trim()
+    ? process.env.KWORKS_TRUSTED_ORIGINS?.trim()
         .split(",")
         .map((s) => s.trim())
         .filter(Boolean)

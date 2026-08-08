@@ -21,9 +21,9 @@ import {
 function setDesktopBridge(present: boolean) {
   const w = window as unknown as Record<string, unknown>;
   if (present) {
-    w.oclawDesktop = { gatewayPort: 29987 };
+    w.kworksDesktop = { gatewayPort: 29987 };
   } else {
-    delete w.oclawDesktop;
+    delete w.kworksDesktop;
   }
 }
 
@@ -49,7 +49,7 @@ describe("isDesktop", () => {
     expect(isDesktop()).toBe(false);
   });
 
-  test("returns true when window.oclawDesktop is present", () => {
+  test("returns true when window.kworksDesktop is present", () => {
     setDesktopBridge(true);
     expect(isDesktop()).toBe(true);
   });

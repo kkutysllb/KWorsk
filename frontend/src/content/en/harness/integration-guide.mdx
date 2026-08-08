@@ -1,6 +1,6 @@
 ---
 title: Integration Guide
-description: KKOCLAW Harness is not only a standalone application. It is a Python library you can import and use inside your own backend, API server, automation system, or multi-agent orchestrator.
+description: Qilin Harness is not only a standalone application. It is a Python library you can import and use inside your own backend, API server, automation system, or multi-agent orchestrator.
 ---
 
 import { Callout, Cards } from "nextra/components";
@@ -8,25 +8,25 @@ import { Callout, Cards } from "nextra/components";
 # Integration Guide
 
 <Callout type="info" emoji="🔌">
-  KKOCLAW Harness can be embedded into any Python application. This guide
-  covers the integration patterns for using KKOCLAW as a library inside your
+  Qilin Harness can be embedded into any Python application. This guide
+  covers the integration patterns for using KWorks as a library inside your
   own system.
 </Callout>
 
-KKOCLAW Harness is not only a standalone application. It is a Python library you can import and use inside your own backend, API server, automation system, or multi-agent orchestrator.
+Qilin Harness is not only a standalone application. It is a Python library you can import and use inside your own backend, API server, automation system, or multi-agent orchestrator.
 
-## Embedding KKOCLAWHarnessClient
+## Embedding QilinHarnessClient
 
-The primary integration point is `KKOCLAWHarnessClient`. It wraps the LangGraph runtime and exposes a clean API for sending messages and streaming responses from any Python application.
+The primary integration point is `QilinHarnessClient`. It wraps the LangGraph runtime and exposes a clean API for sending messages and streaming responses from any Python application.
 
 ```python
-from kkoclaw.client import KKOCLAWHarnessClient
-from kkoclaw.config import load_config
+from qilin.client import QilinHarnessClient
+from qilin.config import load_config
 
-# Load configuration (reads config.yaml or KKOCLAW_CONFIG_PATH)
+# Load configuration (reads config.yaml or QILIN_CONFIG_PATH)
 load_config()
 
-client = KKOCLAWHarnessClient()
+client = QilinHarnessClient()
 ```
 
 The client is thread-safe and designed to be instantiated once and reused across requests.
@@ -106,30 +106,30 @@ result = await client.ainvoke(
 
 ## Integrating with FastAPI
 
-KKOCLAW Gateway is itself a FastAPI application. You can mount it as a sub-application or router:
+KWorks Gateway is itself a FastAPI application. You can mount it as a sub-application or router:
 
 ```python
 from fastapi import FastAPI
-from kkoclaw.config import load_config
+from qilin.config import load_config
 
 load_config()
 
 app = FastAPI()
 
-# Mount the KKOCLAW gateway router
-from kkoclaw.app.gateway.main import app as gateway_app
-app.mount("/kkoclaw", gateway_app)
+# Mount the KWorks gateway router
+from qilin.app.gateway.main import app as gateway_app
+app.mount("/qilin", gateway_app)
 ```
 
-Or use `KKOCLAWHarnessClient` directly in your own FastAPI routes with streaming:
+Or use `QilinHarnessClient` directly in your own FastAPI routes with streaming:
 
 ```python
 from fastapi import FastAPI
 from fastapi.responses import StreamingResponse
-from kkoclaw.client import KKOCLAWHarnessClient
+from qilin.client import QilinHarnessClient
 
 app = FastAPI()
-client = KKOCLAWHarnessClient()
+client = QilinHarnessClient()
 
 @app.post("/chat/{thread_id}")
 async def chat(thread_id: str, body: dict):
@@ -141,10 +141,10 @@ async def chat(thread_id: str, body: dict):
 
 ## Integrating with LangGraph
 
-KKOCLAW Harness is built on LangGraph. The Lead Agent is a standard LangGraph graph. You can compose it with your own LangGraph nodes and graphs:
+Qilin Harness is built on LangGraph. The Lead Agent is a standard LangGraph graph. You can compose it with your own LangGraph nodes and graphs:
 
 ```python
-from kkoclaw.agents.lead_agent.agent import make_lead_agent
+from qilin.agents.lead_agent.agent import make_lead_agent
 from langgraph.graph import StateGraph
 
 # Access the underlying LangGraph agent factory
@@ -157,22 +157,22 @@ When embedded in another application, set the config path explicitly to avoid am
 
 ```python
 import os
-os.environ["KKOCLAW_CONFIG_PATH"] = "/path/to/my-kkoclaw-config.yaml"
+os.environ["QILIN_CONFIG_PATH"] = "/path/to/my-qilin-config.yaml"
 
-from kkoclaw.config import load_config
+from qilin.config import load_config
 load_config()
 ```
 
 Or pass the path directly:
 
 ```python
-from kkoclaw.config import load_config
-load_config(config_path="/path/to/my-kkoclaw-config.yaml")
+from qilin.config import load_config
+load_config(config_path="/path/to/my-qilin-config.yaml")
 ```
 
 ## MCP server integration
 
-KKOCLAW can expose its agent as an MCP server, allowing other MCP-compatible systems to call it as a tool. Refer to the KKOCLAW repository for MCP server integration examples.
+KWorks can expose its agent as an MCP server, allowing other MCP-compatible systems to call it as a tool. Refer to the KWorks repository for MCP server integration examples.
 
 <Cards num={2}>
   <Cards.Card title="Customization" href="/en/docs/harness/customization" />

@@ -141,14 +141,14 @@ export async function Header({ className, homeURL }: HeaderProps) {
               KK
             </span>
             <span className="bg-gradient-to-r from-cyan-400 via-blue-400 to-purple-400 bg-clip-text text-transparent">
-              OClaw
+              KWorks
             </span>
           </h1>
         </a>
       </div>
       <nav className="mr-8 ml-auto flex items-center gap-8 text-sm font-medium">
         <a
-          href="https://github.com/kkutysllb/OClaw"
+          href="https://github.com/kkutysllb/KWorks"
           target="_blank"
           rel="noopener noreferrer"
           className="text-secondary-foreground hover:text-foreground transition-colors"
@@ -156,7 +156,7 @@ export async function Header({ className, homeURL }: HeaderProps) {
           Docs
         </a>
         <a
-          href="https://github.com/kkutysllb/OClaw"
+          href="https://github.com/kkutysllb/KWorks"
           target="_blank"
           rel="noopener noreferrer"
           className="text-secondary-foreground hover:text-foreground transition-colors"

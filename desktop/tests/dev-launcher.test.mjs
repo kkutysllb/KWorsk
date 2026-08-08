@@ -15,11 +15,11 @@ test("desktop dev launcher owns and respawns the gateway process", () => {
 });
 
 test("desktop dev launcher marks backend as dev-managed for the gateway", () => {
-  assert.match(devLauncherSource, /KKOCLAW_DESKTOP_DEV: "1"/);
+  assert.match(devLauncherSource, /QILIN_DESKTOP_DEV: "1"/);
 });
 
 test("desktop dev launcher does not ask Electron BackendManager to spawn another gateway", () => {
-  assert.match(devLauncherSource, /OCLAW_SKIP_BACKEND_AUTOLAUNCH: "1"/);
+  assert.match(devLauncherSource, /KWORKS_SKIP_BACKEND_AUTOLAUNCH: "1"/);
 });
 
 test("desktop dev launcher forces Next rewrites instead of public backend URLs", () => {
@@ -47,15 +47,15 @@ test("desktop dev gateway CORS includes Electron's Next dev origins", () => {
   assert.match(devLauncherSource, /GATEWAY_CORS_ORIGINS: DESKTOP_DEV_ORIGINS/);
 });
 
-test("desktop dev launcher uses isolated public skills instead of repo custom skills", () => {
-  assert.match(devLauncherSource, /syncDesktopPublicSkills/);
-  assert.match(devLauncherSource, /const skillsPath = USER_DATA_DIR[\s\S]*?join\(USER_DATA_DIR, "skills"\)/);
-  assert.match(devLauncherSource, /KKOCLAW_PUBLIC_SKILLS_ONLY:\s*"1"/);
-  assert.doesNotMatch(devLauncherSource, /const skillsPath = join\(REPO_ROOT, "skills"\)/);
+test("desktop dev launcher seeds builtin skills from the qilin submodule", () => {
+  assert.match(devLauncherSource, /syncDesktopBuiltinSkills/);
+  assert.match(devLauncherSource, /join\(REPO_ROOT, "qilin", "skills", "builtin"\)/);
+  // QiLin does not use the legacy KKOCLAW_PUBLIC_SKILLS_ONLY flag.
+  assert.doesNotMatch(devLauncherSource, /KKOCLAW_PUBLIC_SKILLS_ONLY/);
 });
 
 test("desktop dev launcher uses isolated empty extensions config", () => {
   assert.match(devLauncherSource, /initDesktopExtensionsConfig/);
-  assert.match(devLauncherSource, /KKOCLAW_EXTENSIONS_CONFIG_PATH/);
+  assert.match(devLauncherSource, /QILIN_EXTENSIONS_CONFIG_PATH/);
   assert.match(devLauncherSource, /extensions_config\.json/);
 });

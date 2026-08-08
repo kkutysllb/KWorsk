@@ -21,14 +21,11 @@ import {
 } from "@/components/workspace/messages";
 import { ThreadContext } from "@/components/workspace/messages/context";
 import { ThreadTitle } from "@/components/workspace/thread-title";
-import { TodoTrigger } from "@/components/workspace/todo-trigger";
-import { TokenUsageIndicator } from "@/components/workspace/token-usage-indicator";
 import { Welcome } from "@/components/workspace/welcome";
 import { WorkModeBadge } from "@/components/workspace/work-mode-badge";
 import { WorkModeDetailDrawer } from "@/components/workspace/work-mode-detail-drawer";
 import { WorkModeSelector } from "@/components/workspace/work-mode-selector";
 import { useI18n } from "@/core/i18n/hooks";
-import { useModels } from "@/core/models/hooks";
 import { useNotification } from "@/core/notification/hooks";
 import {
   useThreadSettings,
@@ -51,7 +48,6 @@ export default function ChatPage() {
   const { threadId, setThreadId, isNewThread, setIsNewThread, isMock } =
     useThreadChat();
   const [settings, setSettings] = useThreadSettings(threadId);
-  const { tokenUsageEnabled } = useModels();
   const mountedRef = useRef(false);
   const searchParams = useSearchParams();
   useSpecificChatMode();
@@ -200,13 +196,16 @@ export default function ChatPage() {
         <div className="relative flex size-full min-h-0 justify-between">
           <header
             className={cn(
-              "absolute top-0 right-0 left-0 z-30 flex h-12 shrink-0 items-center px-4",
+              // [-webkit-app-region:drag] makes the header a window-drag
+              // zone on Electron so double-click toggles macOS maximize,
+              // matching the landing page title-bar behavior.
+              "absolute top-0 right-0 left-0 z-30 flex h-12 shrink-0 items-center px-4 [-webkit-app-region:drag]",
               isNewThread
                 ? "bg-background/0 backdrop-blur-none"
                 : "bg-background/80 shadow-xs backdrop-blur",
             )}
           >
-            <div className="flex w-full items-center gap-2 text-sm font-medium">
+            <div className="flex w-full items-center gap-2 text-sm font-medium [-webkit-app-region:no-drag]">
               {!isNewThread && (
                 <WorkModeBadge
                   workModeId={settings.context.work_mode_id as string | undefined}
@@ -215,12 +214,7 @@ export default function ChatPage() {
               )}
               <ThreadTitle threadId={threadId} thread={thread} />
             </div>
-            <div className="flex items-center gap-2">
-              <TokenUsageIndicator
-                enabled={tokenUsageEnabled}
-                messages={thread.messages}
-              />
-              <TodoTrigger todos={thread.values.todos} />
+            <div className="flex items-center gap-2 [-webkit-app-region:no-drag]">
               <ArtifactTrigger />
             </div>
           </header>

@@ -39,7 +39,7 @@ export function Hero({ className }: { className?: string }) {
             ]}
           />{" "}
           <span className="bg-gradient-to-r from-cyan-300 via-blue-400 to-purple-400 bg-clip-text text-transparent">
-            就用 OClaw
+            就用 KWorks
           </span>
         </h1>
         <p className="text-muted-foreground mt-6 scale-105 text-center text-2xl text-shadow-sm max-w-3xl">

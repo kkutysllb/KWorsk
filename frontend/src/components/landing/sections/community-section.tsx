@@ -16,12 +16,12 @@ export function CommunitySection() {
           Join the Community
         </AuroraText>
       }
-      subtitle="Contribute brilliant ideas to shape the future of OClaw. Collaborate, innovate, and make impacts."
+      subtitle="Contribute brilliant ideas to shape the future of KWorks. Collaborate, innovate, and make impacts."
     >
       <div className="flex justify-center">
         <Button className="text-xl" size="lg" asChild>
           <Link
-            href="https://github.com/kkOClaw/kkoclaw"
+            href="https://github.com/kkutysllb/KWorks"
             target="_blank"
             rel="noopener noreferrer"
           >

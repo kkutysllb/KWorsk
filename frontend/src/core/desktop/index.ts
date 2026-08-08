@@ -3,7 +3,7 @@
  *
  * Provides a thin abstraction layer over the Electron preload bridge so the
  * rest of the frontend can import from a single location without worrying
- * about whether `window.oclawDesktop` exists.
+ * about whether `window.kworksDesktop` exists.
  *
  * Every function has a browser fallback (no-op / native browser behaviour)
  * so the same code path runs unchanged in the web build.
@@ -41,7 +41,7 @@ export type OpenProjectTerminalResult = "opened" | "copied" | "failed";
 export async function getBackendStatus(): Promise<BackendStatus | null> {
   if (!isDesktop()) return null;
   try {
-    return await window.oclawDesktop!.getBackendStatus();
+    return await window.kworksDesktop!.getBackendStatus();
   } catch (e) {
     console.warn("[desktop] getBackendStatus failed:", e);
     return null;
@@ -52,7 +52,7 @@ export async function getBackendStatus(): Promise<BackendStatus | null> {
 export async function startBackend(): Promise<BackendStatus | null> {
   if (!isDesktop()) return null;
   try {
-    return await window.oclawDesktop!.startBackend();
+    return await window.kworksDesktop!.startBackend();
   } catch (e) {
     console.warn("[desktop] startBackend failed:", e);
     return null;
@@ -63,7 +63,7 @@ export async function startBackend(): Promise<BackendStatus | null> {
 export async function stopBackend(): Promise<BackendStatus | null> {
   if (!isDesktop()) return null;
   try {
-    return await window.oclawDesktop!.stopBackend();
+    return await window.kworksDesktop!.stopBackend();
   } catch (e) {
     console.warn("[desktop] stopBackend failed:", e);
     return null;
@@ -74,7 +74,7 @@ export async function stopBackend(): Promise<BackendStatus | null> {
 export async function restartBackend(): Promise<BackendStatus | null> {
   if (!isDesktop()) return null;
   try {
-    return await window.oclawDesktop!.restartBackend();
+    return await window.kworksDesktop!.restartBackend();
   } catch (e) {
     console.warn("[desktop] restartBackend failed:", e);
     return null;
@@ -85,7 +85,7 @@ export async function restartBackend(): Promise<BackendStatus | null> {
 export async function getBackendLogs(): Promise<string[]> {
   if (!isDesktop()) return [];
   try {
-    return await window.oclawDesktop!.getBackendLogs();
+    return await window.kworksDesktop!.getBackendLogs();
   } catch (e) {
     console.warn("[desktop] getBackendLogs failed:", e);
     return [];
@@ -98,7 +98,7 @@ export async function getBackendLogs(): Promise<string[]> {
 export async function getStartupInfo(): Promise<StartupDiagnostics | null> {
   if (!isDesktop()) return null;
   try {
-    return await window.oclawDesktop!.getStartupInfo();
+    return await window.kworksDesktop!.getStartupInfo();
   } catch (e) {
     console.warn("[desktop] getStartupInfo failed:", e);
     return null;
@@ -120,7 +120,7 @@ export async function openFilePicker(
 
   try {
     const picked: PickedFile[] =
-      await window.oclawDesktop!.pickFiles(options);
+      await window.kworksDesktop!.pickFiles(options);
     return picked.map((p) => {
       // Copy into a fresh ArrayBuffer-backed buffer so TS accepts it as a
       // BlobPart (the IPC bridge may hand back a SharedArrayBuffer-backed view).
@@ -168,7 +168,7 @@ export async function pickDirectory(
 ): Promise<string | null> {
   if (!isDesktop()) return null;
   try {
-    return await window.oclawDesktop!.pickDirectory(options);
+    return await window.kworksDesktop!.pickDirectory(options);
   } catch (e) {
     console.warn("[desktop] pickDirectory failed:", e);
     return null;
@@ -192,7 +192,7 @@ export async function openFolder(folderPath: string): Promise<void> {
     return;
   }
   try {
-    await window.oclawDesktop!.openFolder(folderPath);
+    await window.kworksDesktop!.openFolder(folderPath);
   } catch (e) {
     console.warn("[desktop] openFolder failed:", e);
   }
@@ -222,7 +222,7 @@ export async function startEmbeddedTerminal(
 ): Promise<EmbeddedTerminalSession | null> {
   if (!folderPath.trim() || !isDesktop()) return null;
   try {
-    return await window.oclawDesktop!.startTerminal(folderPath);
+    return await window.kworksDesktop!.startTerminal(folderPath);
   } catch (e) {
     console.warn("[desktop] startTerminal failed:", e);
     return null;
@@ -235,7 +235,7 @@ export async function writeEmbeddedTerminal(
 ): Promise<boolean> {
   if (!sessionId || !isDesktop()) return false;
   try {
-    await window.oclawDesktop!.writeTerminal(sessionId, data);
+    await window.kworksDesktop!.writeTerminal(sessionId, data);
     return true;
   } catch (e) {
     console.warn("[desktop] writeTerminal failed:", e);
@@ -250,7 +250,7 @@ export async function resizeEmbeddedTerminal(
 ): Promise<boolean> {
   if (!sessionId || !isDesktop()) return false;
   try {
-    await window.oclawDesktop!.resizeTerminal(sessionId, cols, rows);
+    await window.kworksDesktop!.resizeTerminal(sessionId, cols, rows);
     return true;
   } catch (e) {
     console.warn("[desktop] resizeTerminal failed:", e);
@@ -263,7 +263,7 @@ export async function stopEmbeddedTerminal(
 ): Promise<void> {
   if (!sessionId || !isDesktop()) return;
   try {
-    await window.oclawDesktop!.stopTerminal(sessionId);
+    await window.kworksDesktop!.stopTerminal(sessionId);
   } catch (e) {
     console.warn("[desktop] stopTerminal failed:", e);
   }
@@ -273,7 +273,7 @@ export function onEmbeddedTerminalData(
   handler: (event: { sessionId: string; data: string }) => void,
 ): () => void {
   if (!isDesktop()) return () => undefined;
-  return window.oclawDesktop!.onTerminalData(handler);
+  return window.kworksDesktop!.onTerminalData(handler);
 }
 
 export function onEmbeddedTerminalExit(
@@ -284,7 +284,7 @@ export function onEmbeddedTerminalExit(
   }) => void,
 ): () => void {
   if (!isDesktop()) return () => undefined;
-  return window.oclawDesktop!.onTerminalExit(handler);
+  return window.kworksDesktop!.onTerminalExit(handler);
 }
 
 export async function copyProjectTerminalPath(folderPath: string): Promise<OpenProjectTerminalResult> {

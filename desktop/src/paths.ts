@@ -16,12 +16,7 @@ import { join, resolve } from "node:path";
  * The repo root when running in development.
  *
  * `app.getAppPath()` returns the directory containing `package.json`,
- * i.e. `desktop-electron/` itself. The repo root is one level above.
- *
- * (Previously this used `"..", ".."` which incorrectly pointed two
- * levels above the package dir — e.g. `kk_Projects/` instead of
- * `kk_OClaw/` — causing dev-mode icon/resource resolution to silently
- * fail because every candidate path was off by one directory.)
+ * i.e. `desktop/` itself. The repo root is one level above.
  */
 const REPO_ROOT = resolve(app.getAppPath(), "..");
 
@@ -34,14 +29,14 @@ export function isPackaged(): boolean {
  * The bundled Python gateway directory.
  *
  * - Packaged: `<resourcesPath>/gateway` (extraResources in electron-builder)
- * - Development: `<repo>/desktop-electron/resources/gateway` (if present),
+ * - Development: `<repo>/desktop/resources/gateway` (if present),
  *   otherwise `null` (fall back to the venv launcher).
  */
 export function getGatewayDir(): string | null {
   if (isPackaged()) {
     return join(process.resourcesPath, "gateway");
   }
-  const devDir = join(REPO_ROOT, "desktop-electron", "resources", "gateway");
+  const devDir = join(REPO_ROOT, "desktop", "resources", "gateway");
   return existsSync(devDir) ? devDir : null;
 }
 
@@ -53,21 +48,22 @@ export function getGatewayDir(): string | null {
 export function getGatewayExecutable(): string | null {
   const dir = getGatewayDir();
   if (!dir) return null;
-  const exe = process.platform === "win32" ? "oclaw-gateway.exe" : "oclaw-gateway";
+  const exe = process.platform === "win32" ? "kworks-gateway.exe" : "kworks-gateway";
   const path = join(dir, exe);
   return existsSync(path) ? path : null;
 }
 
 /**
- * The backend source directory (`backend/`).
+ * The backend source directory — the QiLin engine submodule.
  *
- * Used in development to locate the venv and the `app.gateway.app:app`
- * ASGI entrypoint. Returns `null` in packaged builds where there is no
- * source tree.
+ * In development this is `<repo>/qilin` (a git submodule pointing at the
+ * QiLin agent harness framework). The gateway is launched there via
+ * `uv run python -m uvicorn app.gateway.app:app`. Returns `null` in
+ * packaged builds where the source tree is not present.
  */
 export function getBackendDir(): string | null {
   if (isPackaged()) return null;
-  return join(REPO_ROOT, "backend");
+  return join(REPO_ROOT, "qilin");
 }
 
 /**
@@ -87,52 +83,50 @@ export function getFrontendDistDir(): string {
 /**
  * The app's writable data directory.
  *
- * Desktop runs under `~/.oclaw` (NOT Electron's `userData` /
+ * Desktop runs under `~/.kworks` (NOT Electron's `userData` /
  * `~/Library/Application Support/...`) so the user can discover and back up
- * app state directly from their home folder. This is the same directory the
- * web/backend dev deployment uses, unifying all OClaw user data under one
- * home-folder location. The legacy `userData` layout is migrated on first
- * run — see `migrateLegacyUserData` in backend.ts.
+ * app state directly from their home folder. The legacy `~/.oclaw` layout
+ * is migrated on first run — see `migrateLegacyUserData` in backend.ts.
  */
 export function getAppDataDir(): string {
-  return join(homedir(), ".oclaw");
+  return join(homedir(), ".kworks");
 }
 
 /**
- * The gateway state directory (`KKOCLAW_HOME`).
+ * The gateway state directory (`QILIN_HOME`).
  *
- * On desktop this is the same as `getAppDataDir()` (`~/.oclaw`) —
+ * On desktop this is the same as `getAppDataDir()` (`~/.kworks`) —
  * config.yaml, data/, skills/ etc. all live directly under the home root,
  * without an extra nesting level. This keeps paths short and
  * user-discoverable.
  */
-export function getKkoclawHome(): string {
+export function getKworksHome(): string {
   return getAppDataDir();
 }
 
 /** The desktop-owned gateway config file. */
 export function getDesktopConfigPath(): string {
-  return join(getKkoclawHome(), "config.yaml");
+  return join(getKworksHome(), "config.yaml");
 }
 
 /** The desktop-owned extensions config file for MCP and skill enablement state. */
 export function getDesktopExtensionsConfigPath(): string {
-  return join(getKkoclawHome(), "extensions_config.json");
+  return join(getKworksHome(), "extensions_config.json");
 }
 
 /**
  * The desktop-owned `.env` file holding skill model credentials.
  *
- * Public skills such as image/video/music generation read provider
- * credentials from fixed environment variable names (e.g. `GEMINI_API_KEY`,
- * `MINIMAX_API_KEY`). The web deployment puts these in the repo-root `.env`,
- * but the desktop shell runs fully isolated under `userData` and never reads
- * that file. This path is the desktop equivalent: `backend.ts` parses it on
- * launch and injects every variable into the gateway child-process
- * environment so skill subprocesses inherit them via `os.environ`.
+ * Skills such as image/video/music generation read provider credentials
+ * from fixed environment variable names (e.g. `GEMINI_API_KEY`,
+ * `MINIMAX_API_KEY`). The desktop shell runs fully isolated under `~/.kworks`
+ * and never reads the QiLin repo-root `.env`. This path is the desktop
+ * equivalent: `backend.ts` parses it on launch and injects every variable
+ * into the gateway child-process environment so skill subprocesses inherit
+ * them via `os.environ`.
  */
 export function getSkillModelsEnvPath(): string {
-  return join(getKkoclawHome(), ".env");
+  return join(getKworksHome(), ".env");
 }
 
 /**
@@ -144,7 +138,7 @@ export function getSkillModelsEnvPath(): string {
  * user re-logs in.
  */
 export function getAuthJwtSecretPath(): string {
-  return join(getKkoclawHome(), ".auth_jwt_secret");
+  return join(getKworksHome(), ".auth_jwt_secret");
 }
 
 /** The logs directory for gateway stdout/stderr. */
@@ -170,7 +164,7 @@ export function getRendererLogPath(): string {
 /**
  * The user-writable skills root.
  *
- * `~/.oclaw/skills/` contains bundled `builtin/` skills (seeded on
+ * `~/.kworks/skills/` contains bundled `builtin/` skills (seeded on
  * first run) AND a writable `custom/` directory so users can create their own
  * skills at runtime. The `builtin/` directory has sub-directories `core/`
  * and `task/` grouping skills by work mode.
@@ -205,7 +199,12 @@ export function getBundledSkillsDir(): string | null {
     }
     return null;
   }
-  // Development: repo skills directory (contains builtin/ + custom/).
+  // Development: the KWorks repo no longer ships its own skills tree (the
+  // QiLin engine submodule is the source of bundled builtin skills now).
+  // Look for skills under the qilin/ submodule first, then the legacy
+  // repo-root skills/ directory for backward compatibility.
+  const qilinSkills = join(REPO_ROOT, "qilin", "skills");
+  if (existsSync(qilinSkills)) return qilinSkills;
   const devSkills = join(REPO_ROOT, "skills");
   return existsSync(devSkills) ? devSkills : null;
 }
@@ -241,7 +240,7 @@ export function getBundledConfigTemplatePath(): string | null {
         join(process.resourcesPath, "gateway", "config.embedded.yaml"),
       ]
     : [
-        join(REPO_ROOT, "desktop-electron", "backend-build", "config.embedded.yaml"),
+        join(REPO_ROOT, "desktop", "backend-build", "config.embedded.yaml"),
       ];
 
   for (const candidate of candidates) {

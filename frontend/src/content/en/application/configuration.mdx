@@ -1,13 +1,13 @@
 ---
 title: Configuration
-description: KKOCLAW App is configured through two files and a set of environment variables. This page covers the application-level configuration that most operators need to set up before deploying.
+description: KWorks App is configured through two files and a set of environment variables. This page covers the application-level configuration that most operators need to set up before deploying.
 ---
 
 import { Callout, Cards, Tabs } from "nextra/components";
 
 # Configuration
 
-KKOCLAW App is configured through two files and a set of environment variables. This page covers the application-level configuration that most operators need to set up before deploying.
+KWorks App is configured through two files and a set of environment variables. This page covers the application-level configuration that most operators need to set up before deploying.
 
 ## Configuration files
 
@@ -69,7 +69,7 @@ models:
 ```yaml
 models:
   - name: deepseek-v3
-    use: kkoclaw.models.patched_deepseek:PatchedChatDeepSeek
+    use: qilin.models.patched_deepseek:PatchedChatDeepSeek
     model: deepseek-reasoner
     api_key: $DEEPSEEK_API_KEY
     timeout: 600.0
@@ -99,7 +99,7 @@ models:
     supports_vision: false
 ```
 
-Install Ollama provider: `cd backend && uv add 'kkoclaw-harness[ollama]'`
+Install Ollama provider: `cd backend && uv add 'qilin[ollama]'`
 
 <Callout type="warning">
   Use <code>langchain_ollama:ChatOllama</code> (not the OpenAI-compatible
@@ -130,26 +130,26 @@ Choose the execution environment for agent file and command operations:
   <Tabs.Tab>
 ```yaml
 sandbox:
-  use: kkoclaw.sandbox.local:LocalSandboxProvider
+  use: qilin.sandbox.local:LocalSandboxProvider
   allow_host_bash: false  # set true only for trusted single-user workflows
 ```
   </Tabs.Tab>
   <Tabs.Tab>
 ```yaml
 sandbox:
-  use: kkoclaw.community.aio_sandbox:AioSandboxProvider
+  use: qilin.community.aio_sandbox:AioSandboxProvider
   image: enterprise-public-cn-beijing.cr.volces.com/vefaas-public/all-in-one-sandbox:latest
   replicas: 3
   idle_timeout: 600
 ```
 
-Install: `cd backend && uv add 'kkoclaw-harness[aio-sandbox]'`
+Install: `cd backend && uv add 'qilin[aio-sandbox]'`
 
   </Tabs.Tab>
   <Tabs.Tab>
 ```yaml
 sandbox:
-  use: kkoclaw.community.aio_sandbox:AioSandboxProvider
+  use: qilin.community.aio_sandbox:AioSandboxProvider
   provisioner_url: http://provisioner:9194
 ```
   </Tabs.Tab>
@@ -162,34 +162,34 @@ Configure which tools the agent has access to. The defaults use DuckDuckGo (no A
 ```yaml
 tools:
   # Web search (choose one)
-  - use: kkoclaw.community.ddg_search.tools:web_search_tool # default, no key required
-  # - use: kkoclaw.community.tavily.tools:web_search_tool
+  - use: qilin.community.ddg_search.tools:web_search_tool # default, no key required
+  # - use: qilin.community.tavily.tools:web_search_tool
   #   api_key: $TAVILY_API_KEY
 
   # Web fetch (choose one)
-  - use: kkoclaw.community.jina_ai.tools:web_fetch_tool
+  - use: qilin.community.jina_ai.tools:web_fetch_tool
 
   # Image search
-  - use: kkoclaw.community.image_search.tools:image_search_tool
+  - use: qilin.community.image_search.tools:image_search_tool
 
   # File operations
-  - use: kkoclaw.sandbox.tools:ls_tool
-  - use: kkoclaw.sandbox.tools:read_file_tool
-  - use: kkoclaw.sandbox.tools:glob_tool
-  - use: kkoclaw.sandbox.tools:grep_tool
-  - use: kkoclaw.sandbox.tools:write_file_tool
-  - use: kkoclaw.sandbox.tools:str_replace_tool
-  - use: kkoclaw.sandbox.tools:bash_tool
+  - use: qilin.sandbox.tools:ls_tool
+  - use: qilin.sandbox.tools:read_file_tool
+  - use: qilin.sandbox.tools:glob_tool
+  - use: qilin.sandbox.tools:grep_tool
+  - use: qilin.sandbox.tools:write_file_tool
+  - use: qilin.sandbox.tools:str_replace_tool
+  - use: qilin.sandbox.tools:bash_tool
 ```
 
 ### Thread state persistence (checkpointer)
 
-By default, KKOCLAW uses an SQLite checkpointer for thread state persistence:
+By default, KWorks uses an SQLite checkpointer for thread state persistence:
 
 ```yaml
 checkpointer:
   type: sqlite
-  connection_string: checkpoints.db # stored in backend/.oclaw/
+  connection_string: checkpoints.db # stored in backend/.qilin/
 ```
 
 For production deployments with multiple processes:
@@ -197,7 +197,7 @@ For production deployments with multiple processes:
 ```yaml
 checkpointer:
   type: postgres
-  connection_string: postgresql://user:password@localhost:5432/kkoclaw
+  connection_string: postgresql://user:password@localhost:5432/kworks
 ```
 
 Install PostgreSQL support: `cd backend && uv add langgraph-checkpoint-postgres psycopg[binary] psycopg-pool`

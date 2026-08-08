@@ -65,8 +65,8 @@ function markUpdateInstallInProgress(): void {
  * the speedup; the metadata request is small and usually reachable.
  *
  * Operators can override via env:
- *   - ``OCLAW_GH_MIRROR=https://your-mirror.example.com``  use a custom mirror
- *   - ``OCLAW_GH_MIRROR=`` (empty)                            disable mirroring
+ *   - ``KWORKS_GH_MIRROR=https://your-mirror.example.com``  use a custom mirror
+ *   - ``KWORKS_GH_MIRROR=`` (empty)                            disable mirroring
  */
 const DEFAULT_GH_MIRROR = "https://gh-proxy.com";
 
@@ -89,9 +89,9 @@ const RELEASE_DL_URL_RE =
  * untouched.
  */
 function setupGitHubReleaseMirror(): void {
-  const mirror = process.env.OCLAW_GH_MIRROR ?? DEFAULT_GH_MIRROR;
+  const mirror = process.env.KWORKS_GH_MIRROR ?? DEFAULT_GH_MIRROR;
   if (!mirror) {
-    log.info("[updater] GitHub release mirror disabled by OCLAW_GH_MIRROR=''");
+    log.info("[updater] GitHub release mirror disabled by KWORKS_GH_MIRROR=''");
     return;
   }
 

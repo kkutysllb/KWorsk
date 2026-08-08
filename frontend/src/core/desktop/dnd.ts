@@ -13,7 +13,7 @@
 
 import { isDesktop } from "../config";
 
-export const DESKTOP_DROP_EVENT = "oclaw:desktop-file-drop";
+export const DESKTOP_DROP_EVENT = "kworks:desktop-file-drop";
 
 export interface DroppedFilesDetail {
   files: File[];

@@ -390,7 +390,7 @@ export function MemorySettingsPage() {
     try {
       setIsExporting(true);
       const exportedMemory = await exportMemory();
-      const fileName = `kkoclaw-memory-${(exportedMemory.lastUpdated || new Date().toISOString()).replace(/[:.]/g, "-")}.json`;
+      const fileName = `kworks-memory-${(exportedMemory.lastUpdated || new Date().toISOString()).replace(/[:.]/g, "-")}.json`;
       const blob = new Blob([JSON.stringify(exportedMemory, null, 2)], {
         type: "application/json",
       });

@@ -15,7 +15,7 @@ const noop = () => undefined;
 export async function checkForUpdates(): Promise<UpdateInfo | null> {
   if (!isDesktop()) return null;
   try {
-    return await window.oclawDesktop!.checkForUpdates();
+    return await window.kworksDesktop!.checkForUpdates();
   } catch (e) {
     console.warn("[desktop] checkForUpdates failed:", e);
     return null;
@@ -26,7 +26,7 @@ export async function checkForUpdates(): Promise<UpdateInfo | null> {
 export async function installUpdate(): Promise<boolean> {
   if (!isDesktop()) return false;
   try {
-    return await window.oclawDesktop!.installUpdate();
+    return await window.kworksDesktop!.installUpdate();
   } catch (e) {
     console.warn("[desktop] installUpdate failed:", e);
     return false;
@@ -46,7 +46,7 @@ export function onUpdateDownloading(
 ): () => void {
   if (!isDesktop()) return noop;
   try {
-    return window.oclawDesktop!.onUpdateDownloading(handler);
+    return window.kworksDesktop!.onUpdateDownloading(handler);
   } catch (e) {
     console.warn("[desktop] onUpdateDownloading subscribe failed:", e);
     return noop;
@@ -66,7 +66,7 @@ export function onUpdateReady(
 ): () => void {
   if (!isDesktop()) return noop;
   try {
-    return window.oclawDesktop!.onUpdateReady(handler);
+    return window.kworksDesktop!.onUpdateReady(handler);
   } catch (e) {
     console.warn("[desktop] onUpdateReady subscribe failed:", e);
     return noop;

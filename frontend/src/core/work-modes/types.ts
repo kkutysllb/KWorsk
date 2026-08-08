@@ -89,7 +89,7 @@ export interface WorkModeDetail {
   is_default: boolean;
   /** Effective skill set for this mode, locked-core flags included. */
   skills: WorkModeSkill[];
-  /** Display name of the bound lead agent (e.g. "KKOCLAW 1.0", "Coding Agent"). */
+  /** Display name of the bound lead agent (e.g. "KWorks 1.0", "Coding Agent"). */
   lead_agent_name?: string;
   /** Mode-specific task orchestration guidance, shown in the detail drawer. */
   orchestration_hint?: string;

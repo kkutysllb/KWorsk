@@ -302,7 +302,7 @@ export function mockLangGraphAPI(page: Page, options?: MockAPIOptions) {
 
 /**
  * Build a minimal SSE stream that the LangGraph SDK can parse.
- * The stream returns a single AI message: "Hello from KKOCLAW!".
+ * The stream returns a single AI message: "Hello from KWorks!".
  */
 export function handleRunStream(route: Route) {
   const events = [
@@ -322,7 +322,7 @@ export function handleRunStream(route: Route) {
           {
             type: "ai",
             id: "msg-ai-1",
-            content: "Hello from KKOCLAW!",
+            content: "Hello from KWorks!",
           },
         ],
       },

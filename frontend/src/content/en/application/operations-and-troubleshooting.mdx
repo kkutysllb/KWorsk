@@ -1,13 +1,13 @@
 ---
 title: Operations and Troubleshooting
-description: This page covers day-to-day operational tasks and solutions to common problems when running KKOCLAW App.
+description: This page covers day-to-day operational tasks and solutions to common problems when running KWorks App.
 ---
 
 import { Callout, Cards } from "nextra/components";
 
 # Operations and Troubleshooting
 
-This page covers day-to-day operational tasks and solutions to common problems when running KKOCLAW App.
+This page covers day-to-day operational tasks and solutions to common problems when running KWorks App.
 
 ## Log files
 
@@ -15,7 +15,7 @@ All services write logs to the `logs/` directory when started with `make dev`:
 
 | File                 | Service                              |
 | -------------------- | ------------------------------------ |
-| `logs/langgraph.log` | LangGraph / KKOCLAW Harness runtime |
+| `logs/langgraph.log` | LangGraph / Qilin Harness runtime |
 | `logs/gateway.log`   | FastAPI Gateway API                  |
 | `logs/frontend.log`  | Next.js frontend dev server          |
 | `logs/nginx.log`     | nginx reverse proxy                  |
@@ -50,7 +50,7 @@ curl http://localhost:9191/api/models
 
 ## Config upgrade
 
-When you pull a new version of KKOCLAW, the `config_version` in `config.example.yaml` may be higher than your `config.yaml`. To merge new fields without losing your customizations:
+When you pull a new version of KWorks, the `config_version` in `config.example.yaml` may be higher than your `config.yaml`. To merge new fields without losing your customizations:
 
 ```bash
 make config-upgrade
@@ -136,15 +136,15 @@ If MCP tools appear in `extensions_config.json` but are not available in the age
 ### Memory not persisting across sessions
 
 - Verify `memory.enabled: true` in `config.yaml`.
-- Check that the storage path is writable: `ls -la backend/.oclaw/`.
+- Check that the storage path is writable: `ls -la backend/.qilin/`.
 - Look for memory update errors in `logs/langgraph.log` (search for "memory").
 
 ## Data backup
 
-Thread data and memory are stored under `backend/.oclaw/`:
+Thread data and memory are stored under `backend/.qilin/`:
 
 ```
-backend/.oclaw/
+backend/.qilin/
   memory.json           # global agent memory
   agents/               # per-agent memory
   threads/              # thread working directories
@@ -157,7 +157,7 @@ backend/.oclaw/
 
 Back up this entire directory to preserve conversation history, artifacts, and learned memory.
 
-In Docker deployments, the bind-mounted host path (`$KKOCLAW_ROOT/backend/.oclaw/`) is the source of truth — back up the host path.
+In Docker deployments, the bind-mounted host path (`$QILIN_ROOT/backend/.qilin/`) is the source of truth — back up the host path.
 
 ## Restarting services
 

@@ -4,11 +4,12 @@ import { MessageSquarePlus } from "lucide-react";
 import Link from "next/link";
 import { usePathname } from "next/navigation";
 
+import { KWorksLogo } from "@/components/kworks-logo";
 import {
+  SidebarGroup,
   SidebarMenu,
   SidebarMenuButton,
   SidebarMenuItem,
-  SidebarTrigger,
   useSidebar,
 } from "@/components/ui/sidebar";
 import { useI18n } from "@/core/i18n/hooks";
@@ -19,55 +20,56 @@ export function WorkspaceHeader({ className }: { className?: string }) {
   const { t } = useI18n();
   const { state } = useSidebar();
   const pathname = usePathname();
+  const collapsed = state === "collapsed";
+
   return (
-    <>
-      <div
-        className={cn(
-          "group/workspace-header flex h-12 flex-col justify-center",
-          className,
-        )}
-      >
-        {state === "collapsed" ? (
-          <div className="group-has-data-[collapsible=icon]/sidebar-wrapper:-translate-y flex w-full cursor-pointer items-center justify-center">
-            <div className="block bg-linear-to-r from-cyan-400 via-purple-500 to-pink-500 bg-clip-text pt-1 font-bold text-transparent group-hover/workspace-header:hidden">
-              KC
-            </div>
-            <SidebarTrigger
-              data-testid="workspace-sidebar-trigger"
-              className="hidden pl-2 group-hover/workspace-header:block"
-            />
-          </div>
-        ) : (
-          <div className="flex items-center justify-between gap-2">
-            {env.NEXT_PUBLIC_STATIC_WEBSITE_ONLY === "true" ? (
-              <Link
-                href="/"
-                className="ml-2 bg-linear-to-r from-cyan-400 via-purple-500 to-pink-500 bg-clip-text text-lg font-bold text-transparent"
-              >
-                OClaw
-              </Link>
-            ) : (
-              <div className="ml-2 cursor-default bg-linear-to-r from-cyan-400 via-purple-500 to-pink-500 bg-clip-text text-lg font-bold text-transparent">
-                OClaw
-              </div>
-            )}
-            <SidebarTrigger data-testid="workspace-sidebar-trigger" />
-          </div>
-        )}
-      </div>
-      <SidebarMenu>
-        <SidebarMenuItem>
-          <SidebarMenuButton
-            isActive={pathname === "/workspace/chats/new"}
-            asChild
-          >
-            <Link className="text-muted-foreground" href="/workspace/chats/new">
-              <MessageSquarePlus size={16} className="text-cyan-500" />
-              <span>{t.sidebar.newChat}</span>
+    <div
+      className={cn(
+        "flex flex-col gap-1 [-webkit-app-region:drag]",
+        className,
+      )}
+    >
+      {collapsed ? (
+        <div className="flex items-center justify-center py-1">
+          <KWorksLogo size={20} className="shrink-0" />
+        </div>
+      ) : (
+        <div className="flex items-center gap-2 px-2 py-1">
+          <KWorksLogo size={24} className="shrink-0" />
+          {env.NEXT_PUBLIC_STATIC_WEBSITE_ONLY === "true" ? (
+            <Link
+              href="/"
+              className="bg-linear-to-r from-cyan-400 via-purple-500 to-pink-500 bg-clip-text text-base font-bold text-transparent"
+            >
+              KWorks
             </Link>
-          </SidebarMenuButton>
-        </SidebarMenuItem>
-      </SidebarMenu>
-    </>
+          ) : (
+            <span className="bg-linear-to-r from-cyan-400 via-purple-500 to-pink-500 bg-clip-text text-base font-bold text-transparent">
+              KWorks
+            </span>
+          )}
+        </div>
+      )}
+      {!collapsed && (
+        <SidebarGroup className="p-0">
+          <SidebarMenu className="[-webkit-app-region:no-drag]">
+            <SidebarMenuItem>
+              <SidebarMenuButton
+                isActive={pathname === "/workspace/chats/new"}
+                asChild
+              >
+                <Link
+                  className="text-muted-foreground"
+                  href="/workspace/chats/new"
+                >
+                  <MessageSquarePlus size={16} className="text-cyan-500" />
+                  <span>{t.sidebar.newChat}</span>
+                </Link>
+              </SidebarMenuButton>
+            </SidebarMenuItem>
+          </SidebarMenu>
+        </SidebarGroup>
+      )}
+    </div>
   );
 }

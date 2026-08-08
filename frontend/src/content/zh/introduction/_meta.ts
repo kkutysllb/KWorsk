@@ -1,8 +1,8 @@
 import type { MetaRecord } from "nextra";
 
 const meta: MetaRecord = {
-  "why-kkoclaw": {
-    title: "为什么选择 KKOCLAW",
+  "why-kworks": {
+    title: "为什么选择 KWorks",
   },
   "core-concepts": {
     title: "核心概念",

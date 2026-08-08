@@ -1,16 +1,7 @@
 "use client";
-import { PromptInputProvider } from "@/components/ai-elements/prompt-input";
-import { ArtifactsProvider } from "@/components/workspace/artifacts";
-import { SubtasksProvider } from "@/core/tasks/context";
-import { TodosProvider } from "@/core/todos/context";
+
+// ChatProviders 已提升到 WorkspaceContent（SubtasksProvider / ArtifactsProvider /
+// PromptInputProvider），此文件保留导出以便 page.tsx 无需改动。
 export function ChatProviders({ children }: { children: React.ReactNode }) {
-  return (
-    <SubtasksProvider>
-      <ArtifactsProvider>
-        <TodosProvider>
-          <PromptInputProvider>{children}</PromptInputProvider>
-        </TodosProvider>
-      </ArtifactsProvider>
-    </SubtasksProvider>
-  );
+  return <>{children}</>;
 }

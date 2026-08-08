@@ -9,7 +9,7 @@ import { Callout, Cards, Tabs } from "nextra/components";
 
 <Callout type="info" emoji="📦">
   The sandbox is the isolated workspace where the agent does file and
-  command-based work. It is what makes KKOCLAW capable of real action, not just
+  command-based work. It is what makes KWorks capable of real action, not just
   conversation.
 </Callout>
 
@@ -17,7 +17,7 @@ The sandbox gives the Lead Agent a controlled environment where it can read file
 
 ## Sandbox modes
 
-KKOCLAW supports three sandbox modes. Choose the one that fits your deployment:
+KWorks supports three sandbox modes. Choose the one that fits your deployment:
 
 ### LocalSandbox (default)
 
@@ -28,7 +28,7 @@ Commands run directly on the host machine's filesystem. There is no container is
 
 ```yaml
 sandbox:
-  use: kkoclaw.sandbox.local:LocalSandboxProvider
+  use: qilin.sandbox.local:LocalSandboxProvider
   allow_host_bash: false # default; set to true only for fully trusted workflows
 ```
 
@@ -40,7 +40,7 @@ Commands run in an isolated container (Docker on Linux/Windows, or Apple Contain
 
 ```yaml
 sandbox:
-  use: kkoclaw.community.aio_sandbox:AioSandboxProvider
+  use: qilin.community.aio_sandbox:AioSandboxProvider
 
   # Optional: container image (default shown below)
   image: enterprise-public-cn-beijing.cr.volces.com/vefaas-public/all-in-one-sandbox:latest
@@ -48,8 +48,8 @@ sandbox:
   # Optional: max concurrent containers (default: 3, LRU eviction when exceeded)
   replicas: 3
 
-  # Optional: container name prefix (default: kkoclaw-sandbox)
-  container_prefix: kkoclaw-sandbox
+  # Optional: container name prefix (default: kworks-sandbox)
+  container_prefix: kworks-sandbox
 
   # Optional: idle timeout in seconds (default: 600)
   idle_timeout: 600
@@ -65,7 +65,7 @@ sandbox:
     API_KEY: $MY_API_KEY
 ```
 
-Install: `cd backend && uv add 'kkoclaw-harness[aio-sandbox]'`
+Install: `cd backend && uv add 'qilin[aio-sandbox]'`
 
 ### Provisioner-managed Sandbox (Kubernetes)
 
@@ -73,7 +73,7 @@ Each sandbox gets a dedicated Pod in a Kubernetes cluster, managed by the provis
 
 ```yaml
 sandbox:
-  use: kkoclaw.community.aio_sandbox:AioSandboxProvider
+  use: qilin.community.aio_sandbox:AioSandboxProvider
   provisioner_url: http://provisioner:9194
 ```
 
@@ -86,7 +86,7 @@ The sandbox uses path mappings to bridge the host filesystem and the container's
 | Host path                                   | Container path                               | Access     |
 | ------------------------------------------- | -------------------------------------------- | ---------- |
 | `skills/` (from `skills.path`)              | `/mnt/skills` (from `skills.container_path`) | Read-only  |
-| `.oclaw/threads/{thread_id}/user-data/` | `/mnt/user-data/`                            | Read-write |
+| `.qilin/threads/{thread_id}/user-data/` | `/mnt/user-data/`                            | Read-write |
 
 The skills directory is always mounted read-only. Threads write their working data (uploads, outputs, intermediate files) to `/mnt/user-data/`.
 
@@ -96,7 +96,7 @@ You can add additional mounts for the local sandbox using the `mounts:` configur
 
 ```yaml
 sandbox:
-  use: kkoclaw.sandbox.local:LocalSandboxProvider
+  use: qilin.sandbox.local:LocalSandboxProvider
   mounts:
     - host_path: /home/user/my-project
       container_path: /mnt/my-project
@@ -114,7 +114,7 @@ The sandbox tools limit output size to keep the agent's context manageable. Thes
 
 ```yaml
 sandbox:
-  use: kkoclaw.sandbox.local:LocalSandboxProvider
+  use: qilin.sandbox.local:LocalSandboxProvider
 
   # bash uses middle-truncation (head + tail)
   bash_output_max_chars: 20000

@@ -20,8 +20,8 @@ test.describe("Chat workspace", () => {
     const textarea = page.getByPlaceholder(/how can i assist you/i);
     await expect(textarea).toBeVisible({ timeout: 15_000 });
 
-    await textarea.fill("Hello, KKOCLAW!");
-    await expect(textarea).toHaveValue("Hello, KKOCLAW!");
+    await textarea.fill("Hello, KWorks!");
+    await expect(textarea).toHaveValue("Hello, KWorks!");
   });
 
   test("sending a message triggers API call and shows response", async ({
@@ -44,7 +44,7 @@ test.describe("Chat workspace", () => {
     await expect.poll(() => streamCalled, { timeout: 10_000 }).toBeTruthy();
 
     // The AI response should appear in the chat
-    await expect(page.getByText("Hello from KKOCLAW!")).toBeVisible({
+    await expect(page.getByText("Hello from KWorks!")).toBeVisible({
       timeout: 10_000,
     });
   });

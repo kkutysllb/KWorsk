@@ -17,15 +17,15 @@ import { fetch as fetchWithAuth } from "@/core/api/fetcher";
 function setDesktopMode(enabled: boolean) {
   const w = window as unknown as Record<string, unknown>;
   if (enabled) {
-    w.oclawDesktop = { gatewayPort: 29987 };
+    w.kworksDesktop = { gatewayPort: 29987 };
   } else {
-    delete w.oclawDesktop;
+    delete w.kworksDesktop;
   }
 }
 
 function setDesktopModeWithFrontendPort(frontendPort: number) {
   const w = window as unknown as Record<string, unknown>;
-  w.oclawDesktop = { gatewayPort: 29987, frontendPort };
+  w.kworksDesktop = { gatewayPort: 29987, frontendPort };
 }
 
 function stubLocationPort(port: string) {

@@ -14,8 +14,8 @@ const embeddedConfig = readFileSync(
 test("desktop backend initializes and uses an isolated config.yaml", () => {
   assert.match(backendSource, /initConfig\(\)/);
   assert.match(backendSource, /config\.embedded\.yaml/);
-  assert.match(backendSource, /KKOCLAW_CONFIG_PATH/);
-  assert.match(backendSource, /KKOCLAW_DATA_DIR/);
+  assert.match(backendSource, /QILIN_CONFIG_PATH/);
+  assert.match(backendSource, /QILIN_HOST_BASE_DIR/);
   assert.match(backendSource, /getDesktopConfigPath\(\)/);
 });
 
@@ -35,23 +35,22 @@ test("desktop default config does not ship a coding_agent section", () => {
   assert.doesNotMatch(embeddedConfig, /^coding_agent:/m);
 });
 
-test("desktop default config stores sqlite under the desktop data directory", () => {
-  assert.match(embeddedConfig, /database:\s*\n\s+backend:\s+sqlite\n\s+sqlite_dir:\s+\$KKOCLAW_DATA_DIR/);
+test("desktop default config uses sqlite backend", () => {
+  // sqlite_dir is injected at runtime by config-migration.ts as an absolute
+  // path (~/.kworks/data); the embedded template only pins the backend type.
+  assert.match(embeddedConfig, /database:\s*\n\s+backend:\s+sqlite/);
 });
 
 test("desktop backend uses an isolated extensions config instead of repo MCP config", () => {
-  assert.match(backendSource, /KKOCLAW_EXTENSIONS_CONFIG_PATH/);
+  assert.match(backendSource, /QILIN_EXTENSIONS_CONFIG_PATH/);
   assert.match(backendSource, /getDesktopExtensionsConfigPath\(\)/);
   assert.match(backendSource, /initExtensionsConfig\(\)/);
 });
 
-test("desktop seeds public skills and allows user-created custom skills", () => {
-  // Still seed bundled public skills so first run has a non-empty skill set.
-  assert.match(backendSource, /publicTarget/);
-  // Create an empty custom/ dir so users can author their own skills at
-  // runtime (web-to-desktop migration also depends on this).
-  assert.match(backendSource, /mkdirSync\(join\(skillsRoot,\s*"custom"\)/);
-  // Intentionally do NOT set KKOCLAW_PUBLIC_SKILLS_ONLY at runtime — that
-  // flag was for bundling-time, not for forbidding user-created skills.
+test("desktop seeds bundled builtin skills and allows user-created custom skills", () => {
+  // Seed bundled builtin skills so first run has a non-empty skill set.
+  assert.match(backendSource, /customTarget/);
+  assert.match(backendSource, /mkdirSync\(customTarget/);
+  // QiLin does not use the legacy KKOCLAW_PUBLIC_SKILLS_ONLY flag.
   assert.doesNotMatch(backendSource, /KKOCLAW_PUBLIC_SKILLS_ONLY:\s*"1"/);
 });

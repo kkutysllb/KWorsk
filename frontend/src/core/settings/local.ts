@@ -11,12 +11,12 @@ export const DEFAULT_LOCAL_SETTINGS: LocalSettings = {
   },
 };
 
-export const LOCAL_SETTINGS_KEY = "kkoclaw.local-settings";
-export const THREAD_MODEL_KEY_PREFIX = "kkoclaw.thread-model.";
-export const THREAD_AGENT_KEY_PREFIX = "kkoclaw.thread-agent.";
-export const THREAD_WORK_MODE_KEY_PREFIX = "kkoclaw.thread-work-mode.";
-export const THREAD_WORKSPACE_PATH_KEY_PREFIX = "kkoclaw.thread-workspace-path.";
-export const RECENT_WORKSPACE_PATHS_KEY = "kkoclaw.recent-workspace-paths";
+export const LOCAL_SETTINGS_KEY = "kworks.local-settings";
+export const THREAD_MODEL_KEY_PREFIX = "kworks.thread-model.";
+export const THREAD_AGENT_KEY_PREFIX = "kworks.thread-agent.";
+export const THREAD_WORK_MODE_KEY_PREFIX = "kworks.thread-work-mode.";
+export const THREAD_WORKSPACE_PATH_KEY_PREFIX = "kworks.thread-workspace-path.";
+export const RECENT_WORKSPACE_PATHS_KEY = "kworks.recent-workspace-paths";
 
 function isBrowser(): boolean {
   return typeof window !== "undefined";

@@ -1,13 +1,13 @@
 ---
 title: Work with Memory
-description: This tutorial shows you how to enable and use KKOCLAW's memory system so the agent remembers important information about you across multiple sessions.
+description: This tutorial shows you how to enable and use KWorks's memory system so the agent remembers important information about you across multiple sessions.
 ---
 
 import { Callout } from "nextra/components";
 
 # Work with Memory
 
-This tutorial shows you how to enable and use KKOCLAW's memory system so the agent remembers important information about you across multiple sessions.
+This tutorial shows you how to enable and use KWorks's memory system so the agent remembers important information about you across multiple sessions.
 
 ## Enable memory
 
@@ -49,10 +49,10 @@ The agent will automatically produce FastAPI-style code with type annotations.
 
 ## Inspect memory
 
-Memory is stored in `backend/.oclaw/memory.json`:
+Memory is stored in `backend/.qilin/memory.json`:
 
 ```bash
-cat backend/.oclaw/memory.json
+cat backend/.qilin/memory.json
 ```
 
 ## Per-agent memory
@@ -60,12 +60,12 @@ cat backend/.oclaw/memory.json
 When a custom agent is active, it maintains its own memory file at:
 
 ```
-backend/.oclaw/agents/{agent_name}/memory.json
+backend/.qilin/agents/{agent_name}/memory.json
 ```
 
 This keeps each agent's learned knowledge separate.
 
 ## Next steps
 
-- [Deploy Your Own KKOCLAW](/docs/tutorials/deploy-your-own-kkoclaw)
+- [Deploy Your Own KWorks](/docs/tutorials/deploy-your-own-kworks)
 - [Memory System Reference](/docs/harness/memory)

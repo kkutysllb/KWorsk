@@ -6,9 +6,9 @@ import { getDesktopAuthHeaders } from "@/core/auth/session";
 function setDesktopMode(enabled: boolean) {
   const w = window as unknown as Record<string, unknown>;
   if (enabled) {
-    w.oclawDesktop = { gatewayPort: 29987 };
+    w.kworksDesktop = { gatewayPort: 29987 };
   } else {
-    delete w.oclawDesktop;
+    delete w.kworksDesktop;
   }
 }
 
@@ -22,6 +22,6 @@ describe("desktop auth session helpers", () => {
     expect(getDesktopAuthHeaders()).toEqual({});
 
     setDesktopMode(true);
-    expect(getDesktopAuthHeaders()).toEqual({ "X-OClaw-Desktop": "1" });
+    expect(getDesktopAuthHeaders()).toEqual({ "X-KWorks-Desktop": "1" });
   });
 });

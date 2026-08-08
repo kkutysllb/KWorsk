@@ -35,7 +35,7 @@ export interface AgentThreadContext extends Record<string, unknown> {
    * this directory for the current thread. Forwarded via the gateway's
    * ``_CONTEXT_CONFIGURABLE_KEYS`` whitelist and injected into
    * ``thread_data`` by ``ThreadDataMiddleware``. Falls back to the
-   * default user data root (~/.oclaw) when absent.
+   * default user data root (~/.kworks) when absent.
    */
   user_workspace_path?: string;
 }

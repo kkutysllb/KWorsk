@@ -28,7 +28,7 @@ export default defineConfig({
     timeout: 120_000,
     env: {
       SKIP_ENV_VALIDATION: "1",
-      KKOCLAW_AUTH_DISABLED: "1",
+      KWORKS_AUTH_DISABLED: "1",
       PORT: "9192",
     },
   },

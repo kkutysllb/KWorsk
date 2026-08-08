@@ -902,7 +902,7 @@ export function useThreadStream({
                 // Forward the per-thread user-selected workspace path so
                 // the backend sandbox grants bash/read/write access to
                 // this directory. Falls back to the default user data
-                // root (~/.oclaw) when undefined.
+                // root (~/.kworks) when undefined.
                 user_workspace_path: context.user_workspace_path,
               },
             },

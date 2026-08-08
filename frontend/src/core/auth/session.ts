@@ -2,8 +2,8 @@
 
 import { isDesktop } from "@/core/config";
 
-const DESKTOP_SESSION_TOKEN_KEY = "oclawDesktopSessionToken";
-const DESKTOP_AUTH_HEADER = "X-OClaw-Desktop";
+const DESKTOP_SESSION_TOKEN_KEY = "kworksDesktopSessionToken";
+const DESKTOP_AUTH_HEADER = "X-KWorks-Desktop";
 
 export function getDesktopSessionToken(): string | null {
   if (typeof window === "undefined") return null;

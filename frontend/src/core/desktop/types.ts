@@ -1,7 +1,7 @@
 /**
  * Type definitions for the Electron desktop bridge.
  *
- * The Electron preload script exposes a `window.oclawDesktop` object via
+ * The Electron preload script exposes a `window.kworksDesktop` object via
  * `contextBridge`. This module declares both that global and the shared
  * shapes exchanged across the IPC boundary, so the renderer can consume
  * them with full type-safety without importing any Electron code.
@@ -122,7 +122,7 @@ export interface SkillModelsConfig {
 }
 
 /**
- * The bridge exposed on `window.oclawDesktop` by the Electron preload.
+ * The bridge exposed on `window.kworksDesktop` by the Electron preload.
  *
  * Every member maps 1:1 to an `ipcMain.handle` channel (or a native call)
  * implemented in `desktop-electron/preload.ts`.
@@ -212,6 +212,6 @@ export interface DesktopBridge {
 
 declare global {
   interface Window {
-    oclawDesktop?: DesktopBridge;
+    kworksDesktop?: DesktopBridge;
   }
 }

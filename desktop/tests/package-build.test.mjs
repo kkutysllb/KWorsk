@@ -18,7 +18,7 @@ test("package resource verifier rejects stale or incomplete gateway bundles", ()
   const verifierSource = readFileSync(verifierUrl, "utf8");
   assert.match(verifierSource, /resources\/gateway/);
   assert.match(verifierSource, /frontend\/out/);
-  assert.match(verifierSource, /KKOCLAW_PUBLIC_SKILLS_ONLY/);
+  assert.match(verifierSource, /LocalSkillStorage/);
   assert.match(verifierSource, /config\.embedded\.yaml/);
   assert.match(verifierSource, /skills\/builtin/);
   assert.match(verifierSource, /skills\/builtin\/core/);

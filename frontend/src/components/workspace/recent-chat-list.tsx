@@ -55,6 +55,7 @@ import {
 } from "@/components/ui/sidebar";
 import { getAPIClient } from "@/core/api";
 import { useI18n } from "@/core/i18n/hooks";
+import { useWorkspaceLayout } from "./workspace-layout-context";
 import {
   exportThreadAsJSON,
   exportThreadAsMarkdown,
@@ -136,6 +137,7 @@ export function RecentChatList() {
   const { t } = useI18n();
   const router = useRouter();
   const pathname = usePathname();
+  const { historyCollapsed, toggleHistory } = useWorkspaceLayout();
   // In the Electron desktop build, useParams() returns stale values from the
   // pre-rendered new.html RSC payload. Parse thread_id and agent_name from
   // the real URL pathname instead.
@@ -209,7 +211,7 @@ export function RecentChatList() {
   const handleShare = useCallback(
     async (thread: AgentThread) => {
       // Always use Vercel URL for sharing so others can access
-      const VERCEL_URL = "https://kkoclaw.com";
+      const VERCEL_URL = "https://kworks.com";
       const isLocalhost =
         window.location.hostname === "localhost" ||
         window.location.hostname === "127.0.0.1";
@@ -260,8 +262,46 @@ export function RecentChatList() {
     onDelete: handleDelete,
   };
 
+  // 历史会话段整体折叠：只显示标题条
+  if (historyCollapsed) {
+    return (
+      <SidebarGroup className="pt-1">
+        <SidebarGroupLabel
+          asChild
+          className="cursor-pointer"
+        >
+          <button type="button" onClick={toggleHistory}>
+            <span className="truncate">{t.sidebar.recentChats}</span>
+            <span className="ml-auto rounded-full bg-muted px-1.5 py-0.5 text-[10px] font-medium text-muted-foreground">
+              {threads.length}
+            </span>
+            <span className="ml-1.5 text-muted-foreground">
+              <ChevronRight className="size-3.5" />
+            </span>
+          </button>
+        </SidebarGroupLabel>
+      </SidebarGroup>
+    );
+  }
+
   return (
     <>
+      <SidebarGroup className="pt-1">
+        <SidebarGroupLabel
+          asChild
+          className="cursor-pointer"
+        >
+          <button type="button" onClick={toggleHistory}>
+            <span className="truncate">{t.sidebar.recentChats}</span>
+            <span className="ml-auto rounded-full bg-muted px-1.5 py-0.5 text-[10px] font-medium text-muted-foreground">
+              {threads.length}
+            </span>
+            <span className="ml-1.5 text-muted-foreground">
+              <ChevronDown className="size-3.5" />
+            </span>
+          </button>
+        </SidebarGroupLabel>
+      </SidebarGroup>
       {groups.map((group) => (
         <ThreadModeGroup
           key={group.workModeId}

@@ -8,7 +8,7 @@ function setDesktopBridge(bridge?: Partial<DesktopBridge>) {
   const w = window as unknown as Record<string, unknown>;
   const unsubscribe = () => undefined;
   if (bridge) {
-    w.oclawDesktop = {
+    w.kworksDesktop = {
       gatewayPort: 29987,
       getGatewayConfig: vi.fn(),
       getBackendStatus: vi.fn(),
@@ -38,7 +38,7 @@ function setDesktopBridge(bridge?: Partial<DesktopBridge>) {
       ...bridge,
     } satisfies DesktopBridge;
   } else {
-    delete w.oclawDesktop;
+    delete w.kworksDesktop;
   }
 }
 

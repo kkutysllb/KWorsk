@@ -54,8 +54,8 @@ const CHINESE_DESCRIPTIONS: Record<string, string> = {
     "通过温暖、自适应的引导式对话生成个性化 SOUL.md 身份文档。让 AI 了解你的角色、偏好和愿景，打造专属于你的智能体灵魂。",
   "chart-visualization":
     "将数据智能转化为可视化图表。从 26 种图表类型中自动选择最优方案，支持折线图、柱状图、饼图、雷达图、桑基图、热力图等。",
-  "claude-to-kkoclaw":
-    "通过 HTTP API 与 OClaw 平台交互。可发送消息进行深度研究分析、管理对话线程、列出模型/技能/智能体、管理记忆、上传文件等。",
+  "claude-to-kworks":
+    "通过 HTTP API 与 KWorks 平台交互。可发送消息进行深度研究分析、管理对话线程、列出模型/技能/智能体、管理记忆、上传文件等。",
   "code-documentation":
     "为代码库、API、库或软件项目生成专业文档。支持 README、API 参考、内联注释、架构文档、变更日志和开发者指南等格式。",
   "consulting-analysis":
@@ -123,7 +123,7 @@ const SKILL_THEMES: Record<string, SkillTheme> = {
     badgeBg: "bg-cyan-500/15",
     badgeText: "text-cyan-400",
   },
-  "claude-to-kkoclaw": {
+  "claude-to-kworks": {
     gradient: "from-teal-500/20 to-emerald-500/10",
     iconBg: "bg-teal-500/15",
     iconColor: "text-teal-400",
@@ -273,7 +273,7 @@ const SKILL_ICON_MAP: Record<string, React.ComponentType<{ className?: string }>
   "academic-paper-review": BookOpenIcon,
   bootstrap: RocketIcon,
   "chart-visualization": ChartBarIcon,
-  "claude-to-kkoclaw": WandIcon,
+  "claude-to-kworks": WandIcon,
   "code-documentation": Code2Icon,
   "consulting-analysis": LightbulbIcon,
   "data-analysis": ChartBarIcon,

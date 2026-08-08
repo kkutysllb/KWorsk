@@ -10,7 +10,7 @@ import {
   type ReactNode,
 } from "react";
 
-const STORAGE_KEY = "oclaw.todosPanelOpen";
+const STORAGE_KEY = "kworks.todosPanelOpen";
 
 export interface TodosContextValue {
   open: boolean;

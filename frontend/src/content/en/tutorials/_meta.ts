@@ -13,8 +13,8 @@ const meta: MetaRecord = {
   "work-with-memory": {
     title: "Work with Memory",
   },
-  "deploy-your-own-kkoclaw": {
-    title: "Deploy Your Own KKOCLAW",
+  "deploy-your-own-kworks": {
+    title: "Deploy Your Own KWorks",
   },
 };
 

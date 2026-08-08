@@ -190,4 +190,9 @@ third_party/
 2026-06-28-work-mode-skills-implementation.md
 frontend/playwright-report/*.worktrees/
 .worktrees/
-.scratch/
+.scratch/%
+
+# ═══════════════════════════════════════
+# Local agent tooling caches (not for version control)
+# ═══════════════════════════════════════
+.workbuddy/

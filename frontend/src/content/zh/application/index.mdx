@@ -1,19 +1,19 @@
 ---
-title: KKOCLAW 应用
-description: KKOCLAW 应用是 KKOCLAW 生产体验的参考实现。它将 Harness 运行时、基于 Web 的对话工作区、API Gateway 和反向代理组合成一个可部署的完整系统。
+title: KWorks 应用
+description: KWorks 应用是 KWorks 生产体验的参考实现。它将 Harness 运行时、基于 Web 的对话工作区、API Gateway 和反向代理组合成一个可部署的完整系统。
 ---
 
 import { Callout, Cards } from "nextra/components";
 
-# KKOCLAW 应用
+# KWorks 应用
 
 <Callout type="info" emoji="🚀">
-  KKOCLAW 应用是构建在 KKOCLAW Harness 之上的完整 Super Agent
+  KWorks 应用是构建在 Qilin Harness 之上的完整 Super Agent
   应用。它将运行时能力打包成一个可部署的产品，包含 Web 界面、API Gateway
   和运维工具。
 </Callout>
 
-KKOCLAW 应用是 KKOCLAW 生产体验的参考实现。它将 Harness 运行时、基于 Web 的对话工作区、API Gateway 和反向代理组合成一个可部署的完整系统。
+KWorks 应用是 KWorks 生产体验的参考实现。它将 Harness 运行时、基于 Web 的对话工作区、API Gateway 和反向代理组合成一个可部署的完整系统。
 
 ## 应用提供什么
 
@@ -29,7 +29,7 @@ KKOCLAW 应用是 KKOCLAW 生产体验的参考实现。它将 Harness 运行时
 
 ## 架构
 
-KKOCLAW 应用以三个服务的形式运行，通过单个 nginx 反向代理提供：
+KWorks 应用以三个服务的形式运行，通过单个 nginx 反向代理提供：
 
 ```
                 ┌──────────────────┐
@@ -54,7 +54,7 @@ KKOCLAW 应用以三个服务的形式运行，通过单个 nginx 反向代理�
 | ------------ | ------------------------------------------------------- |
 | 前端         | Next.js 16、React 19、TypeScript、pnpm                  |
 | Gateway      | FastAPI、Python 3.12、uvicorn                           |
-| Agent 运行时 | LangGraph、LangChain、KKOCLAW Harness                  |
+| Agent 运行时 | LangGraph、LangChain、Qilin Harness                  |
 | 反向代理     | nginx                                                   |
 | 状态持久化   | LangGraph Server（默认）+ 可选 SQLite/PostgreSQL 检查点 |
 

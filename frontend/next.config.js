@@ -48,7 +48,7 @@ const config = {
         async rewrites() {
           const rewrites = [];
           const gatewayURL = getInternalServiceURL(
-            "KKOCLAW_INTERNAL_GATEWAY_BASE_URL",
+            "KWORKS_INTERNAL_GATEWAY_BASE_URL",
             "http://127.0.0.1:9193",
           );
 
