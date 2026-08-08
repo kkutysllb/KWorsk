@@ -4,58 +4,80 @@
 # 本文件在首次启动时被复制到 ~/.kworks/config.yaml，是桌面端 QiLin gateway
 # 的默认配置。用户可在运行时通过 Settings UI 或直接编辑该文件调整。
 #
-# 注意：
-#   - database.sqlite_dir 由 desktop config-migration 在运行时动态注入绝对
-#     路径（~/.kworks/data），此处保持注释占位即可。
-#   - models 段首次启动留空，请在 Settings UI 中配置（避免硬性 env 依赖）。
-#   - orchestration.mode: multi 启用多智能体编排（QiLin v2.0.0）。
+# 字段含义与完整选项请参照上游示例：
+#   qilin/config.example.yaml （QiLin 权威配置参考，~2600 行带注释）
+# 本模板只显式写出桌面端需要 override 的默认值；其余字段走引擎内置默认。
+#
+# 桌面端 override 清单（与上游 config.example.yaml 默认值的差异）：
+#   - models                首次启动留空（$VAR 解析是硬强制，预置会导致启动崩溃）
+#   - database.sqlite_dir   由 config-migration.ts 运行时注入 ~/.kworks/data 绝对路径
+#   - orchestration.mode    multi（启用多智能体编排，上游默认 single）
+#   - sandbox.allow_host_bash  true（桌面端可信本地环境，上游默认 false）
+#   - agents_api.enabled    true（桌面端 UI 管理自定义 Agent，上游默认 false）
+#
+# 环境变量：$VAR 语法由 AppConfig.resolve_env_variables 解析；缺失变量会抛
+# ValueError。模型 api_key 推荐用 $VAR 引用 ~/.kworks/.env 中的凭证（UI 创建
+# 模型时自动完成明文→.env 迁移）。
 # =============================================================================
 
 config_version: 32
 
+# ── 日志级别 ──────────────────────────────────────────────────────────────
+# qilin 模块日志级别：debug / info / warning / error
+log_level: info
+
+# ── Token 用量 ────────────────────────────────────────────────────────────
+# 启用后 QiLin 记录每次模型调用的 input/output/total token，并在工作区 UI
+# 展示用量元数据（provider 返回时）。
+token_usage:
+  enabled: true
+
 # ── 模型配置 ──────────────────────────────────────────────────────────────
-# 桌面端首次启动不带任何预置模型：QiLin 的 $VAR 解析（app_config.py
-# resolve_env_variables）对缺失环境变量会直接抛 ValueError，若在此预置带
-# $DEEPSEEK_API_KEY 的模型，会导致 gateway 在用户未配置凭证前就无法启动。
-# 请在 gateway 起来后，通过桌面端 Settings UI 配置模型与 API Key（写入
-# ~/.kworks/config.yaml 与 ~/.kworks/.env）。
+# 桌面端首次启动不带任何预置模型：QiLin 的 $VAR 解析对缺失环境变量会直接
+# 抛 ValueError，预置带 $VAR 的模型会导致 gateway 在用户未配置凭证前无法启动。
+# 请在 gateway 起来后，通过桌面端 Settings UI 配置模型与 API Key（明文 key
+# 自动迁移到 ~/.kworks/.env，config.yaml 只保留 $VAR 引用）。
 #
-# 如需手动编辑 config.yaml，可参照下方注释示例：
+# 如需手动编辑 config.yaml，可参照下方注释示例（完整字段见 config.example.yaml）：
 #
 # models:
 #   - name: deepseek
 #     display_name: DeepSeek
 #     use: qilin.models.patched_deepseek:PatchedChatDeepSeek
 #     model: deepseek-chat
-#     api_base: https://api.deepseek.com
+#     api_base: https://api.deepseek.com       # DeepSeek 用 api_base 而非 base_url
 #     api_key: $DEEPSEEK_API_KEY
 #     timeout: 600.0
 #     max_retries: 2
 #     supports_thinking: false
 #     supports_vision: false
+#     # 可选：单模型定价（启用工作区实时成本展示；所有模型须用同一货币）
+#     # pricing:
+#     #   currency: CNY
+#     #   input_per_million: 8.0
+#     #   output_per_million: 32.0
+#     #   input_cache_hit_per_million: 0.8   # 可选，省略则 cache hit 按 miss 计价
 #
-#   # 示例：Anthropic Claude（取消注释并在 .env 配置 ANTHROPIC_API_KEY 后启用）
 #   - name: claude-sonnet
 #     display_name: Claude Sonnet
 #     use: qilin.models.patched_anthropic:PatchedChatAnthropic
 #     model: claude-sonnet-4-5
 #     api_key: $ANTHROPIC_API_KEY
-#     timeout: 600.0
-#     max_retries: 2
 #     supports_thinking: true
 #     supports_vision: true
 
 # ── 数据库 ────────────────────────────────────────────────────────────────
-# sqlite_dir 由 config-migration.ts 动态注入为 ~/.kworks/data 绝对路径。
-# 此处保留 backend: sqlite 确保 checkpointer + 应用数据共享同一 .db 文件。
+# SQLite 模式下 checkpointer 与应用层共享同一 .db 文件（WAL 模式允许并发读 +
+# 单写不阻塞）。sqlite_dir 由 config-migration.ts 运行时注入为
+# ~/.kworks/data 绝对路径，此处保持注释占位即可。
 database:
   backend: sqlite
-  # sqlite_dir: <由桌面端运行时注入>
+  # sqlite_dir: <由桌面端 config-migration.ts 运行时注入绝对路径>
 
 # ── 多智能体编排 ──────────────────────────────────────────────────────────
-# QiLin v2.0.0 引擎原生支持多智能体编排：
-#   single（默认）：lead agent + task_tool 委派
-#   multi：OrchestratorGraph 编排，workers 注册参与编排的子代理
+# QiLin v2.0.0 引擎原生支持多智能体编排（切换需重启：图结构在构建时定型）：
+#   single（上游默认）：lead agent + task_tool 委派
+#   multi（桌面端启用）：OrchestratorGraph 编排，workers 注册参与编排的子代理
 orchestration:
   mode: multi
   max_concurrency: 3
@@ -72,7 +94,8 @@ orchestration:
 
 # ── 沙箱 ──────────────────────────────────────────────────────────────────
 # 桌面端使用 LocalSandboxProvider（本地文件系统，无容器隔离）。
-# allow_host_bash: true 允许 agent 执行宿主机 shell 命令（桌面端可信环境）。
+# allow_host_bash: true 允许 agent 执行宿主机 shell 命令（桌面端可信环境；
+# 上游默认 false 因为 LocalSandboxProvider 不是安全隔离边界）。
 sandbox:
   use: qilin.sandbox.local:LocalSandboxProvider
   allow_host_bash: true
@@ -80,6 +103,24 @@ sandbox:
   read_file_output_max_chars: 50000
   ls_output_max_chars: 20000
   bash_command_timeout: 600
+
+# ── 文件上传 ──────────────────────────────────────────────────────────────
+# 网关级上传限制（字符数 = 字节）。自动 Office/PDF 转换在沙箱隔离前于宿主机
+# 执行，仅在完全可信来源时启用。
+uploads:
+  max_files: 10
+  max_file_size: 52428800    # 50 MiB
+  max_total_size: 104857600  # 100 MiB
+  auto_convert_documents: false
+  # pdf_converter: auto  # auto（默认，pymupdf4llm 优先回退 MarkItDown）/ pymupdf4llm / markitdown
+
+# ── 记忆 ──────────────────────────────────────────────────────────────────
+# 启用记忆中间件模式：agent 每轮结束后被动提取长期记忆，数据落在
+# ~/.kworks/ 下（FTS5 全文索引在 ~/.kworks/.retrieval/memory-fts5.sqlite3）。
+# 上游默认后端为 deermem + fts5 检索适配器；此处只显式锁定 mode。
+# 合法值仅为 middleware | tool（tool 为实验性，模型主动调用 memory_* 工具）。
+memory:
+  mode: middleware
 
 # ── 认证 ──────────────────────────────────────────────────────────────────
 # 桌面端启用本地认证（用户名/密码注册），禁用 OIDC SSO。
@@ -91,10 +132,7 @@ auth:
     providers: {}
 
 # ── 自定义 Agent 管理 API ─────────────────────────────────────────────────
+# 桌面端 UI 通过该 API 管理自定义 Agent 的 SOUL.md / USER.md。
+# 上游默认 false（仅在受信任的管理边界后启用）；桌面端显式开启。
 agents_api:
   enabled: true
-
-# ── 记忆 ──────────────────────────────────────────────────────────────────
-# 启用记忆中间件模式（agent 自动读写长期记忆，数据落在 ~/.kworks/ 下）。
-memory:
-  mode: middleware

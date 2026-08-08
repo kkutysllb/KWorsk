@@ -868,7 +868,9 @@ export function useThreadStream({
               // so thread.messages stays empty and the user sees no output.
               streamMode: ["values", "messages-tuple"],
               streamSubgraphs: true,
-              streamResumable: true,
+              // streamResumable is intentionally omitted: QiLin does not support
+              // resumable streams (HTTP 422). sanitizeRunStreamOptions in
+              // api-client.ts also strips it as a safety net.
               // Keep the task running even if the current page unmounts and
               // drops its SSE connection, so the frontend can rejoin instead
               // of cancelling work.

@@ -13,14 +13,14 @@ import type { BackendStatus, DesktopBridge } from "@/core/desktop/types";
 
 /** A minimal Electron bridge stub used to drive the desktop code path. */
 function makeBridge(overrides: Partial<DesktopBridge> = {}): DesktopBridge {
-  const stopped: BackendStatus = { status: "stopped", port: 29987 };
-  const starting: BackendStatus = { status: "starting", port: 29987 };
+  const stopped: BackendStatus = { status: "stopped", port: 19987 };
+  const starting: BackendStatus = { status: "starting", port: 19987 };
   const unsubscribe = () => {
     return undefined;
   };
   return {
-    gatewayPort: 29987,
-    getGatewayConfig: vi.fn(async () => ({ port: 29987 })),
+    gatewayPort: 19987,
+    getGatewayConfig: vi.fn(async () => ({ port: 19987 })),
     getBackendStatus: vi.fn(async (): Promise<BackendStatus> => stopped),
     startBackend: vi.fn(async (): Promise<BackendStatus> => starting),
     stopBackend: vi.fn(async (): Promise<BackendStatus> => stopped),
@@ -54,8 +54,8 @@ function makeBridge(overrides: Partial<DesktopBridge> = {}): DesktopBridge {
         repo_root: "",
         env_file: "",
         env_file_exists: false,
-        gateway_port: 29987,
-        frontend_port: 3000,
+        gateway_port: 19987,
+        frontend_port: 18569,
         uv_binary: "",
         uv_binary_exists: true,
         is_dev: true,
@@ -77,8 +77,8 @@ function setDesktopMode(enabled: boolean, bridge?: DesktopBridge) {
   }
 }
 
-const STOPPED: BackendStatus = { status: "stopped", port: 29987 };
-const STARTING: BackendStatus = { status: "starting", port: 29987 };
+const STOPPED: BackendStatus = { status: "stopped", port: 19987 };
+const STARTING: BackendStatus = { status: "starting", port: 19987 };
 
 describe("desktop integration — web mode (no Electron bridge)", () => {
   beforeEach(() => {

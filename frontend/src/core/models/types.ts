@@ -7,6 +7,8 @@ export interface Model {
   description?: string | null;
   api_key?: string | null;
   base_url?: string | null;
+  /** YAML key that carries the endpoint (base_url/api_base/api_url). */
+  endpoint_field?: string | null;
   max_tokens?: number | null;
   max_input_tokens?: number | null;
   max_retries?: number | null;
@@ -27,6 +29,8 @@ export interface ModelRequest {
   model: string;
   api_key?: string | null;
   base_url?: string | null;
+  /** YAML key to store base_url under (e.g. 'api_base' for DeepSeek). */
+  endpoint_field?: string | null;
   max_tokens?: number | null;
   max_input_tokens?: number | null;
   max_retries?: number | null;

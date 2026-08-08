@@ -3,7 +3,7 @@
  *
  * Boots three processes and wires them together:
  *   1. The Python gateway via `uv run uvicorn` (backend venv)
- *   2. The Next.js dev server on port 28569
+ *   2. The Next.js dev server on port 18569
  *   3. Electron, pointed at the dev server via KWORKS_DEV_SERVER=1
  *
  * Ctrl-C tears everything down cleanly.
@@ -27,8 +27,8 @@ const EMBEDDED_CONFIG = resolve(
   "config.embedded.yaml",
 );
 
-const GATEWAY_PORT = process.env.GATEWAY_PORT ?? "29987";
-const DEV_SERVER_PORT = "28569";
+const GATEWAY_PORT = process.env.GATEWAY_PORT ?? "19987";
+const DEV_SERVER_PORT = "18569";
 const DEV_SERVER_URL = `http://127.0.0.1:${DEV_SERVER_PORT}`;
 const FRONTEND_READY_TIMEOUT_MS = 60_000;
 const DESKTOP_DEV_ORIGINS = [
@@ -74,7 +74,7 @@ function start(cmd, args, opts = {}) {
     // POSIX: put each child in its own process group so teardown can kill the
     // entire group (including grandchildren spawned by pnpm exec / uv run)
     // with a single negative-PID signal. Without this, killing the direct
-    // child leaves grandchildren as orphans still bound to ports (e.g. 29987)
+    // child leaves grandchildren as orphans still bound to ports (e.g. 19987)
     // or holding .next/dev/lock. Windows has no process groups, so disabled.
     detached: process.platform !== "win32" && detached !== false,
     ...spawnOpts,
@@ -262,6 +262,37 @@ function syncDesktopBuiltinSkills(skillsPath) {
   }
 }
 
+/**
+ * Minimal `.env` parser — mirrors skill-models-env.ts::parseEnvFile.
+ *
+ * We inline it here (instead of importing from dist/) because
+ * skill-models-env.js transitively imports paths.js → electron, which is
+ * unavailable when dev.mjs runs as a plain Node script outside Electron.
+ * The parser is pure string processing with no external deps, so a local
+ * copy is the simplest way to keep the gateway env injection working.
+ */
+function parseEnvFile(content) {
+  const out = {};
+  for (const rawLine of content.split(/\r?\n/)) {
+    const line = rawLine.trim();
+    if (!line || line.startsWith("#")) continue;
+    const deprefixed = line.startsWith("export ") ? line.slice(7).trimStart() : line;
+    const eq = deprefixed.indexOf("=");
+    if (eq < 0) continue;
+    const key = deprefixed.slice(0, eq).trim();
+    if (!key) continue;
+    let value = deprefixed.slice(eq + 1).trim();
+    if (
+      (value.startsWith('"') && value.endsWith('"')) ||
+      (value.startsWith("'") && value.endsWith("'"))
+    ) {
+      value = value.slice(1, -1);
+    }
+    out[key] = value;
+  }
+  return out;
+}
+
 function startGateway() {
   if (!existsSync(BACKEND_DIR)) {
     console.warn(`[dev] backend dir not found: ${BACKEND_DIR} — skipping gateway`);
@@ -289,6 +320,26 @@ function startGateway() {
     syncDesktopBuiltinSkills(skillsPath);
   }
 
+  // Load ~/.kworks/.env so $ENV_VAR references in config.yaml resolve at
+  // gateway startup. Mirrors backend.ts::loadSkillModelsEnv / buildEnv.
+  // Without this, creating a model via the UI writes api_key: $FOO_API_KEY
+  // into config.yaml + the plaintext key into .env, but dev mode never injects
+  // the .env into the gateway subprocess, causing resolve_env_variables to
+  // raise ValueError and crash uvicorn before it binds the port.
+  const envFilePath = kworksHome ? join(kworksHome, ".env") : undefined;
+  let skillModelVars = {};
+  if (envFilePath && existsSync(envFilePath)) {
+    try {
+      skillModelVars = parseEnvFile(readFileSync(envFilePath, "utf8"));
+      const count = Object.keys(skillModelVars).length;
+      if (count > 0) {
+        console.log(`[dev] injected ${count} var(s) from ${envFilePath}`);
+      }
+    } catch (e) {
+      console.warn(`[dev] could not read ${envFilePath}:`, e);
+    }
+  }
+
   console.log(`[dev] starting gateway on port ${GATEWAY_PORT}...`);
   console.log(`[dev]   QILIN_HOME=${kworksHome}`);
   console.log(`[dev]   QILIN_CONFIG_PATH=${configPath}`);
@@ -299,6 +350,9 @@ function startGateway() {
     cwd: BACKEND_DIR,
     env: {
       ...process.env,
+      // .env credentials take priority over the parent shell env, matching
+      // backend.ts buildEnv() ordering (skillModelVars after loginShellEnv).
+      ...skillModelVars,
       GATEWAY_HOST: "127.0.0.1",
       GATEWAY_PORT,
       GATEWAY_CORS_ORIGINS: DESKTOP_DEV_ORIGINS,
@@ -327,10 +381,10 @@ function startGateway() {
 // Static export is only used by `desktop-build.mjs` (which patches that layout).
 //
 // In dev we run the normal SSR dev server with rewrites proxying /api/* to the
-// desktop gateway on 29987. Desktop detection (`isDesktop()`) still works
+// desktop gateway on 19987. Desktop detection (`isDesktop()`) still works
 // because it checks `window.kworksDesktop` (injected by the preload), not the
 // DESKTOP_BUILD env var. Cookie-based auth flows through the Next.js proxy,
-// matching fetcher.ts's `port === "28569"` credentials branch.
+// matching fetcher.ts's `port === "18569"` credentials branch.
 let frontendReadyPromise = null;
 
 function ensureFrontendDeps() {

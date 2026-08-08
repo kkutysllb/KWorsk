@@ -9,7 +9,7 @@ function setDesktopBridge(bridge?: Partial<DesktopBridge>) {
   const unsubscribe = () => undefined;
   if (bridge) {
     w.kworksDesktop = {
-      gatewayPort: 29987,
+      gatewayPort: 19987,
       getGatewayConfig: vi.fn(),
       getBackendStatus: vi.fn(),
       startBackend: vi.fn(),

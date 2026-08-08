@@ -87,31 +87,55 @@ function replaceOrAppendDesktopDatabase(source: string): string {
   }
 
   const lines = range.text.split("\n");
-  let hasBackend = false;
-  let hasSqliteDir = false;
+  let backendIdx = -1;
+  let sqliteIdx = -1;
 
+  // Pass 1: update existing values in place, recording their line indices.
   for (let i = 0; i < lines.length; i += 1) {
     const line = lines[i] ?? "";
     if (/^[ \t]+backend:\s*/.test(line)) {
       lines[i] = "  backend: sqlite";
-      hasBackend = true;
+      backendIdx = i;
     }
     if (/^[ \t]+sqlite_dir:\s*/.test(line)) {
       lines[i] = `  sqlite_dir: ${sqliteDir}`;
-      hasSqliteDir = true;
+      sqliteIdx = i;
     }
   }
 
-  let insertAt = lines.length;
-  while (insertAt > 1 && (lines[insertAt - 1] ?? "").trim() === "") {
-    insertAt -= 1;
-  }
-  if (!hasBackend) {
+  // Insert `backend: sqlite` right after the `database:` header if missing.
+  if (backendIdx === -1) {
     lines.splice(1, 0, "  backend: sqlite");
-    insertAt += 1;
+    backendIdx = 1;
+    if (sqliteIdx !== -1) sqliteIdx += 1; // shifted by the splice above
   }
-  if (!hasSqliteDir) {
-    lines.splice(insertAt, 0, `  sqlite_dir: ${sqliteDir}`);
+
+  // Insert `sqlite_dir` immediately after `backend` if missing. Keeping the
+  // two adjacent prevents the value from landing after a downstream comment
+  // block (which `findTopLevelSections` cannot distinguish from `database:`'s
+  // own body — see the class docstring on `Paths` for why this matters).
+  if (sqliteIdx === -1) {
+    lines.splice(backendIdx + 1, 0, `  sqlite_dir: ${sqliteDir}`);
+    sqliteIdx = backendIdx + 1;
+  }
+
+  // Realign `sqlite_dir` if a prior revision inserted it far from `backend`
+  // with only comments / blank lines in between. We never reorder when the gap
+  // contains another real key — that would silently rewrite a user's
+  // intentional key ordering.
+  if (sqliteIdx > backendIdx + 1) {
+    let gapIsCommentsOnly = true;
+    for (let i = backendIdx + 1; i < sqliteIdx; i += 1) {
+      const gapLine = (lines[i] ?? "").trim();
+      if (gapLine !== "" && !gapLine.startsWith("#")) {
+        gapIsCommentsOnly = false;
+        break;
+      }
+    }
+    if (gapIsCommentsOnly) {
+      const [moved] = lines.splice(sqliteIdx, 1);
+      lines.splice(backendIdx + 1, 0, moved);
+    }
   }
 
   const migratedSection = lines.join("\n");

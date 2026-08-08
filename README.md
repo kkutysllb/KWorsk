@@ -51,8 +51,8 @@ pnpm run dev
 ```
 
 This boots three coordinated processes:
-1. The QiLin gateway (`uv run uvicorn app.gateway.app:app` on port 29987)
-2. The Next.js dev server (port 28569)
+1. The QiLin gateway (`uv run uvicorn app.gateway.app:app` on port 19987)
+2. The Next.js dev server (port 18569)
 3. Electron, pointed at the dev server
 
 The gateway reads its config from `~/.kworks/config.yaml` (auto-created on

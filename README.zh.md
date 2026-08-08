@@ -49,8 +49,8 @@ pnpm run dev
 ```
 
 该命令会协调启动三个进程：
-1. 麒麟 gateway（`uv run uvicorn app.gateway.app:app`，端口 29987）
-2. Next.js 开发服务器（端口 28569）
+1. 麒麟 gateway（`uv run uvicorn app.gateway.app:app`，端口 19987）
+2. Next.js 开发服务器（端口 18569）
 3. Electron，加载开发服务器
 
 gateway 从 `~/.kworks/config.yaml` 读取配置（首次启动时从 `desktop/backend-build/config.embedded.yaml` 自动创建）。用户数据存放在 `~/.kworks/` 目录下。

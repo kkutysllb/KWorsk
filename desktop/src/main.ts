@@ -32,7 +32,7 @@ import { BackendManager, type BackendStatus } from "./backend.js";
 import { getFrontendURLPath } from "./frontend-protocol.js";
 import { registerIpc } from "./ipc.js";
 import { isUpdateInstallInProgress, registerUpdater } from "./updater.js";
-import { getFrontendDistDir, getLogsDir, REPO_ROOT } from "./paths.js";
+import { getFrontendDistDir, getKworksHome, getLogsDir, REPO_ROOT } from "./paths.js";
 import { stopBackendWithTimeout } from "./shutdown.js";
 import { appendRendererLog, log } from "./logger.js";
 import {
@@ -455,8 +455,10 @@ function buildAppMenu(): Menu {
         }),
         item({ type: "separator" }),
         item({
-          label: "KWorks 文档",
-          click: () => void shell.openExternal("https://github.com/kkutysllb/KWorks"),
+          label: "打开用户数据空间",
+          click: () => {
+            void shell.openPath(getKworksHome());
+          },
         }),
         item({ type: "separator" }),
         item({

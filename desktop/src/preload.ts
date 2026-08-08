@@ -82,10 +82,10 @@ interface SkillModelsConfig {
 }
 
 // The renderer reads `gatewayPort` synchronously at module load to resolve
-// the gateway base URL. We default it to the standard desktop port (29987);
+// the gateway base URL. We default it to the standard desktop port (19987);
 // the renderer's `initGatewayPort()` refreshes it asynchronously once the
 // main process responds.
-const DEFAULT_GATEWAY_PORT = 29987;
+const DEFAULT_GATEWAY_PORT = 19987;
 
 contextBridge.exposeInMainWorld("kworksDesktop", {
   gatewayPort: DEFAULT_GATEWAY_PORT,

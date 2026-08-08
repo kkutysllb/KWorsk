@@ -46,12 +46,14 @@ const hintCls = "text-muted-foreground/70 mt-0.5 text-[11px] leading-relaxed";
 
 /** 将模板转换为 ModelRequest 初始值（预填 provider 等字段）。 */
 function templateToRequest(tpl: ModelTemplate): Partial<ModelRequest> {
+  const isNative = tpl.endpointField === "native";
   return {
     name: tpl.id,
     display_name: tpl.name,
     use: tpl.provider,
     model: tpl.model,
-    base_url: tpl.endpointField === "native" ? null : tpl.endpoint,
+    base_url: isNative ? null : tpl.endpoint,
+    endpoint_field: isNative ? null : tpl.endpointField,
     api_key: tpl.apiKeyEnv,
     supports_thinking: tpl.thinking,
     supports_vision: tpl.vision,
@@ -407,6 +409,11 @@ function InlineModelForm({
   const [modelId, setModelId] = useState(initial?.model ?? "");
   const [apiKey, setApiKey] = useState(initial?.api_key ?? "");
   const [baseUrl, setBaseUrl] = useState(initial?.base_url ?? "");
+  const endpointField: string | null =
+    initial?.endpoint_field ??
+    (template?.endpointField && template.endpointField !== "native"
+      ? template.endpointField
+      : null);
   const [supportsThinking, setSupportsThinking] = useState(
     initial?.supports_thinking ?? false,
   );
@@ -442,6 +449,7 @@ function InlineModelForm({
         model: modelId.trim(),
         api_key: apiKey.trim() || null,
         base_url: baseUrl.trim() || null,
+        endpoint_field: endpointField,
         supports_thinking: supportsThinking,
         supports_vision: supportsVision,
         supports_reasoning_effort: supportsReasoningEffort,
@@ -522,14 +530,19 @@ function InlineModelForm({
           />
         </FieldGroup>
 
-        {/* Base URL */}
-        <FieldGroup label="Base URL">
+        {/* Base URL / 端点 */}
+        <FieldGroup label={endpointField === "api_base" ? "API Base" : "Base URL"}>
           <Input
             value={baseUrl ?? ""}
             onChange={(e) => setBaseUrl(e.target.value)}
             placeholder="https://api.deepseek.com"
             className="h-8"
           />
+          {endpointField && endpointField !== "base_url" && (
+            <p className={hintCls}>
+              YAML 字段名：<code className="font-mono">{endpointField}</code>
+            </p>
+          )}
         </FieldGroup>
 
         {/* API Key */}
