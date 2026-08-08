@@ -3,7 +3,7 @@
 import {
   BrainIcon,
   LogOutIcon,
-  PaletteIcon,
+  Settings2Icon,
   ShieldCheckIcon,
   UserIcon,
   WrenchIcon,
@@ -29,19 +29,17 @@ import { useI18n } from "@/core/i18n/hooks";
 import { useWorkspaceLayout } from "./workspace-layout-context";
 
 type SettingsSection =
-  | "account"
-  | "appearance"
+  | "general"
   | "memory"
   | "tools";
 
 const SETTINGS_ITEMS: {
   id: SettingsSection;
-  icon: typeof UserIcon;
+  icon: typeof Settings2Icon;
   color: string;
-  labelKey: "account" | "appearance" | "memory" | "tools";
+  labelKey: "general" | "memory" | "tools";
 }[] = [
-  { id: "account", icon: UserIcon, color: "text-sky-500", labelKey: "account" },
-  { id: "appearance", icon: PaletteIcon, color: "text-violet-500", labelKey: "appearance" },
+  { id: "general", icon: Settings2Icon, color: "text-sky-500", labelKey: "general" },
   { id: "memory", icon: BrainIcon, color: "text-amber-500", labelKey: "memory" },
   { id: "tools", icon: WrenchIcon, color: "text-orange-500", labelKey: "tools" },
 ];

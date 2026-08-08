@@ -572,6 +572,7 @@ export const enUS: Translations = {
     title: "Settings",
     description: "Adjust how KWorks looks and behaves for you.",
     sections: {
+      general: "General",
       account: "Account",
       appearance: "Appearance",
       memory: "Memory",
@@ -593,8 +594,7 @@ export const enUS: Translations = {
         engine: "Engine",
       },
       titles: {
-        account: "Account",
-        appearance: "Appearance",
+        general: "General",
         memory: "Memory",
         tools: "Tools",
         skill: "Skills",
@@ -603,8 +603,7 @@ export const enUS: Translations = {
         skillModels: "Skill Models",
       },
       summaries: {
-        account: "Account info, password changes, and session management.",
-        appearance: "Theme mode, density, and animation preferences.",
+        general: "Account info, password, theme, and language preferences.",
         memory: "View, edit, and manage cross-session memory facts.",
         skill: "Enable built-in and custom skills, manage the skill matrix.",
         tools: "MCP server toggles and tool policies.",
@@ -625,6 +624,25 @@ export const enUS: Translations = {
         "Restart failed, use the tray menu to restart manually",
       restartTimeout: "Backend restart timed out, check service status",
       restartFailed: "Restart failed",
+    },
+    general: {
+      accountGroup: "Account",
+      appearanceGroup: "Appearance",
+    },
+    account: {
+      email: "Email",
+      role: "Role",
+      passwordSection: "Change Password",
+      currentPassword: "Current password",
+      newPassword: "New password",
+      confirmPassword: "Confirm new password",
+      passwordMismatch: "Passwords do not match",
+      passwordTooShort: "Password must be at least 8 characters",
+      update: "Update password",
+      updating: "Updating…",
+      passwordSuccess: "Password updated",
+      networkError: "Network error, please try again.",
+      logout: "Log out",
     },
     memory: {
       title: "Memory",

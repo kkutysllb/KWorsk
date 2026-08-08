@@ -496,6 +496,7 @@ export interface Translations {
     title: string;
     description: string;
     sections: {
+      general: string;
       account: string;
       appearance: string;
       memory: string;
@@ -517,8 +518,7 @@ export interface Translations {
         engine: string;
       };
       titles: {
-        account: string;
-        appearance: string;
+        general: string;
         memory: string;
         tools: string;
         skill: string;
@@ -527,8 +527,7 @@ export interface Translations {
         skillModels: string;
       };
       summaries: {
-        account: string;
-        appearance: string;
+        general: string;
         memory: string;
         skill: string;
         tools: string;
@@ -547,6 +546,25 @@ export interface Translations {
       restartFailedTray: string;
       restartTimeout: string;
       restartFailed: string;
+    };
+    general: {
+      accountGroup: string;
+      appearanceGroup: string;
+    };
+    account: {
+      email: string;
+      role: string;
+      passwordSection: string;
+      currentPassword: string;
+      newPassword: string;
+      confirmPassword: string;
+      passwordMismatch: string;
+      passwordTooShort: string;
+      update: string;
+      updating: string;
+      passwordSuccess: string;
+      networkError: string;
+      logout: string;
     };
     memory: {
       title: string;

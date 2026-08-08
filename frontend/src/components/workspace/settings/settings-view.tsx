@@ -6,11 +6,10 @@ import {
   DatabaseIcon,
   KeyRoundIcon,
   type LucideIcon,
-  PaletteIcon,
   SearchIcon,
+  Settings2Icon,
   SlidersHorizontalIcon,
   SparklesIcon,
-  UserIcon,
   WrenchIcon,
 } from "lucide-react";
 import { useEffect, useMemo, useState } from "react";
@@ -22,11 +21,10 @@ import { isDesktop } from "@/core/config";
 import { useI18n } from "@/core/i18n/hooks";
 import { cn } from "@/lib/utils";
 
-import { AccountSettingsPage } from "./account-settings-page";
-import { AppearanceSettingsPage } from "./appearance-settings-page";
 import { BackendControlBar } from "./backend-control-bar";
 import { ConfigSettingsPage } from "./config-settings-page";
 import { DatasourcesSettingsPage } from "./datasources-settings-page";
+import { GeneralSettingsPage } from "./general-settings-page";
 import { MemorySettingsPage } from "./memory-settings-page";
 import { SkillModelsSettingsPage } from "./skill-models-settings-page";
 import { SkillSettingsPage } from "./skill-settings-page";
@@ -38,8 +36,7 @@ const MIN_SIDEBAR_WIDTH = 200;
 const MAX_SIDEBAR_WIDTH = 360;
 
 type SectionId =
-  | "account"
-  | "appearance"
+  | "general"
   | "memory"
   | "tools"
   | "config"
@@ -57,8 +54,7 @@ interface SectionDef {
 }
 
 const SECTIONS: SectionDef[] = [
-  { id: "account", icon: UserIcon, groupKey: "personal" },
-  { id: "appearance", icon: PaletteIcon, groupKey: "personal" },
+  { id: "general", icon: Settings2Icon, groupKey: "personal" },
   { id: "memory", icon: BrainIcon, groupKey: "agent" },
   { id: "skill", icon: SparklesIcon, groupKey: "agent" },
   { id: "tools", icon: WrenchIcon, groupKey: "toolsData" },
@@ -235,8 +231,7 @@ export function SettingsView({
           <ScrollArea className="min-h-0 flex-1">
             <div className="mx-auto w-full max-w-4xl px-8 py-6">
               <BackendControlBar />
-              {active.id === "account" && <AccountSettingsPage />}
-              {active.id === "appearance" && <AppearanceSettingsPage />}
+              {active.id === "general" && <GeneralSettingsPage />}
               {active.id === "memory" && <MemorySettingsPage />}
               {active.id === "skill" && <SkillSettingsPage />}
               {active.id === "tools" && <ToolSettingsPage />}

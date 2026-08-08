@@ -555,6 +555,7 @@ export const zhCN: Translations = {
     title: "设置",
     description: "根据你的偏好调整 KWorks 的界面和行为。",
     sections: {
+      general: "常规",
       account: "账号",
       appearance: "外观",
       memory: "记忆",
@@ -576,8 +577,7 @@ export const zhCN: Translations = {
         engine: "引擎",
       },
       titles: {
-        account: "账号",
-        appearance: "外观",
+        general: "常规",
         memory: "记忆",
         tools: "工具",
         skill: "技能",
@@ -586,8 +586,7 @@ export const zhCN: Translations = {
         skillModels: "技能模型",
       },
       summaries: {
-        account: "账户信息、密码修改与登录会话管理。",
-        appearance: "主题模式、界面密度与动效偏好。",
+        general: "账户信息、密码、主题与语言偏好。",
         memory: "查看、编辑与管理 AI 跨会话沉淀的记忆事实。",
         skill: "启停内置与自定义技能，管理技能矩阵。",
         tools: "MCP 服务器开关与工具策略。",
@@ -607,6 +606,25 @@ export const zhCN: Translations = {
       restartFailedTray: "重启失败，请查看托盘菜单手动重启",
       restartTimeout: "后端重启超时，请检查服务状态",
       restartFailed: "重启失败",
+    },
+    general: {
+      accountGroup: "账户",
+      appearanceGroup: "外观",
+    },
+    account: {
+      email: "邮箱",
+      role: "角色",
+      passwordSection: "修改密码",
+      currentPassword: "当前密码",
+      newPassword: "新密码",
+      confirmPassword: "确认新密码",
+      passwordMismatch: "两次密码不一致",
+      passwordTooShort: "密码长度不能少于8位",
+      update: "更新密码",
+      updating: "更新中…",
+      passwordSuccess: "密码修改成功",
+      networkError: "网络错误，请重试。",
+      logout: "退出登录",
     },
     memory: {
       title: "记忆",

@@ -22,8 +22,7 @@ export type PanelSectionId =
 
 /** 设置页可用的 section id，与 SettingsView 内部保持一致。 */
 export type SettingsSectionId =
-  | "account"
-  | "appearance"
+  | "general"
   | "memory"
   | "tools"
   | "config"
@@ -94,7 +93,7 @@ export function WorkspaceLayoutProvider({
   });
   const [settingsOpen, setSettingsOpen] = useState(false);
   const [settingsSection, setSettingsSection] =
-    useState<SettingsSectionId>("appearance");
+    useState<SettingsSectionId>("general");
 
   const openSettings = useCallback((section?: SettingsSectionId) => {
     if (section) setSettingsSection(section);
