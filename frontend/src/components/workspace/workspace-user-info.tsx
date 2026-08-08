@@ -128,7 +128,12 @@ export function WorkspaceUserInfo() {
                 {avatar}
               </button>
             </DropdownMenuTrigger>
-            <DropdownMenuContent side="right" align="end" className="min-w-52">
+            <DropdownMenuContent
+              side="top"
+              align="end"
+              collisionPadding={8}
+              className="min-w-52"
+            >
               {userInfoLabel}
               <DropdownMenuSeparator />
               {settingsMenuItems}
@@ -162,7 +167,12 @@ export function WorkspaceUserInfo() {
             </div>
           </button>
         </DropdownMenuTrigger>
-        <DropdownMenuContent side="right" align="end" className="min-w-52">
+        <DropdownMenuContent
+          side="top"
+          align="end"
+          collisionPadding={8}
+          className="min-w-52"
+        >
           {userInfoLabel}
           <DropdownMenuSeparator />
           {settingsMenuItems}
