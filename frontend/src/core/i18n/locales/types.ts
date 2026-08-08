@@ -501,7 +501,6 @@ export interface Translations {
       memory: string;
       tools: string;
       skills: string;
-      notification: string;
       tokenUsage: string;
       config: string;
       dataSources: string;
@@ -672,17 +671,6 @@ export interface Translations {
       scriptsPartialFailure: string;
       scriptsCreateAndUpload: string;
       scriptsCreateAndUploading: string;
-    };
-    notification: {
-      title: string;
-      description: string;
-      requestPermission: string;
-      deniedHint: string;
-      testButton: string;
-      testTitle: string;
-      testBody: string;
-      notSupported: string;
-      disableNotification: string;
     };
     tokenUsage: {
       title: string;

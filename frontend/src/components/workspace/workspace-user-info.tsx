@@ -1,7 +1,6 @@
 "use client";
 
 import {
-  BellIcon,
   BrainIcon,
   LogOutIcon,
   PaletteIcon,
@@ -34,20 +33,18 @@ type SettingsSection =
   | "account"
   | "appearance"
   | "memory"
-  | "tools"
-  | "notification";
+  | "tools";
 
 const SETTINGS_ITEMS: {
   id: SettingsSection;
   icon: typeof UserIcon;
   color: string;
-  labelKey: "account" | "appearance" | "memory" | "tools" | "notification";
+  labelKey: "account" | "appearance" | "memory" | "tools";
 }[] = [
   { id: "account", icon: UserIcon, color: "text-sky-500", labelKey: "account" },
   { id: "appearance", icon: PaletteIcon, color: "text-violet-500", labelKey: "appearance" },
   { id: "memory", icon: BrainIcon, color: "text-amber-500", labelKey: "memory" },
   { id: "tools", icon: WrenchIcon, color: "text-orange-500", labelKey: "tools" },
-  { id: "notification", icon: BellIcon, color: "text-cyan-500", labelKey: "notification" },
 ];
 
 function getRoleLabel(

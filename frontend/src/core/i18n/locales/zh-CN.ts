@@ -560,7 +560,6 @@ export const zhCN: Translations = {
       memory: "记忆",
       tools: "工具",
       skills: "技能",
-      notification: "通知",
       tokenUsage: "Token 用量",
       config: "系统配置",
       dataSources: "数据源",
@@ -726,19 +725,6 @@ export const zhCN: Translations = {
       scriptsPartialFailure: "技能已创建,但脚本上传失败:{error}。可在编辑界面重试。",
       scriptsCreateAndUpload: "创建技能并上传脚本",
       scriptsCreateAndUploading: "创建中...",
-    },
-    notification: {
-      title: "通知",
-      description:
-        "KWorks 只会在窗口不活跃时发送完成通知，特别适合长时间任务：你可以先去做别的事，完成后会收到提醒。",
-      requestPermission: "请求通知权限",
-      deniedHint:
-        "通知权限已被拒绝。可在浏览器的网站设置中重新开启，以接收完成提醒。",
-      testButton: "发送测试通知",
-      testTitle: "KWorks",
-      testBody: "这是一条测试通知。",
-      notSupported: "当前浏览器不支持通知功能。",
-      disableNotification: "关闭通知",
     },
     tokenUsage: {
       title: "Token 用量统计",

@@ -577,7 +577,6 @@ export const enUS: Translations = {
       memory: "Memory",
       tools: "Tools",
       skills: "Skills",
-      notification: "Notification",
       tokenUsage: "Token Usage",
       config: "System Config",
       dataSources: "Data Sources",
@@ -747,19 +746,6 @@ export const enUS: Translations = {
       scriptsPartialFailure: "Skill created, but script upload failed: {error}. You can retry from the edit UI.",
       scriptsCreateAndUpload: "Create skill and upload scripts",
       scriptsCreateAndUploading: "Creating...",
-    },
-    notification: {
-      title: "Notification",
-      description:
-        "KWorks only sends a completion notification when the window is not active. This is especially useful for long-running tasks so you can switch to other work and get notified when done.",
-      requestPermission: "Request notification permission",
-      deniedHint:
-        "Notification permission was denied. You can enable it in your browser's site settings to receive completion alerts.",
-      testButton: "Send test notification",
-      testTitle: "KWorks",
-      testBody: "This is a test notification.",
-      notSupported: "Your browser does not support notifications.",
-      disableNotification: "Disable notification",
     },
     tokenUsage: {
       title: "Token Usage Statistics",

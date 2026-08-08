@@ -1,7 +1,6 @@
 "use client";
 
 import {
-  BellIcon,
   BrainIcon,
   DatabaseIcon,
   KeyRoundIcon,
@@ -25,7 +24,6 @@ import { AppearanceSettingsPage } from "@/components/workspace/settings/appearan
 import { ConfigSettingsPage } from "@/components/workspace/settings/config-settings-page";
 import { DatasourcesSettingsPage } from "@/components/workspace/settings/datasources-settings-page";
 import { MemorySettingsPage } from "@/components/workspace/settings/memory-settings-page";
-import { NotificationSettingsPage } from "@/components/workspace/settings/notification-settings-page";
 import { SkillModelsSettingsPage } from "@/components/workspace/settings/skill-models-settings-page";
 import { ToolSettingsPage } from "@/components/workspace/settings/tool-settings-page";
 import { isDesktop } from "@/core/config";
@@ -39,7 +37,6 @@ type SettingsSection =
   | "dataSources"
   | "memory"
   | "tools"
-  | "notification"
   | "skillModels";
 
 type SettingsDialogProps = React.ComponentProps<typeof Dialog> & {
@@ -62,12 +59,6 @@ const SECTION_COLORS: Record<
     iconInactive: "text-violet-500",
     bar: "from-violet-400 to-purple-500",
     bg: "bg-violet-500/10",
-  },
-  notification: {
-    iconActive: "text-amber-400",
-    iconInactive: "text-amber-500",
-    bar: "from-amber-400 to-orange-500",
-    bg: "bg-amber-500/10",
   },
   memory: {
     iconActive: "text-emerald-400",
@@ -129,11 +120,6 @@ export function SettingsDialog(props: SettingsDialogProps) {
           icon: PaletteIcon,
         },
         {
-          id: "notification" as const,
-          label: t.settings.sections.notification,
-          icon: BellIcon,
-        },
-        {
           id: "memory" as const,
           label: t.settings.sections.memory,
           icon: BrainIcon,
@@ -165,7 +151,6 @@ export function SettingsDialog(props: SettingsDialogProps) {
       t.settings.sections.appearance,
       t.settings.sections.memory,
       t.settings.sections.tools,
-      t.settings.sections.notification,
       t.settings.sections.config,
       t.settings.sections.dataSources,
       t.settings.sections.skillModels,
@@ -240,7 +225,6 @@ export function SettingsDialog(props: SettingsDialogProps) {
               {activeSection === "appearance" && <AppearanceSettingsPage />}
               {activeSection === "memory" && <MemorySettingsPage />}
               {activeSection === "tools" && <ToolSettingsPage />}
-              {activeSection === "notification" && <NotificationSettingsPage />}
               {activeSection === "config" && <ConfigSettingsPage />}
               {activeSection === "dataSources" && <DatasourcesSettingsPage />}
               {activeSection === "skillModels" && <SkillModelsSettingsPage />}
