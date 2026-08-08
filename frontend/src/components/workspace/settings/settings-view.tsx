@@ -3,6 +3,7 @@
 import {
   ArrowLeftIcon,
   BrainIcon,
+  CpuIcon,
   DatabaseIcon,
   KeyRoundIcon,
   type LucideIcon,
@@ -26,6 +27,7 @@ import { ConfigSettingsPage } from "./config-settings-page";
 import { DatasourcesSettingsPage } from "./datasources-settings-page";
 import { GeneralSettingsPage } from "./general-settings-page";
 import { MemorySettingsPage } from "./memory-settings-page";
+import { ModelsSettingsPage } from "./models/models-settings-page";
 import { SkillModelsSettingsPage } from "./skill-models-settings-page";
 import { SkillSettingsPage } from "./skill-settings-page";
 import { ToolSettingsPage } from "./tool-settings-page";
@@ -37,6 +39,7 @@ const MAX_SIDEBAR_WIDTH = 360;
 
 type SectionId =
   | "general"
+  | "models"
   | "memory"
   | "tools"
   | "config"
@@ -59,6 +62,7 @@ const SECTIONS: SectionDef[] = [
   { id: "skill", icon: SparklesIcon, groupKey: "agent" },
   { id: "tools", icon: WrenchIcon, groupKey: "toolsData" },
   { id: "dataSources", icon: DatabaseIcon, groupKey: "toolsData" },
+  { id: "models", icon: CpuIcon, groupKey: "engine" },
   { id: "config", icon: SlidersHorizontalIcon, groupKey: "engine" },
   {
     id: "skillModels",
@@ -232,6 +236,7 @@ export function SettingsView({
             <div className="mx-auto w-full max-w-4xl px-8 py-6">
               <BackendControlBar />
               {active.id === "general" && <GeneralSettingsPage />}
+              {active.id === "models" && <ModelsSettingsPage />}
               {active.id === "memory" && <MemorySettingsPage />}
               {active.id === "skill" && <SkillSettingsPage />}
               {active.id === "tools" && <ToolSettingsPage />}

@@ -5,7 +5,6 @@ import {
   ChevronDown,
   ClockIcon,
   Code2Icon,
-  CpuIcon,
   DatabaseIcon,
   FileUpIcon,
   HardDriveIcon,
@@ -31,7 +30,6 @@ import { restartBackend } from "@/core/desktop";
 import { restartGateway, waitForGateway } from "@/core/settings-config/api";
 import { cn } from "@/lib/utils";
 
-import { ModelConfigSection } from "./config/model-config-section";
 import { CronForm } from "./config/settings-forms/cron-form";
 import { DatabaseForm } from "./config/settings-forms/database-form";
 import { LogLevelForm } from "./config/settings-forms/log-level-form";
@@ -44,7 +42,6 @@ import { UploadsForm } from "./config/settings-forms/uploads-form";
 import { YamlEditorSection } from "./config/yaml-editor-section";
 
 type ConfigSubPage =
-  | "models"
   | "sandbox"
   | "database"
   | "run_events"
@@ -68,7 +65,7 @@ interface NavGroup {
 }
 
 export function ConfigSettingsPage() {
-  const [active, setActive] = useState<ConfigSubPage>("models");
+  const [active, setActive] = useState<ConfigSubPage>("sandbox");
   const [restarting, setRestarting] = useState(false);
 
   const handleApplyAndRestart = async () => {
@@ -109,10 +106,6 @@ export function ConfigSettingsPage() {
   };
 
   const groups: NavGroup[] = [
-    {
-      title: "模型配置",
-      items: [{ id: "models", label: "模型管理", icon: CpuIcon }],
-    },
     {
       title: "运行时",
       items: [
@@ -218,7 +211,6 @@ export function ConfigSettingsPage() {
         {/* Right: form content */}
         <ScrollArea className="h-[calc(75vh-10rem)] min-h-[400px] min-w-0 flex-1 rounded-lg border">
           <div className="min-w-0 p-5">
-            {active === "models" && <ModelConfigSection />}
             {active === "sandbox" && <SandboxForm />}
             {active === "database" && <DatabaseForm />}
             {active === "run_events" && <RunEventsForm />}

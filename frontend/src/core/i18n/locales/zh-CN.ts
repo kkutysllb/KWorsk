@@ -555,6 +555,7 @@ export const zhCN: Translations = {
     title: "设置",
     description: "根据你的偏好调整 KWorks 的界面和行为。",
     sections: {
+      models: "模型",
       general: "常规",
       account: "账号",
       appearance: "外观",
@@ -578,6 +579,7 @@ export const zhCN: Translations = {
       },
       titles: {
         general: "常规",
+        models: "模型",
         memory: "记忆",
         tools: "工具",
         skill: "技能",
@@ -587,6 +589,7 @@ export const zhCN: Translations = {
       },
       summaries: {
         general: "账户信息、密码、主题与语言偏好。",
+        models: "管理可用 LLM 模型，从 provider 模板快速创建，配置思考、视觉等能力。",
         memory: "查看、编辑与管理 AI 跨会话沉淀的记忆事实。",
         skill: "启停内置与自定义技能，管理技能矩阵。",
         tools: "MCP 服务器开关与工具策略。",

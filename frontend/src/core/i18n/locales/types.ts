@@ -496,6 +496,7 @@ export interface Translations {
     title: string;
     description: string;
     sections: {
+      models: string;
       general: string;
       account: string;
       appearance: string;
@@ -519,6 +520,7 @@ export interface Translations {
       };
       titles: {
         general: string;
+        models: string;
         memory: string;
         tools: string;
         skill: string;
@@ -528,6 +530,7 @@ export interface Translations {
       };
       summaries: {
         general: string;
+        models: string;
         memory: string;
         skill: string;
         tools: string;

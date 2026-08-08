@@ -23,6 +23,7 @@ export type PanelSectionId =
 /** 设置页可用的 section id，与 SettingsView 内部保持一致。 */
 export type SettingsSectionId =
   | "general"
+  | "models"
   | "memory"
   | "tools"
   | "config"

@@ -572,6 +572,7 @@ export const enUS: Translations = {
     title: "Settings",
     description: "Adjust how KWorks looks and behaves for you.",
     sections: {
+      models: "Models",
       general: "General",
       account: "Account",
       appearance: "Appearance",
@@ -595,6 +596,7 @@ export const enUS: Translations = {
       },
       titles: {
         general: "General",
+        models: "Models",
         memory: "Memory",
         tools: "Tools",
         skill: "Skills",
@@ -604,6 +606,7 @@ export const enUS: Translations = {
       },
       summaries: {
         general: "Account info, password, theme, and language preferences.",
+        models: "Manage LLM models, create from provider templates, configure thinking/vision capabilities.",
         memory: "View, edit, and manage cross-session memory facts.",
         skill: "Enable built-in and custom skills, manage the skill matrix.",
         tools: "MCP server toggles and tool policies.",
