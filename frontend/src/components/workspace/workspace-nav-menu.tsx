@@ -24,7 +24,7 @@ import {
 } from "@/components/ui/sidebar";
 import { useI18n } from "@/core/i18n/hooks";
 
-import { SettingsDialog } from "./settings";
+import { useWorkspaceLayout } from "./workspace-layout-context";
 
 type SettingsSection =
   | "account"
@@ -69,24 +69,17 @@ function NavMenuButtonContent({
 }
 
 export function WorkspaceNavMenu() {
-  const [settingsOpen, setSettingsOpen] = useState(false);
-  const [settingsDefaultSection, setSettingsDefaultSection] = useState<SettingsSection>("appearance");
   const [mounted, setMounted] = useState(false);
   const { open: isSidebarOpen } = useSidebar();
   const { t } = useI18n();
+  const { openSettings } = useWorkspaceLayout();
 
   useEffect(() => {
     setMounted(true);
   }, []);
 
   return (
-    <>
-      <SettingsDialog
-        open={settingsOpen}
-        onOpenChange={setSettingsOpen}
-        defaultSection={settingsDefaultSection}
-      />
-      <SidebarMenu className="w-full">
+    <SidebarMenu className="w-full">
         <SidebarMenuItem>
           {mounted ? (
             <DropdownMenu>
@@ -108,10 +101,7 @@ export function WorkspaceNavMenu() {
                   return (
                     <DropdownMenuItem
                       key={item.id}
-                      onClick={() => {
-                        setSettingsDefaultSection(item.id);
-                        setSettingsOpen(true);
-                      }}
+                      onClick={() => openSettings(item.id)}
                     >
                       <Icon className={`size-4 ${item.color}`} />
                       {t.settings.sections[item.labelKey]}
@@ -127,6 +117,5 @@ export function WorkspaceNavMenu() {
           )}
         </SidebarMenuItem>
       </SidebarMenu>
-    </>
   );
 }

@@ -506,6 +506,48 @@ export interface Translations {
       dataSources: string;
       skillModels: string;
     };
+    view: {
+      backToApp: string;
+      searchPlaceholder: string;
+      resizeLabel: string;
+      groups: {
+        personal: string;
+        agent: string;
+        toolsData: string;
+        engine: string;
+      };
+      titles: {
+        account: string;
+        appearance: string;
+        memory: string;
+        tools: string;
+        skill: string;
+        config: string;
+        dataSources: string;
+        skillModels: string;
+      };
+      summaries: {
+        account: string;
+        appearance: string;
+        memory: string;
+        skill: string;
+        tools: string;
+        config: string;
+        dataSources: string;
+        skillModels: string;
+      };
+    };
+    backend: {
+      title: string;
+      description: string;
+      restartButton: string;
+      restarting: string;
+      restartingToast: string;
+      restartSuccess: string;
+      restartFailedTray: string;
+      restartTimeout: string;
+      restartFailed: string;
+    };
     memory: {
       title: string;
       description: string;

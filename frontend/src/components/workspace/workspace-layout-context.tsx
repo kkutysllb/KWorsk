@@ -20,6 +20,17 @@ export type PanelSectionId =
   | "resources"
   | "artifacts";
 
+/** 设置页可用的 section id，与 SettingsView 内部保持一致。 */
+export type SettingsSectionId =
+  | "account"
+  | "appearance"
+  | "memory"
+  | "tools"
+  | "config"
+  | "dataSources"
+  | "skillModels"
+  | "skill";
+
 interface WorkspaceLayoutValue {
   rightPanelOpen: boolean;
   toggleRightPanel: () => void;
@@ -28,6 +39,11 @@ interface WorkspaceLayoutValue {
   toggleHistory: () => void;
   isSectionCollapsed: (id: PanelSectionId) => boolean;
   toggleSection: (id: PanelSectionId) => void;
+  /** 设置全屏视图状态。 */
+  settingsOpen: boolean;
+  settingsSection: SettingsSectionId;
+  openSettings: (section?: SettingsSectionId) => void;
+  closeSettings: () => void;
 }
 
 const WorkspaceLayoutContext = createContext<WorkspaceLayoutValue | undefined>(
@@ -76,6 +92,18 @@ export function WorkspaceLayoutProvider({
     resources: false,
     artifacts: false,
   });
+  const [settingsOpen, setSettingsOpen] = useState(false);
+  const [settingsSection, setSettingsSection] =
+    useState<SettingsSectionId>("appearance");
+
+  const openSettings = useCallback((section?: SettingsSectionId) => {
+    if (section) setSettingsSection(section);
+    setSettingsOpen(true);
+  }, []);
+
+  const closeSettings = useCallback(() => {
+    setSettingsOpen(false);
+  }, []);
 
   // 初始化从 localStorage 恢复
   useEffect(() => {
@@ -136,6 +164,10 @@ export function WorkspaceLayoutProvider({
       toggleHistory,
       isSectionCollapsed,
       toggleSection,
+      settingsOpen,
+      settingsSection,
+      openSettings,
+      closeSettings,
     }),
     [
       rightPanelOpen,
@@ -145,6 +177,10 @@ export function WorkspaceLayoutProvider({
       toggleHistory,
       isSectionCollapsed,
       toggleSection,
+      settingsOpen,
+      settingsSection,
+      openSettings,
+      closeSettings,
     ],
   );
 

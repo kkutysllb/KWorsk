@@ -582,6 +582,50 @@ export const enUS: Translations = {
       dataSources: "Data Sources",
       skillModels: "Skill Models",
     },
+    view: {
+      backToApp: "Back to app",
+      searchPlaceholder: "Search settings…",
+      resizeLabel: "Resize settings sidebar",
+      groups: {
+        personal: "Personal",
+        agent: "Agent",
+        toolsData: "Tools & Data",
+        engine: "Engine",
+      },
+      titles: {
+        account: "Account",
+        appearance: "Appearance",
+        memory: "Memory",
+        tools: "Tools",
+        skill: "Skills",
+        config: "System Config",
+        dataSources: "Data Sources",
+        skillModels: "Skill Models",
+      },
+      summaries: {
+        account: "Account info, password changes, and session management.",
+        appearance: "Theme mode, density, and animation preferences.",
+        memory: "View, edit, and manage cross-session memory facts.",
+        skill: "Enable built-in and custom skills, manage the skill matrix.",
+        tools: "MCP server toggles and tool policies.",
+        config: "Edit config.yaml directly: models, sandbox, database, runtime events.",
+        dataSources: "Configure external data source credentials (e.g. Tushare Pro).",
+        skillModels: "Desktop skill model API credential management.",
+      },
+    },
+    backend: {
+      title: "Backend Maintenance",
+      description:
+        "Restart the gateway after changing config to apply changes. This briefly interrupts all active sessions.",
+      restartButton: "Restart Backend",
+      restarting: "Restarting…",
+      restartingToast: "Restarting backend…",
+      restartSuccess: "Backend restarted, config applied",
+      restartFailedTray:
+        "Restart failed, use the tray menu to restart manually",
+      restartTimeout: "Backend restart timed out, check service status",
+      restartFailed: "Restart failed",
+    },
     memory: {
       title: "Memory",
       description:
