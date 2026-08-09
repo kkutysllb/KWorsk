@@ -10,18 +10,20 @@ function read(path: string): string {
 }
 
 describe("memory-summary settings page", () => {
-  test("renders three Card sections (memory, summarization, title)", () => {
+  test("renders four Card sections (config, facts, summarization, title)", () => {
     const source = read(
       "src/components/workspace/settings/memory-summary-settings-page.tsx",
     );
 
-    // Three cards with correct titles
-    expect(source).toContain("长期记忆");
+    // Four cards with correct titles
+    expect(source).toContain("记忆配置");
+    expect(source).toContain("记忆事实管理");
     expect(source).toContain("对话摘要");
     expect(source).toContain("标题生成");
 
-    // Imports the three forms
+    // Imports all components
     expect(source).toContain("MemoryForm");
+    expect(source).toContain("MemoryFactsManager");
     expect(source).toContain("SummarizationForm");
     expect(source).toContain("TitleForm");
 
@@ -111,6 +113,44 @@ describe("old memory page fully removed", () => {
     // No "title" or "memory" sub-page
     expect(source).not.toMatch(/id:\s*["']title["']/);
     expect(source).not.toMatch(/id:\s*["']memory["']/);
+  });
+});
+
+describe("memory-facts-manager data operations", () => {
+  test("uses core/memory hooks for CRUD operations", () => {
+    const source = read(
+      "src/components/workspace/settings/memory-facts-manager.tsx",
+    );
+
+    // Uses all the memory hooks
+    expect(source).toContain("useMemory()");
+    expect(source).toContain("useClearMemory()");
+    expect(source).toContain("useCreateMemoryFact()");
+    expect(source).toContain("useDeleteMemoryFact()");
+    expect(source).toContain("useUpdateMemoryFact()");
+    expect(source).toContain("useImportMemory()");
+    expect(source).toContain("exportMemory");
+  });
+
+  test("provides search, create, edit, delete, clear, import, export", () => {
+    const source = read(
+      "src/components/workspace/settings/memory-facts-manager.tsx",
+    );
+
+    // Search
+    expect(source).toContain("搜索记忆事实");
+    // Create
+    expect(source).toContain("新增事实");
+    // Edit
+    expect(source).toContain("openEdit");
+    // Delete
+    expect(source).toContain("setFactToDelete");
+    // Clear all
+    expect(source).toContain("清空");
+    // Import
+    expect(source).toContain("导入");
+    // Export
+    expect(source).toContain("导出");
   });
 });
 

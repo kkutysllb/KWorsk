@@ -1,6 +1,7 @@
 "use client";
 
 import {
+  DatabaseIcon,
   Loader2Icon,
   MessageSquareTextIcon,
   PowerIcon,
@@ -14,6 +15,7 @@ import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { MemoryForm } from "./config/settings-forms/memory-form";
 import { SummarizationForm } from "./config/settings-forms/summarization-form";
 import { TitleForm } from "./config/settings-forms/title-form";
+import { MemoryFactsManager } from "./memory-facts-manager";
 import { useApplyAndRestart } from "./use-apply-and-restart";
 
 export function MemorySummarySettingsPage() {
@@ -51,11 +53,22 @@ export function MemorySummarySettingsPage() {
       <Card>
         <CardHeader>
           <CardTitle className="flex items-center gap-2 text-sm">
-            <ScrollTextIcon className="size-4" /> 长期记忆
+            <ScrollTextIcon className="size-4" /> 记忆配置
           </CardTitle>
         </CardHeader>
         <CardContent>
           <MemoryForm />
+        </CardContent>
+      </Card>
+
+      <Card>
+        <CardHeader>
+          <CardTitle className="flex items-center gap-2 text-sm">
+            <DatabaseIcon className="size-4" /> 记忆事实管理
+          </CardTitle>
+        </CardHeader>
+        <CardContent>
+          <MemoryFactsManager />
         </CardContent>
       </Card>
 
