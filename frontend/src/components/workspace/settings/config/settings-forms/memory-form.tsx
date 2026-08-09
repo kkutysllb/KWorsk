@@ -114,8 +114,19 @@ export function MemoryForm() {
     }));
 
   const handleSave = async () => {
+    // Clamp values to backend pydantic constraints to avoid 422 errors.
+    const clamped: MemoryConfig = {
+      ...local,
+      backend_config: {
+        ...local.backend_config,
+        max_injection_tokens: Math.min(
+          Math.max(local.backend_config.max_injection_tokens, 100),
+          8000,
+        ),
+      },
+    };
     try {
-      await save(local);
+      await save(clamped);
       toast.success("记忆配置已更新");
     } catch (e) {
       toast.error(e instanceof Error ? e.message : "保存失败");
@@ -259,12 +270,14 @@ export function MemoryForm() {
           <Input
             type="number"
             min={100}
+            max={8000}
             value={local.backend_config.max_injection_tokens}
             onChange={(e) =>
               updateBackend("max_injection_tokens", Number(e.target.value))
             }
             disabled={disabled || !local.injection_enabled}
           />
+          <p className={hintCls}>后端限制 100–8000</p>
         </div>
       </div>
 
