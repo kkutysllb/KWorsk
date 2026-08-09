@@ -1,7 +1,6 @@
 "use client";
 
 import {
-  BrainIcon,
   ChevronDown,
   ClockIcon,
   Code2Icon,
@@ -10,7 +9,6 @@ import {
   PowerIcon,
   Settings2Icon,
   TerminalIcon,
-  TypeIcon,
   ZapIcon,
 } from "lucide-react";
 import { useState } from "react";
@@ -26,9 +24,7 @@ import { cn } from "@/lib/utils";
 
 import { CronForm } from "./config/settings-forms/cron-form";
 import { LogLevelForm } from "./config/settings-forms/log-level-form";
-import { MemoryForm } from "./config/settings-forms/memory-form";
 import { SandboxForm } from "./config/settings-forms/sandbox-form";
-import { TitleForm } from "./config/settings-forms/title-form";
 import { TokenUsageForm } from "./config/settings-forms/token-usage-form";
 import { UploadsForm } from "./config/settings-forms/uploads-form";
 import { YamlEditorSection } from "./config/yaml-editor-section";
@@ -37,8 +33,6 @@ import { useApplyAndRestart } from "./use-apply-and-restart";
 type ConfigSubPage =
   | "sandbox"
   | "cron"
-  | "title"
-  | "memory"
   | "uploads"
   | "log_level"
   | "token_usage"
@@ -65,13 +59,6 @@ export function ConfigSettingsPage() {
       items: [
         { id: "sandbox", label: "沙箱", icon: TerminalIcon },
         { id: "cron", label: "定时任务", icon: ClockIcon },
-      ],
-    },
-    {
-      title: "对话行为",
-      items: [
-        { id: "title", label: "标题生成", icon: TypeIcon },
-        { id: "memory", label: "记忆", icon: BrainIcon },
       ],
     },
     {
@@ -165,8 +152,6 @@ export function ConfigSettingsPage() {
           <div className="min-w-0 p-5">
             {active === "sandbox" && <SandboxForm />}
             {active === "cron" && <CronForm />}
-            {active === "title" && <TitleForm />}
-            {active === "memory" && <MemoryForm />}
             {active === "uploads" && <UploadsForm />}
             {active === "log_level" && <LogLevelForm />}
             {active === "token_usage" && <TokenUsageForm />}

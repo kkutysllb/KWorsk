@@ -500,7 +500,7 @@ export interface Translations {
       general: string;
       account: string;
       appearance: string;
-      memory: string;
+      memorySummary: string;
       tools: string;
       skills: string;
       tokenUsage: string;
@@ -521,7 +521,7 @@ export interface Translations {
       titles: {
         general: string;
         models: string;
-        memory: string;
+        memorySummary: string;
         tools: string;
         skill: string;
         config: string;
@@ -532,7 +532,7 @@ export interface Translations {
       summaries: {
         general: string;
         models: string;
-        memory: string;
+        memorySummary: string;
         skill: string;
         tools: string;
         config: string;
@@ -570,79 +570,6 @@ export interface Translations {
       passwordSuccess: string;
       networkError: string;
       logout: string;
-    };
-    memory: {
-      title: string;
-      description: string;
-      empty: string;
-      rawJson: string;
-      exportButton: string;
-      exportSuccess: string;
-      importButton: string;
-      importConfirmTitle: string;
-      importConfirmDescription: string;
-      importFileLabel: string;
-      importInvalidFile: string;
-      importSuccess: string;
-      manualFactSource: string;
-      addFact: string;
-      addFactTitle: string;
-      editFactTitle: string;
-      addFactSuccess: string;
-      editFactSuccess: string;
-      clearAll: string;
-      clearAllConfirmTitle: string;
-      clearAllConfirmDescription: string;
-      clearAllSuccess: string;
-      factDeleteConfirmTitle: string;
-      factDeleteConfirmDescription: string;
-      factDeleteSuccess: string;
-      factContentLabel: string;
-      factCategoryLabel: string;
-      factConfidenceLabel: string;
-      factContentPlaceholder: string;
-      factCategoryPlaceholder: string;
-      factConfidenceHint: string;
-      factSave: string;
-      factValidationContent: string;
-      factValidationConfidence: string;
-      noFacts: string;
-      summaryReadOnly: string;
-      memoryFullyEmpty: string;
-      factPreviewLabel: string;
-      searchPlaceholder: string;
-      filterAll: string;
-      filterFacts: string;
-      filterSummaries: string;
-      noMatches: string;
-      markdown: {
-        overview: string;
-        userContext: string;
-        work: string;
-        personal: string;
-        topOfMind: string;
-        historyBackground: string;
-        recentMonths: string;
-        earlierContext: string;
-        longTermBackground: string;
-        updatedAt: string;
-        facts: string;
-        empty: string;
-        table: {
-          category: string;
-          confidence: string;
-          confidenceLevel: {
-            veryHigh: string;
-            high: string;
-            normal: string;
-            unknown: string;
-          };
-          content: string;
-          source: string;
-          createdAt: string;
-          view: string;
-        };
-      };
     };
     appearance: {
       themeTitle: string;

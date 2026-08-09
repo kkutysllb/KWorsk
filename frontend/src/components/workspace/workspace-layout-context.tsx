@@ -24,7 +24,7 @@ export type PanelSectionId =
 export type SettingsSectionId =
   | "general"
   | "models"
-  | "memory"
+  | "memorySummary"
   | "tools"
   | "config"
   | "dataSources"

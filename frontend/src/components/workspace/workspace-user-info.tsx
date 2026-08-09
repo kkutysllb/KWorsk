@@ -1,8 +1,8 @@
 "use client";
 
 import {
-  BrainIcon,
   LogOutIcon,
+  ScrollTextIcon,
   Settings2Icon,
   ShieldCheckIcon,
   UserIcon,
@@ -30,17 +30,17 @@ import { useWorkspaceLayout } from "./workspace-layout-context";
 
 type SettingsSection =
   | "general"
-  | "memory"
+  | "memorySummary"
   | "tools";
 
 const SETTINGS_ITEMS: {
   id: SettingsSection;
   icon: typeof Settings2Icon;
   color: string;
-  labelKey: "general" | "memory" | "tools";
+  labelKey: "general" | "memorySummary" | "tools";
 }[] = [
   { id: "general", icon: Settings2Icon, color: "text-sky-500", labelKey: "general" },
-  { id: "memory", icon: BrainIcon, color: "text-amber-500", labelKey: "memory" },
+  { id: "memorySummary", icon: ScrollTextIcon, color: "text-amber-500", labelKey: "memorySummary" },
   { id: "tools", icon: WrenchIcon, color: "text-orange-500", labelKey: "tools" },
 ];
 

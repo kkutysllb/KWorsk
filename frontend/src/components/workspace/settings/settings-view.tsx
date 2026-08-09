@@ -2,12 +2,12 @@
 
 import {
   ArrowLeftIcon,
-  BrainIcon,
   CpuIcon,
   DatabaseIcon,
   HardDriveIcon,
   KeyRoundIcon,
   type LucideIcon,
+  ScrollTextIcon,
   SearchIcon,
   Settings2Icon,
   SlidersHorizontalIcon,
@@ -28,7 +28,7 @@ import { ConfigSettingsPage } from "./config-settings-page";
 import { DataPersistenceSettingsPage } from "./data-persistence-settings-page";
 import { DatasourcesSettingsPage } from "./datasources-settings-page";
 import { GeneralSettingsPage } from "./general-settings-page";
-import { MemorySettingsPage } from "./memory-settings-page";
+import { MemorySummarySettingsPage } from "./memory-summary-settings-page";
 import { ModelsSettingsPage } from "./models/models-settings-page";
 import { SkillModelsSettingsPage } from "./skill-models-settings-page";
 import { SkillSettingsPage } from "./skill-settings-page";
@@ -42,7 +42,7 @@ const MAX_SIDEBAR_WIDTH = 360;
 type SectionId =
   | "general"
   | "models"
-  | "memory"
+  | "memorySummary"
   | "tools"
   | "config"
   | "dataSources"
@@ -61,13 +61,13 @@ interface SectionDef {
 
 const SECTIONS: SectionDef[] = [
   { id: "general", icon: Settings2Icon, groupKey: "personal" },
-  { id: "memory", icon: BrainIcon, groupKey: "agent" },
   { id: "skill", icon: SparklesIcon, groupKey: "agent" },
   { id: "tools", icon: WrenchIcon, groupKey: "toolsData" },
   { id: "dataSources", icon: DatabaseIcon, groupKey: "toolsData" },
   { id: "models", icon: CpuIcon, groupKey: "engine" },
   { id: "config", icon: SlidersHorizontalIcon, groupKey: "engine" },
   { id: "dataPersistence", icon: HardDriveIcon, groupKey: "engine" },
+  { id: "memorySummary", icon: ScrollTextIcon, groupKey: "engine" },
   {
     id: "skillModels",
     icon: KeyRoundIcon,
@@ -241,7 +241,7 @@ export function SettingsView({
               <BackendControlBar />
               {active.id === "general" && <GeneralSettingsPage />}
               {active.id === "models" && <ModelsSettingsPage />}
-              {active.id === "memory" && <MemorySettingsPage />}
+              {active.id === "memorySummary" && <MemorySummarySettingsPage />}
               {active.id === "skill" && <SkillSettingsPage />}
               {active.id === "tools" && <ToolSettingsPage />}
               {active.id === "config" && <ConfigSettingsPage />}
