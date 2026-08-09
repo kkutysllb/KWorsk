@@ -206,7 +206,11 @@ function createAppWindow(options: AppWindowOptions = {}): BrowserWindow {
     }
   });
 
-  win.once("ready-to-show", () => win.show());
+  // Maximise on first show so the app fills the screen at startup.
+  win.once("ready-to-show", () => {
+    win.maximize();
+    win.show();
+  });
 
   // Open external links in the system browser, not a new Electron window.
   win.webContents.setWindowOpenHandler(({ url }) => {
