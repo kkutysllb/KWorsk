@@ -1,13 +1,24 @@
 ---
 name: image-generation
 description: Use this skill when the user requests to generate, create, imagine, or visualize images including characters, scenes, products, or any visual content. Supports structured prompts and reference images for guided generation.
+
+package:
+  type: python
+  entry: scripts/generate.py
 ---
 
 # Image Generation Skill
 
 ## Overview
 
-This skill generates high-quality images using structured prompts and a Python script. The workflow includes creating JSON-formatted prompts and executing image generation with optional reference images.
+This skill generates high-quality images using structured prompts and a Python script. The script supports multiple image generation providers with automatic priority selection:
+
+1. **Gemini/Doubao** (priority) — OpenAI-compatible images/generations endpoint (e.g. doubao-seedream)
+2. **GPT/Image2** (fallback) — OpenAI-compatible images/generations endpoint
+
+Provider is auto-selected based on environment variables configured in `.env`:
+- `GEMINI_API_KEY` + `GEMINI_BASE_URL` → Gemini/Doubao
+- `GPT_IMAGE2_API_KEY` + `GPT_IMAGE2_BASE_URL` → GPT/Image2
 
 ## Core Capabilities
 
@@ -177,27 +188,6 @@ For scenarios where visual accuracy is critical, **use the `image_search` tool f
 3. Use the downloaded images as `--reference-images` parameter in the generation script
 
 This approach significantly improves generation quality by providing the model with concrete visual guidance rather than relying solely on text descriptions.
-
-## Providers (Gemini / MiniMax)
-
-This skill auto-selects the provider by environment variables (no CLI change):
-
-- `GEMINI_API_KEY` set → use Gemini (default, unchanged).
-- Only `MINIMAX_API_KEY` set → use MiniMax (`/v1/image_generation`, model `image-01`).
-- Force one explicitly with `IMAGE_GENERATION_PROVIDER=gemini|minimax`.
-
-MiniMax optional overrides: `MINIMAX_API_HOST` (default `https://api.minimaxi.com`),
-`MINIMAX_IMAGE_MODEL` (default `image-01`). Reference images are sent as the MiniMax
-`subject_reference` character image. The CLI and `--prompt-file` / `--reference-images`
-/ `--output-file` / `--aspect-ratio` arguments are identical for both providers.
-
-**MiniMax prompt handling (provider-internal).** Authoring is provider-agnostic — write
-the same structured JSON regardless of which provider is active. MiniMax `image-01`
-consumes a single text string, so the MiniMax path itself sends only the JSON `prompt`
-field (the other fields such as `style` / `composition` / `negative_prompt` apply to the
-Gemini path) and enables `prompt_optimizer` so MiniMax expands it server-side. MiniMax
-caps that prompt at 1500 characters; if the `prompt` field is longer, the script returns
-an error instead of calling the API. The Gemini path receives the full structured JSON.
 
 ## Notes
 

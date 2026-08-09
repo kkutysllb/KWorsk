@@ -100,22 +100,32 @@ function resolveIcon(): Electron.NativeImage | undefined {
 }
 
 function resolveTrayIcon(): Electron.NativeImage | undefined {
+  // Prefer a transparent background icon (K-Book glyph only, no dark rounded
+  // square). On macOS we mark it as a Template Image so the system renders
+  // the alpha channel in the menu-bar foreground colour and adapts to light
+  // / dark menu bars automatically. On Windows / Linux the same PNG keeps
+  // its gold gradient on a transparent background.
   const candidates = [
+    join(__dirname, "..", "build", "tray-icons", "32x32.png"),
+    join(__dirname, "..", "build", "tray-icons", "16x16.png"),
+    join(__dirname, "..", "build", "tray-icons", "64x64.png"),
+    join(process.resourcesPath, "tray-icons", "32x32.png"),
+    join(process.resourcesPath, "tray-icons", "16x16.png"),
+    join(REPO_ROOT, "desktop", "build", "tray-icons", "32x32.png"),
+    join(REPO_ROOT, "desktop", "build", "tray-icons", "16x16.png"),
+    // Legacy fallback: full-colour brand logo with dark background. Kept
+    // only so existing packaged builds continue to work before new icons
+    // ship. Will be removed once the tray-icons are bundled by electron-builder.
     join(__dirname, "..", "build", "icons", "16x16.png"),
     join(__dirname, "..", "build", "icons", "32x32.png"),
-    join(process.resourcesPath, "icons", "16x16.png"),
-    join(process.resourcesPath, "icons", "32x32.png"),
-    join(REPO_ROOT, "desktop-electron", "build", "icons", "16x16.png"),
-    join(REPO_ROOT, "desktop-electron", "build", "icons", "32x32.png"),
   ];
   for (const path of candidates) {
     if (!existsSync(path)) continue;
-    // NOTE: do NOT call setTemplateImage(true) here. The tray icon is a
-    // full-colour brand logo (yellow→green gradient O-ring), not a monochrome
-    // silhouette. Marking it as a template image makes macOS discard all
-    // colour and render only the alpha mask as a solid white/grey blob.
-    // Colour tray icons are fully supported on macOS without template mode.
-    return nativeImage.createFromPath(path);
+    const image = nativeImage.createFromPath(path);
+    if (process.platform === "darwin") {
+      image.setTemplateImage(true);
+    }
+    return image;
   }
   return undefined;
 }

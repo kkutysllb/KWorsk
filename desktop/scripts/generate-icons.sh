@@ -71,6 +71,22 @@ else
 fi
 rm -rf "$ICONSET_DIR"
 
+# ── Tray icons ──────────────────────────────────────────────────────────
+# Transparent background template icons for the system tray / menu bar.
+# macOS treats them as Template Images (see main.ts → setTemplateImage(true))
+# so the alpha channel renders in the menu-bar foreground colour and adapts
+# to light/dark menu bars automatically. Windows / Linux keep the gold
+# gradient against the transparent background.
+info "Rendering tray icons (transparent, K-Book only)..."
+TRAY_DIR="$BUILD_DIR/tray-icons"
+mkdir -p "$TRAY_DIR"
+TRAY_SIZES=(16 32 64)
+for size in "${TRAY_SIZES[@]}"; do
+  rsvg-convert -w "$size" -h "$size" "$BUILD_DIR/tray-icon-source.svg" \
+    -o "$TRAY_DIR/${size}x${size}.png"
+done
+ok "tray-icons generated: ${TRAY_DIR}/ (${TRAY_SIZES[*]} px)"
+
 # ── Windows .ico ─────────────────────────────────────────────────────────
 # ICO = 6-byte header + directory entries + PNG blobs. We embed PNGs directly
 # (supported by Windows Vista+ and all Electron targets).

@@ -1,6 +1,10 @@
 ---
 name: podcast-generation
 description: Use this skill when the user requests to generate, create, or produce podcasts from text content. Converts written content into a two-host conversational podcast audio format with natural dialogue.
+
+package:
+  type: python
+  entry: scripts/generate.py
 ---
 
 # Podcast Generation Skill
@@ -64,7 +68,6 @@ Parameters:
 > - The script handles all TTS API calls and audio generation internally.
 > - Do NOT read the Python file, just call it with the parameters.
 > - Always include `--transcript-file` to generate a readable transcript for the user.
-> - The TTS provider and its concurrency are selected automatically from environment variables — you do not choose or tune them.
 
 ## Script JSON Format
 
@@ -75,7 +78,7 @@ The script JSON file must follow this structure:
   "title": "The History of Artificial Intelligence",
   "locale": "en",
   "lines": [
-    {"speaker": "male", "paragraph": "Hello Deer! Welcome back to another episode."},
+    {"speaker": "male", "paragraph": "Hello everyone! Welcome back to another episode."},
     {"speaker": "female", "paragraph": "Hey everyone! Today we have an exciting topic to discuss."},
     {"speaker": "male", "paragraph": "That's right! We're going to talk about..."}
   ]
@@ -96,7 +99,7 @@ When creating the script JSON, follow these guidelines:
 ### Format Requirements
 - Only two hosts: male and female, alternating naturally
 - Target runtime: approximately 10 minutes of dialogue (around 40-60 lines)
-- Start with the male host saying a greeting that includes "Hello Deer"
+- Start with the male host saying a friendly greeting
 
 ### Tone & Style
 - Natural, conversational dialogue - like two friends chatting
@@ -123,7 +126,7 @@ Step 1: Create script file `/mnt/user-data/workspace/ai-history-script.json`:
   "title": "The History of Artificial Intelligence",
   "locale": "en",
   "lines": [
-    {"speaker": "male", "paragraph": "Hello Deer! Welcome back to another fascinating episode. Today we're diving into something that's literally shaping our future - the history of artificial intelligence."},
+    {"speaker": "male", "paragraph": "Hello everyone! Welcome back to another fascinating episode. Today we're diving into something that's literally shaping our future - the history of artificial intelligence."},
     {"speaker": "female", "paragraph": "Oh, I love this topic! You know, AI feels so modern, but it actually has roots going back over seventy years."},
     {"speaker": "male", "paragraph": "Exactly! It all started back in the 1950s. The term artificial intelligence was actually coined by John McCarthy in 1956 at a famous conference at Dartmouth."},
     {"speaker": "female", "paragraph": "Wait, so they were already thinking about machines that could think back then? That's incredible!"},
@@ -154,10 +157,10 @@ Read the following template file only when matching the user request.
 
 ## Output Format
 
-The generated podcast follows the "Hello Deer" format:
+The generated podcast follows the conversational two-host format:
 - Two hosts: one male, one female
 - Natural conversational dialogue
-- Starts with "Hello Deer" greeting
+- Starts with a friendly greeting
 - Target duration: approximately 10 minutes
 - Alternating speakers for engaging flow
 
@@ -173,9 +176,10 @@ After generation:
 ## Requirements
 
 The following environment variables must be set:
-- For Volcengine: `VOLCENGINE_TTS_APPID` and `VOLCENGINE_TTS_ACCESS_TOKEN`
-- For MiniMax: `MINIMAX_API_KEY`
-- `VOLCENGINE_TTS_CLUSTER`: Volcengine TTS cluster (optional, defaults to "volcano_tts")
+- `TTS_APPID`: TTS application ID
+- `TTS_ACCESS_TOKEN`: TTS access token
+- `TTS_API_URL`: TTS API endpoint URL
+- `TTS_CLUSTER`: TTS cluster (optional, defaults to "default")
 
 ## Notes
 
@@ -184,20 +188,3 @@ The following environment variables must be set:
 - Technical content should be simplified for audio accessibility in the script
 - Complex notations (formulas, code) should be translated to plain language in the script
 - Long content may result in longer podcasts
-
-## Providers (Volcengine / MiniMax)
-
-Auto-selected by environment variables:
-
-- `VOLCENGINE_TTS_APPID` + `VOLCENGINE_TTS_ACCESS_TOKEN` set → Volcengine TTS (default).
-- Only `MINIMAX_API_KEY` set → MiniMax TTS (`/v1/t2a_v2`).
-- Force with `PODCAST_GENERATION_PROVIDER=volcengine|minimax`.
-
-MiniMax overrides: `MINIMAX_API_HOST` (default `https://api.minimaxi.com`),
-`MINIMAX_TTS_MODEL` (default `speech-2.6-hd`), `MINIMAX_TTS_VOICE_MALE`
-(default `male-qn-qingse`), `MINIMAX_TTS_VOICE_FEMALE` (default `female-tianmei`).
-
-Concurrency is owned by each provider internally — MiniMax runs single-threaded
-to reduce rate-limit failures, Volcengine uses 4 workers. There is no
-caller-facing concurrency knob; transient rate limits are handled by automatic
-retry with backoff.

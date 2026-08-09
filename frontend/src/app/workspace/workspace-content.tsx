@@ -50,7 +50,7 @@ function WorkspaceContentInner({ children }: { children: ReactNode }) {
   }
 
   return (
-    <SidebarProvider className="h-screen" defaultOpen={false}>
+    <SidebarProvider className="h-screen" defaultOpen={true}>
       <WorkspaceSidebar />
       <SidebarInset className="min-w-0">
         {/*
