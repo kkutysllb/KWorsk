@@ -2,7 +2,6 @@
 
 import {
   ClockIcon,
-  CoinsIcon,
   MessageCircleIcon,
   SparklesIcon,
   TerminalIcon,
@@ -66,17 +65,6 @@ export function WorkspaceNavChatList() {
             <Link className="text-muted-foreground" href="/workspace/crons">
               <ClockIcon className="text-orange-500" />
               <span>{t.sidebar.crons}</span>
-            </Link>
-          </SidebarMenuButton>
-        </SidebarMenuItem>
-        <SidebarMenuItem>
-          <SidebarMenuButton
-            isActive={pathname.startsWith("/workspace/token-usage")}
-            asChild
-          >
-            <Link className="text-muted-foreground" href="/workspace/token-usage">
-              <CoinsIcon className="text-emerald-500" />
-              <span>{t.sidebar.tokenUsage}</span>
             </Link>
           </SidebarMenuButton>
         </SidebarMenuItem>

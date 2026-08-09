@@ -1,5 +1,5 @@
-import { TokenUsagePage } from "@/components/workspace/token-usage/token-usage-page";
+import { redirect } from "next/navigation";
 
 export default function TokenUsagePageRoute() {
-  return <TokenUsagePage />;
+  redirect("/workspace");
 }

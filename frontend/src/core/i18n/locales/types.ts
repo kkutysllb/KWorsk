@@ -672,6 +672,7 @@ export interface Translations {
       description: string;
       summaryTotalTokens: string;
       summaryTotalRuns: string;
+      summaryApiCalls: string;
       summaryModels: string;
       byModel: string;
       byCaller: string;
@@ -682,6 +683,13 @@ export interface Translations {
       subagent: string;
       middleware: string;
       noData: string;
+      cacheHit: string;
+      cacheHitTitle: string;
+      cacheHitTokens: string;
+      cacheHitRate: string;
+      cacheMiss: string;
+      cacheSavedHint: string;
+      timezoneHint: string;
     };
     acknowledge: {
       emptyTitle: string;
