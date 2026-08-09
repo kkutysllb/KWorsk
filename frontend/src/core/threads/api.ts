@@ -1,5 +1,6 @@
 import { fetch } from "@/core/api/fetcher";
 import { getBackendBaseURL } from "@/core/config";
+import { stripUploadedFilesTag } from "@/core/messages/utils";
 
 export async function fetchThreadTitle(threadId: string): Promise<string | null> {
   try {
@@ -14,7 +15,9 @@ export async function fetchThreadTitle(threadId: string): Promise<string | null>
       values?: { title?: unknown } | null;
     } | null;
     const title = payload?.values?.title;
-    return typeof title === "string" && title.trim() ? title.trim() : null;
+    if (typeof title !== "string" || !title.trim()) return null;
+    const cleaned = stripUploadedFilesTag(title);
+    return cleaned.trim() || null;
   } catch {
     return null;
   }

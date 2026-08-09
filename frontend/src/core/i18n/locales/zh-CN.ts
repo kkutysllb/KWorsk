@@ -285,6 +285,7 @@ export const zhCN: Translations = {
 
   // Workspace
   workspace: {
+    settings: "设置",
     settingsAndMore: "设置和更多",
     logout: "退出登录",
     userInfo: {
@@ -651,11 +652,11 @@ export const zhCN: Translations = {
     skills: {
       title: "技能",
       description: "管理 Agent Skill 配置和启用状态。",
-      createSkill: "新建技能",
+      createSkill: "添加技能",
       emptyTitle: "还没有技能",
       emptyDescription:
-        "将你的 Agent Skill 文件夹放在 KWorks 根目录下的 `/skills/custom` 文件夹中。",
-      emptyButton: "创建你的第一个技能",
+        "通过 AI 引导创建，或上传 .skill / .zip 技能包来安装。",
+      emptyButton: "安装第一个技能",
     },
     createSkillWizard: {
       title: "创建新技能",

@@ -298,6 +298,7 @@ export const enUS: Translations = {
 
   // Workspace
   workspace: {
+    settings: "Settings",
     settingsAndMore: "Settings and more",
     logout: "Log out",
     userInfo: {
@@ -671,11 +672,11 @@ export const enUS: Translations = {
       title: "Agent Skills",
       description:
         "Manage the configuration and enabled status of the agent skills.",
-      createSkill: "Create skill",
+      createSkill: "Add Skill",
       emptyTitle: "No agent skill yet",
       emptyDescription:
-        "Put your agent skill folders under the `/skills/custom` folder under the root folder of KWorks.",
-      emptyButton: "Create Your First Skill",
+        "Create via AI guidance, or upload a .skill / .zip package to install.",
+      emptyButton: "Install Your First Skill",
     },
     createSkillWizard: {
       title: "Create a new skill",

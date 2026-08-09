@@ -1,13 +1,10 @@
 "use client";
 
 import {
-  GaugeIcon,
   LogOutIcon,
-  ScrollTextIcon,
   Settings2Icon,
   ShieldCheckIcon,
   UserIcon,
-  WrenchIcon,
 } from "lucide-react";
 
 import {
@@ -29,24 +26,6 @@ import { useI18n } from "@/core/i18n/hooks";
 
 import { useWorkspaceLayout } from "./workspace-layout-context";
 
-type SettingsSection =
-  | "general"
-  | "memorySummary"
-  | "tokenUsageBudget"
-  | "mcp";
-
-const SETTINGS_ITEMS: {
-  id: SettingsSection;
-  icon: typeof Settings2Icon;
-  color: string;
-  labelKey: "general" | "memorySummary" | "tokenUsageBudget" | "mcp";
-}[] = [
-  { id: "general", icon: Settings2Icon, color: "text-sky-500", labelKey: "general" },
-  { id: "memorySummary", icon: ScrollTextIcon, color: "text-amber-500", labelKey: "memorySummary" },
-  { id: "tokenUsageBudget", icon: GaugeIcon, color: "text-emerald-500", labelKey: "tokenUsageBudget" },
-  { id: "mcp", icon: WrenchIcon, color: "text-orange-500", labelKey: "mcp" },
-];
-
 function getRoleLabel(
   role: string,
   t: ReturnType<typeof useI18n>["t"],
@@ -66,38 +45,42 @@ export function WorkspaceUserInfo() {
   if (!user) return null;
 
   const avatar = (
-    <Avatar className="size-8 shrink-0 ring-2 ring-offset-1 ring-offset-background ring-violet-500/30">
-      <AvatarFallback className="bg-gradient-to-br from-violet-500 via-purple-500 to-fuchsia-500 text-white text-sm font-bold shadow-sm">
+    <Avatar className="size-8 shrink-0 ring-2 ring-offset-1 ring-offset-background ring-zinc-400/40">
+      <AvatarFallback className="bg-gradient-to-br from-zinc-500 via-zinc-600 to-neutral-700 text-white text-sm font-bold shadow-sm">
         <UserIcon className="size-4" />
       </AvatarFallback>
     </Avatar>
   );
 
-  const settingsMenuItems = SETTINGS_ITEMS.map((item) => {
-    const Icon = item.icon;
-    return (
-      <DropdownMenuItem
-        key={item.id}
-        onClick={() => openSettings(item.id)}
-      >
-        <Icon className={`size-4 ${item.color}`} />
-        {t.settings.sections[item.labelKey]}
-      </DropdownMenuItem>
-    );
-  });
+  // Single aggregated entry: opens the settings page (default `general`)
+  // where the previously-separate items (memory summary, token usage,
+  // MCP) live as in-page sections. Keeps the user menu compact.
+  const settingsMenuItem = (
+    <DropdownMenuItem onClick={() => openSettings("general")}>
+      <Settings2Icon className="size-4" />
+      {t.workspace.settings}
+    </DropdownMenuItem>
+  );
 
   const userInfoLabel = (
     <DropdownMenuLabel className="font-normal">
       <div className="flex flex-col gap-1">
         <p className="truncate text-sm font-medium">{user.email}</p>
         <div className="flex items-center gap-1.5">
-          <ShieldCheckIcon className={user.system_role === "admin" ? "size-3.5 text-amber-500" : "size-3.5 text-slate-400"} />
+          <ShieldCheckIcon className="size-3.5 text-muted-foreground" />
           <span className="text-muted-foreground text-xs">
             {getRoleLabel(user.system_role, t)}
           </span>
         </div>
       </div>
     </DropdownMenuLabel>
+  );
+
+  const logoutItem = (
+    <DropdownMenuItem onClick={logout}>
+      <LogOutIcon className="size-4" />
+      {t.workspace.logout}
+    </DropdownMenuItem>
   );
 
   if (isCollapsed) {
@@ -119,12 +102,9 @@ export function WorkspaceUserInfo() {
             >
               {userInfoLabel}
               <DropdownMenuSeparator />
-              {settingsMenuItems}
+              {settingsMenuItem}
               <DropdownMenuSeparator />
-              <DropdownMenuItem onClick={logout}>
-                <LogOutIcon className="size-4 text-rose-500" />
-                {t.workspace.logout}
-              </DropdownMenuItem>
+              {logoutItem}
             </DropdownMenuContent>
           </DropdownMenu>
         </div>
@@ -157,12 +137,9 @@ export function WorkspaceUserInfo() {
         >
           {userInfoLabel}
           <DropdownMenuSeparator />
-          {settingsMenuItems}
+          {settingsMenuItem}
           <DropdownMenuSeparator />
-          <DropdownMenuItem onClick={logout}>
-            <LogOutIcon className="size-4 text-rose-500" />
-            {t.workspace.logout}
-          </DropdownMenuItem>
+          {logoutItem}
         </DropdownMenuContent>
       </DropdownMenu>
     </div>

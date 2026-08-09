@@ -227,6 +227,7 @@ export interface Translations {
 
   // Workspace
   workspace: {
+    settings: string;
     settingsAndMore: string;
     logout: string;
     userInfo: {

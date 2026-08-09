@@ -62,7 +62,7 @@ export function WorkspaceHeader({ className }: { className?: string }) {
                   className="text-muted-foreground"
                   href="/workspace/chats/new"
                 >
-                  <MessageSquarePlus size={16} className="text-cyan-500" />
+                  <MessageSquarePlus className="size-4 shrink-0" />
                   <span>{t.sidebar.newChat}</span>
                 </Link>
               </SidebarMenuButton>

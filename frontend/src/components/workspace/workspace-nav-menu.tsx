@@ -35,13 +35,12 @@ type SettingsSection =
 const MENU_ITEMS: {
   id: SettingsSection;
   icon: typeof Settings2Icon;
-  color: string;
   labelKey: "general" | "memorySummary" | "tokenUsageBudget" | "mcp";
 }[] = [
-  { id: "general", icon: Settings2Icon, color: "text-sky-500", labelKey: "general" },
-  { id: "memorySummary", icon: ScrollTextIcon, color: "text-amber-500", labelKey: "memorySummary" },
-  { id: "tokenUsageBudget", icon: GaugeIcon, color: "text-emerald-500", labelKey: "tokenUsageBudget" },
-  { id: "mcp", icon: WrenchIcon, color: "text-orange-500", labelKey: "mcp" },
+  { id: "general", icon: Settings2Icon, labelKey: "general" },
+  { id: "memorySummary", icon: ScrollTextIcon, labelKey: "memorySummary" },
+  { id: "tokenUsageBudget", icon: GaugeIcon, labelKey: "tokenUsageBudget" },
+  { id: "mcp", icon: WrenchIcon, labelKey: "mcp" },
 ];
 
 function NavMenuButtonContent({
@@ -103,7 +102,7 @@ export function WorkspaceNavMenu() {
                       key={item.id}
                       onClick={() => openSettings(item.id)}
                     >
-                      <Icon className={`size-4 ${item.color}`} />
+                      <Icon className="size-4" />
                       {t.settings.sections[item.labelKey]}
                     </DropdownMenuItem>
                   );

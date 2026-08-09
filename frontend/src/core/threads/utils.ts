@@ -1,5 +1,7 @@
 import type { Message } from "@langchain/langgraph-sdk";
 
+import { stripUploadedFilesTag } from "@/core/messages/utils";
+
 import type { AgentThread, AgentThreadContext } from "./types";
 
 type ThreadRouteTarget =
@@ -47,5 +49,10 @@ export function textOfMessage(message: Message) {
 }
 
 export function titleOfThread(thread: AgentThread) {
-  return thread.values?.title ?? "Untitled";
+  const title = thread.values?.title;
+  if (!title) return "Untitled";
+  // Strip leaked middleware tags (uploaded files listing / working dir)
+  // that the auto-naming may have picked up as the title prefix.
+  const cleaned = stripUploadedFilesTag(title);
+  return cleaned || "Untitled";
 }

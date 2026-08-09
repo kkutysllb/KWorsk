@@ -1,16 +1,21 @@
 "use client";
 
 import {
+  ArrowLeftIcon,
+  BotIcon,
   FileTextIcon,
   HelpCircleIcon,
   InfoIcon,
   Loader2Icon,
+  PackageIcon,
   PencilIcon,
   PlusIcon,
   SparklesIcon,
   Trash2Icon,
+  UploadIcon,
 } from "lucide-react";
-import { useCallback, useEffect, useState } from "react";
+import { useRouter } from "next/navigation";
+import { useCallback, useEffect, useRef, useState } from "react";
 import { toast } from "sonner";
 
 import { Button } from "@/components/ui/button";
@@ -21,21 +26,21 @@ import {
   DialogHeader,
   DialogTitle,
 } from "@/components/ui/dialog";
-import { Input } from "@/components/ui/input";
 import { Switch } from "@/components/ui/switch";
 import { Textarea } from "@/components/ui/textarea";
 import { useI18n } from "@/core/i18n/hooks";
 import { getCustomSkill, updateCustomSkill } from "@/core/skills/api";
 import {
-  useCreateSkill,
   useDeleteCustomSkill,
   useEnableSkill,
+  useInstallSkillFromUpload,
   useSkills,
 } from "@/core/skills/hooks";
 import type { CustomSkillContent, Skill } from "@/core/skills/type";
 import { env } from "@/env";
 
 import { SettingsSection } from "./settings-section";
+import { useWorkspaceLayout } from "../workspace-layout-context";
 
 /* ── Category metadata ────────────────────────────────── */
 
@@ -56,7 +61,7 @@ export function SkillSettingsPage() {
   const { mutate: enableSkill } = useEnableSkill();
   const isStatic = env.NEXT_PUBLIC_STATIC_WEBSITE_ONLY === "true";
 
-  const [createOpen, setCreateOpen] = useState(false);
+  const [installOpen, setInstallOpen] = useState(false);
   const [editSkill, setEditSkill] = useState<string | null>(null);
   const [deleting, setDeleting] = useState<string | null>(null);
   const { mutate: deleteSkill } = useDeleteCustomSkill();
@@ -88,7 +93,7 @@ export function SkillSettingsPage() {
         <SkillPipelineHelp />
 
         <header className="flex justify-end">
-          <Button size="sm" onClick={() => setCreateOpen(true)}>
+          <Button size="sm" onClick={() => setInstallOpen(true)}>
             <PlusIcon className="size-4" />
             {t.settings.skills.createSkill}
           </Button>
@@ -102,7 +107,7 @@ export function SkillSettingsPage() {
         ) : error ? (
           <div className="text-sm text-red-500">Error: {error.message}</div>
         ) : skills.length === 0 ? (
-          <EmptySkill onCreate={() => setCreateOpen(true)} />
+          <EmptySkill onCreate={() => setInstallOpen(true)} />
         ) : (
           <div className="space-y-4">
             {CATEGORY_ORDER.filter((cat) => grouped[cat]?.length).map((cat) => (
@@ -122,7 +127,7 @@ export function SkillSettingsPage() {
           </div>
         )}
 
-        <CreateSkillDialog open={createOpen} onOpenChange={setCreateOpen} />
+        <InstallSkillDialog open={installOpen} onOpenChange={setInstallOpen} />
         {editSkill && (
           <EditSkillDialog
             skillName={editSkill}
@@ -325,9 +330,14 @@ function SkillPipelineHelp() {
   );
 }
 
-/* ── Create skill dialog ──────────────────────────────── */
+/* ── Install skill dialog ────────────────────────────── */
 
-function CreateSkillDialog({
+/**
+ * Two-mode skill installation dialog:
+ * 1. AI-guided — opens a chat thread with a pre-filled skill-creation prompt
+ * 2. Upload — drag-and-drop or file picker for .skill / .zip packages
+ */
+function InstallSkillDialog({
   open,
   onOpenChange,
 }: {
@@ -335,101 +345,188 @@ function CreateSkillDialog({
   onOpenChange: (open: boolean) => void;
 }) {
   const { t } = useI18n();
-  const { mutate: createMutate, isPending } = useCreateSkill();
-  const [name, setName] = useState("");
-  const [description, setDescription] = useState("");
-  const [content, setContent] = useState("");
+  const router = useRouter();
+  const { closeSettings } = useWorkspaceLayout();
+  const [view, setView] = useState<"menu" | "upload">("menu");
 
   useEffect(() => {
     if (open) {
-      setName("");
-      setDescription("");
-      setContent("");
+      setView("menu");
     }
   }, [open]);
 
-  const handleSubmit = (e: React.FormEvent) => {
-    e.preventDefault();
-    if (!name.trim() || !content.trim()) {
-      toast.error("请填写技能名称和 SKILL.md 内容");
-      return;
-    }
-    createMutate(
-      { name: name.trim(), description: description.trim(), content },
-      {
-        onSuccess: () => {
-          toast.success(`已创建技能「${name.trim()}」`);
-          onOpenChange(false);
-        },
-        onError: (e) =>
-          toast.error(e instanceof Error ? e.message : "创建失败"),
-      },
-    );
+  const handleAiGuided = () => {
+    onOpenChange(false);
+    closeSettings();
+    router.push("/workspace/chats/new?mode=skill");
   };
 
   return (
     <Dialog open={open} onOpenChange={onOpenChange}>
-      <DialogContent className="sm:max-w-2xl">
+      <DialogContent className="sm:max-w-lg">
         <DialogHeader>
           <DialogTitle>{t.settings.skills.createSkill}</DialogTitle>
         </DialogHeader>
-        <form onSubmit={handleSubmit} className="space-y-4">
-          <div className="space-y-1.5">
-            <label htmlFor="skill-name" className="text-sm font-medium">
-              名称
-            </label>
-            <Input
-              id="skill-name"
-              value={name}
-              onChange={(e) => setName(e.target.value)}
-              disabled={isPending}
-              placeholder="如：my-custom-skill"
-              className="h-9"
-            />
-          </div>
-          <div className="space-y-1.5">
-            <label htmlFor="skill-desc" className="text-sm font-medium">
-              描述
-            </label>
-            <Input
-              id="skill-desc"
-              value={description}
-              onChange={(e) => setDescription(e.target.value)}
-              disabled={isPending}
-              placeholder="该技能的用途说明"
-              className="h-9"
-            />
-          </div>
-          <div className="space-y-1.5">
-            <label htmlFor="skill-content" className="text-sm font-medium">
-              SKILL.md 内容
-            </label>
-            <Textarea
-              id="skill-content"
-              value={content}
-              onChange={(e) => setContent(e.target.value)}
-              disabled={isPending}
-              className="min-h-48 font-mono text-xs"
-              spellCheck={false}
-              placeholder={`---\nname: ${name || "skill-name"}\ndescription: ${description || "技能描述"}\n---\n\n技能内容…`}
-            />
-          </div>
-          <DialogFooter>
-            <Button
-              type="button"
-              variant="outline"
-              onClick={() => onOpenChange(false)}
-              disabled={isPending}
+        {view === "menu" ? (
+          <div className="space-y-3">
+            <button
+              onClick={handleAiGuided}
+              className="group flex w-full items-start gap-3 rounded-xl border p-4 text-left transition-colors hover:border-violet-300 hover:bg-violet-50/50 dark:hover:border-violet-800 dark:hover:bg-violet-950/20"
             >
-              取消
-            </Button>
-            <Button type="submit" disabled={isPending}>
-              {isPending ? "创建中…" : "创建"}
-            </Button>
-          </DialogFooter>
-        </form>
+              <div className="flex size-10 shrink-0 items-center justify-center rounded-lg bg-violet-100 dark:bg-violet-900/40">
+                <BotIcon className="size-5 text-violet-600 dark:text-violet-400" />
+              </div>
+              <div className="min-w-0 flex-1">
+                <p className="text-sm font-medium">
+                  AI 引导创建
+                </p>
+                <p className="mt-0.5 text-xs leading-relaxed text-muted-foreground">
+                  打开对话窗口，由 AI 引导你逐步完成技能的需求分析和创建。
+                </p>
+              </div>
+            </button>
+
+            <button
+              onClick={() => setView("upload")}
+              className="group flex w-full items-start gap-3 rounded-xl border p-4 text-left transition-colors hover:border-blue-300 hover:bg-blue-50/50 dark:hover:border-blue-800 dark:hover:bg-blue-950/20"
+            >
+              <div className="flex size-10 shrink-0 items-center justify-center rounded-lg bg-blue-100 dark:bg-blue-900/40">
+                <UploadIcon className="size-5 text-blue-600 dark:text-blue-400" />
+              </div>
+              <div className="min-w-0 flex-1">
+                <p className="text-sm font-medium">
+                  上传技能包
+                </p>
+                <p className="mt-0.5 text-xs leading-relaxed text-muted-foreground">
+                  选择 .skill 或 .zip 压缩包，自动完成安全扫描和安装。
+                </p>
+              </div>
+            </button>
+          </div>
+        ) : (
+          <UploadSkillPanel
+            onBack={() => setView("menu")}
+            onSuccess={() => onOpenChange(false)}
+          />
+        )}
       </DialogContent>
     </Dialog>
+  );
+}
+
+/* ── Upload skill panel ───────────────────────────────── */
+
+function UploadSkillPanel({
+  onBack,
+  onSuccess,
+}: {
+  onBack: () => void;
+  onSuccess: () => void;
+}) {
+  const { mutateAsync, isPending } = useInstallSkillFromUpload();
+  const [file, setFile] = useState<File | null>(null);
+  const [dragging, setDragging] = useState(false);
+  const inputRef = useRef<HTMLInputElement>(null);
+
+  const accept = ".skill,.zip";
+
+  const validateAndSet = (f: File) => {
+    const name = f.name.toLowerCase();
+    if (!name.endsWith(".skill") && !name.endsWith(".zip")) {
+      toast.error("仅支持 .skill 或 .zip 格式的技能包");
+      return;
+    }
+    setFile(f);
+  };
+
+  const handleDrop = (e: React.DragEvent) => {
+    e.preventDefault();
+    setDragging(false);
+    const dropped = e.dataTransfer.files[0];
+    if (dropped) {
+      validateAndSet(dropped);
+    }
+  };
+
+  const handleInstall = async () => {
+    if (!file) return;
+    try {
+      const result = await mutateAsync({ file });
+      toast.success(result.message || `已安装技能「${result.skill_name}」`);
+      setFile(null);
+      onSuccess();
+    } catch (e) {
+      toast.error(e instanceof Error ? e.message : "安装失败");
+    }
+  };
+
+  return (
+    <div className="space-y-4">
+      <div
+        onClick={() => inputRef.current?.click()}
+        onDragOver={(e) => {
+          e.preventDefault();
+          setDragging(true);
+        }}
+        onDragLeave={() => setDragging(false)}
+        onDrop={handleDrop}
+        className={[
+          "flex cursor-pointer flex-col items-center gap-3 rounded-xl border-2 border-dashed py-10 transition-colors",
+          dragging
+            ? "border-blue-400 bg-blue-50/50 dark:border-blue-600 dark:bg-blue-950/20"
+            : "border-muted-foreground/25 hover:border-muted-foreground/50",
+        ].join(" ")}
+      >
+        {file ? (
+          <>
+            <PackageIcon className="size-8 text-blue-500" />
+            <span className="text-sm font-medium">{file.name}</span>
+            <span className="text-xs text-muted-foreground">
+              {(file.size / 1024).toFixed(1)} KB — 点击重新选择
+            </span>
+          </>
+        ) : (
+          <>
+            <UploadIcon className="size-8 text-muted-foreground" />
+            <span className="text-sm font-medium">拖拽技能包到此处</span>
+            <span className="text-xs text-muted-foreground">
+              或点击选择 .skill / .zip 文件
+            </span>
+          </>
+        )}
+        <input
+          ref={inputRef}
+          type="file"
+          accept={accept}
+          className="hidden"
+          onChange={(e) => {
+            const selected = e.target.files?.[0];
+            if (selected) validateAndSet(selected);
+          }}
+        />
+      </div>
+
+      <DialogFooter>
+        <Button
+          variant="outline"
+          onClick={onBack}
+          disabled={isPending}
+        >
+          <ArrowLeftIcon className="size-4" />
+          返回
+        </Button>
+        <Button onClick={handleInstall} disabled={!file || isPending}>
+          {isPending ? (
+            <>
+              <Loader2Icon className="size-4 animate-spin" />
+              安装中…
+            </>
+          ) : (
+            "安装技能"
+          )}
+        </Button>
+      </DialogFooter>
+    </div>
   );
 }
 

@@ -1,5 +1,7 @@
 import type { AIMessage, Message } from "@langchain/langgraph-sdk";
 
+import type { HumanInputField, HumanInputOption, HumanInputRequest } from "./human-input";
+
 interface GenericMessageGroup<T = string> {
   type: T;
   id: string | undefined;
@@ -586,6 +588,12 @@ export function stripInternalContent(text: string): string {
 
   let output = result.join("\n").replace(/\n{3,}/g, "\n\n").trim();
 
+  // Strip uploaded_files / current_uploads / working_directory tags injected
+  // by middlewares so file listings and outline metadata never leak into the
+  // prose body of the AI reply. They are surfaced separately via the file
+  // cards and tool-activity chain.
+  output = stripUploadedFilesTag(output);
+
   // Strip lines that begin with middleware/tool-status announcements that
   // the engine occasionally injects into the assistant content. These
   // are not part of the agent's own reply and must not leak into the
@@ -676,14 +684,17 @@ export interface FileInMessage {
 
 /**
  * Strip injected middleware blocks from message content.
- * Removes <uploaded_files> and <working_directory> tags so they don't
- * appear in the chat UI (they are agent-internal context injections).
+ * Removes <uploaded_files>, <working_directory> and <current_uploads>
+ * tags so they don't appear in the chat UI (they are agent-internal
+ * context injections — file list / outline / tool guidance that should
+ * only surface in the upload file cards, never in the prose body).
  * Returns the cleaned content.
  */
 export function stripUploadedFilesTag(content: string): string {
   return content
     .replace(/<uploaded_files>[\s\S]*?<\/uploaded_files>/g, "")
     .replace(/<working_directory>[\s\S]*?<\/working_directory>/g, "")
+    .replace(/<current_uploads>[\s\S]*?<\/current_uploads>/g, "")
     .trim();
 }
 
@@ -742,4 +753,155 @@ export function parseUploadedFiles(content: string): FileInMessage[] {
   }
 
   return files;
+}
+
+/**
+ * Detect a structured clarification request that the model emitted as
+ * plain markdown (instead of routing through the ask_clarification tool
+ * call) and convert it into a `HumanInputRequest` so the existing
+ * `HumanInputCard` component can render the question + fields as an
+ * interactive form rather than a wall of text.
+ *
+ * Recognised shape (simplified):
+ *
+ *   <optional question preamble — free prose>
+ *
+ *   1. **<field name> (required)** — options: A / B / C (multiple allowed)
+ *   2. **<field name>** — options: D / E
+ *   …
+ *
+ *   Please reply with a value for each field.
+ *
+ * If the closing marker is missing or no fields parse out, the helper
+ * returns `null` so the caller falls back to the normal markdown render.
+ */
+export function tryExtractInlineHumanInputForm(
+  content: string,
+): HumanInputRequest | null {
+  // Multi-lingual closing markers — assistants may phrase the ask in
+  // English or Chinese, and any one of these appearing in the response
+  // strongly signals an inline clarification the model wrote instead of
+  // routing through the ask_clarification tool call.
+  const markers = [
+    "Please reply with a value for each field",
+    "Please answer the following",
+    "Please select",
+    "Please confirm",
+    "Please tell me",
+    "请回答以下问题",
+    "请回复",
+    "请选择",
+    "请确认",
+    "请告诉我",
+    "请逐一回答",
+    "请提供以上信息",
+  ];
+  let markerIdx = -1;
+  for (const m of markers) {
+    const idx = content.indexOf(m);
+    if (idx !== -1 && (markerIdx === -1 || idx < markerIdx)) {
+      markerIdx = idx;
+    }
+  }
+
+  const fieldPattern =
+    // `\d+. <label> (required|optional) — options: a / b`
+    // `**label**` bold is optional (assistants sometimes skip it).
+    /(?:^|\n)\s*(\d+)\.\s+(?:\*\*)?([^*\n(]+?)(?:\*\*)?\s*\((required|可选|optional)\)\s*([^\n]*?)—\s*options?\s*:\s*([^\n]+)/gi;
+  const indexedFields = new Map<number, HumanInputField>();
+  const matches = [...content.matchAll(fieldPattern)];
+  for (const match of matches) {
+    const index = Number(match[1]);
+    const rawLabel = (match[2] ?? "").trim();
+    if (!rawLabel) continue;
+    const cleanedLabel = rawLabel
+      .replace(/\s*\(\s*(required|optional|可选)\s*\)\s*$/i, "")
+      .trim();
+    const required = /required|必填/i.test(rawLabel);
+    const multiple = /multiple allowed/i.test(match[0]);
+    const options = parseHumanInputOptions(match[5] ?? "");
+    if (options.length === 0) continue;
+    indexedFields.set(index, {
+      name: cleanedLabel.replace(/\s+/g, "_").toLowerCase(),
+      label: cleanedLabel,
+      type: multiple ? "multi_select" : "select",
+      required,
+      options,
+    });
+  }
+
+  // Capture `N. <label> (required)` lines without an `options:` clause —
+  // those are free-text fields the model wants the user to type into.
+  const textFieldPattern =
+    /(?:^|\n)\s*(\d+)\.\s+(?:\*\*)?([^*\n(]+?)(?:\*\*)?\s*\((required|可选|optional)\)/gi;
+  for (const match of content.matchAll(textFieldPattern)) {
+    const index = Number(match[1]);
+    if (indexedFields.has(index)) continue;
+    const rawLabel = (match[2] ?? "").trim();
+    if (!rawLabel) continue;
+    const cleanedLabel = rawLabel
+      .replace(/\s*\(\s*(required|optional|可选)\s*\)\s*$/i, "")
+      .trim();
+    const required = /required|必填/i.test(rawLabel);
+    indexedFields.set(index, {
+      name: cleanedLabel.replace(/\s+/g, "_").toLowerCase(),
+      label: cleanedLabel,
+      type: "textarea",
+      required,
+    });
+  }
+
+  // Preserve numeric ordering as emitted by the assistant.
+  const fields: HumanInputField[] = [...indexedFields.entries()]
+    .sort((a, b) => a[0] - b[0])
+    .map(([, field]) => field);
+
+  if (fields.length === 0) return null;
+
+  // If the model didn't emit a recognised closing marker but did list
+  // at least two structured `(required)` / `(optional)` fields, treat
+  // the block as an inline clarification anyway — better to render the
+  // interactive card than a wall of prose.
+  if (markerIdx === -1 && fields.length < 2) return null;
+
+  // Question preamble is everything before the first numbered field, trimmed.
+  const firstFieldMatch = content.match(/(?:^|\n)\s*1\.\s+/);
+  const preambleEnd = firstFieldMatch
+    ? content.indexOf(firstFieldMatch[0])
+    : markerIdx === -1
+      ? 0
+      : markerIdx;
+  const question = content
+    .slice(0, preambleEnd === -1 ? markerIdx : preambleEnd)
+    .trim();
+
+  return {
+    version: 1,
+    kind: "human_input_request",
+    source: "inline-form",
+    request_id: `inline-${Date.now().toString(36)}`,
+    question:
+      question.length > 0 ? question : "请回答以下问题：",
+    input_mode: "form",
+    fields,
+  };
+}
+
+/**
+ * Parse a free-form `options:` segment into structured
+ * {@link HumanInputOption} entries. Tolerates ` / `, `、`, and `, ` as
+ * separators and strips trailing parenthesis hints such as
+ * `(multiple allowed)`.
+ */
+function parseHumanInputOptions(text: string): HumanInputOption[] {
+  const cleaned = text.replace(/\([^)]*\)\s*$/g, "").trim();
+  const parts = cleaned
+    .split(/\s*[、,\/]\s*/)
+    .map((p) => p.trim())
+    .filter((p) => p.length > 0);
+  return parts.map((label, idx) => ({
+    id: `${idx}-${label.slice(0, 16)}`,
+    label,
+    value: label,
+  }));
 }

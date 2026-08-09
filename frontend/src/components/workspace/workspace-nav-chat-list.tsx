@@ -28,13 +28,11 @@ export function WorkspaceNavChatList() {
       <SidebarMenu>
         <SidebarMenuItem>
           <SidebarMenuButton
-            isActive={pathname.startsWith("/workspace/skills")}
-            asChild
+            onClick={() => openSettings("skill")}
+            tooltip={t.sidebar.skills}
           >
-            <Link className="text-muted-foreground" href="/workspace/skills">
-              <SparklesIcon className="text-amber-500" />
-              <span>{t.sidebar.skills}</span>
-            </Link>
+            <SparklesIcon className="size-4 shrink-0" />
+            <span>{t.sidebar.skills}</span>
           </SidebarMenuButton>
         </SidebarMenuItem>
         <SidebarMenuItem>
@@ -42,10 +40,8 @@ export function WorkspaceNavChatList() {
             onClick={() => openSettings("mcp")}
             tooltip={t.sidebar.mcp}
           >
-            <span className="text-muted-foreground">
-              <TerminalIcon className="text-amber-500" />
-              <span>{t.sidebar.mcp}</span>
-            </span>
+            <TerminalIcon className="size-4 shrink-0" />
+            <span>{t.sidebar.mcp}</span>
           </SidebarMenuButton>
         </SidebarMenuItem>
         <SidebarMenuItem>
@@ -53,8 +49,8 @@ export function WorkspaceNavChatList() {
             isActive={pathname.startsWith("/workspace/crons")}
             asChild
           >
-            <Link className="text-muted-foreground" href="/workspace/crons">
-              <ClockIcon className="text-orange-500" />
+            <Link href="/workspace/crons">
+              <ClockIcon className="size-4 shrink-0" />
               <span>{t.sidebar.crons}</span>
             </Link>
           </SidebarMenuButton>

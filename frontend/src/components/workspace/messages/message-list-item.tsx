@@ -38,18 +38,24 @@ import {
 import { useAuthenticatedArtifactObjectUrl } from "@/core/artifacts/authenticated-url";
 import { isArtifactPath, resolveArtifactURL } from "@/core/artifacts/utils";
 import { useI18n } from "@/core/i18n/hooks";
+import type { HumanInputResponse } from "@/core/messages/human-input";
 import {
   extractContentFromMessage,
   extractReasoningContentFromMessage,
   parseUploadedFiles,
   stripInternalContent,
   stripUploadedFilesTag,
+  tryExtractInlineHumanInputForm,
   type FileInMessage,
 } from "@/core/messages/utils";
 import { SafeReasoningContent } from "@/core/streamdown/components";
 import { cn } from "@/lib/utils";
 
 import { CopyButton } from "../copy-button";
+import {
+  type HumanInputSubmitResult,
+  HumanInputCard,
+} from "./human-input-card";
 import { Tooltip } from "../tooltip";
 
 import { MarkdownContent } from "./markdown-content";
@@ -129,6 +135,7 @@ export function MessageListItem({
   feedback,
   runId,
   onEditMessage,
+  onClarifySubmit,
 }: {
   className?: string;
   message: Message;
@@ -142,6 +149,15 @@ export function MessageListItem({
    * thread stream) can hook this to replay / regenerate the turn.
    */
   onEditMessage?: (messageId: string, replacementText: string) => void;
+  /**
+   * Optional callback invoked when the user submits a structured
+   * clarification request that the assistant emitted as inline markdown
+   * (rendered through `HumanInputCard`). Upper layers can pipe the
+   * response back into the chat stream.
+   */
+  onClarifySubmit?: (
+    response: HumanInputResponse,
+  ) => HumanInputSubmitResult | Promise<HumanInputSubmitResult>;
 }) {
   const isHuman = message.type === "human";
   const [editing, setEditing] = useState(false);
@@ -190,6 +206,7 @@ export function MessageListItem({
         onSaveEdit={saveEdit}
         onCancelEdit={cancelEdit}
         onStartEdit={startEditing}
+        onClarifySubmit={onClarifySubmit}
       />
       {!isLoading && (
         <MessageToolbar
@@ -303,6 +320,7 @@ function MessageContent_({
   onSaveEdit,
   onCancelEdit,
   onStartEdit,
+  onClarifySubmit,
 }: {
   className?: string;
   message: Message;
@@ -315,6 +333,9 @@ function MessageContent_({
   onSaveEdit?: () => void;
   onCancelEdit?: () => void;
   onStartEdit?: () => void;
+  onClarifySubmit?: (
+    response: HumanInputResponse,
+  ) => HumanInputSubmitResult | Promise<HumanInputSubmitResult>;
 }) {
   const isHuman = message.type === "human";
   const components = useMemo(
@@ -458,6 +479,16 @@ function MessageContent_({
     );
   }
 
+  // If the assistant reply is a structured clarification rendered as plain
+  // markdown (numbered `**field (required)** — options: …` items plus
+  // "Please reply with a value for each field"), surface it through the
+  // interactive HumanInputCard component instead of an unreadable wall
+  // of prose.
+  const inlineHumanInput = !isHuman && contentToDisplay
+    ? tryExtractInlineHumanInputForm(contentToDisplay)
+    : null;
+  const proseContent = inlineHumanInput ? "" : contentToDisplay;
+
   return (
     <AIElementMessageContent className={className}>
       {filesList}
@@ -469,12 +500,20 @@ function MessageContent_({
           </SafeReasoningContent>
         </Reasoning>
       )}
-      <MarkdownContent
-        content={contentToDisplay}
-        isLoading={isLoading}
-        className="streamdown-tight my-1"
-        components={components}
-      />
+      {inlineHumanInput && (
+        <HumanInputCard
+          request={inlineHumanInput}
+          onSubmit={onClarifySubmit}
+        />
+      )}
+      {proseContent && (
+        <MarkdownContent
+          content={proseContent}
+          isLoading={isLoading}
+          className="streamdown-tight my-1"
+          components={components}
+        />
+      )}
     </AIElementMessageContent>
   );
 }

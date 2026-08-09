@@ -14,6 +14,7 @@ import {
 import { useBackendStatus } from "@/core/desktop/use-backend-status";
 import { useI18n } from "@/core/i18n/hooks";
 import { useModels } from "@/core/models/hooks";
+import { stripUploadedFilesTag } from "@/core/messages/utils";
 import { useActiveThreadMessages } from "@/hooks/use-active-thread";
 import { cn } from "@/lib/utils";
 
@@ -41,7 +42,6 @@ function pageTitle(
   if (!pathname) return t.topbar.noActiveSession;
   if (pathname.startsWith("/workspace/chats")) return t.breadcrumb.chats;
   if (pathname.startsWith("/workspace/agents")) return t.sidebar.agents;
-  if (pathname.startsWith("/workspace/skills")) return t.sidebar.skills;
   if (pathname.startsWith("/workspace/crons")) return t.sidebar.crons;
   if (pathname.startsWith("/workspace/token-usage"))
     return t.sidebar.tokenUsage;
@@ -84,7 +84,7 @@ export function WorkspaceTopbar() {
       {/* 中段：当前会话标题（动态）｜ 状态 */}
       <div className="flex min-w-0 flex-1 items-center gap-2 px-3">
         <span className="truncate text-sm font-medium">
-          {values?.title || pageTitle(pathname, t)}
+          {values?.title ? stripUploadedFilesTag(values.title) || pageTitle(pathname, t) : pageTitle(pathname, t)}
         </span>
         <Separator orientation="vertical" className="h-4" />
         <Tooltip>
