@@ -25,7 +25,7 @@ import type { MCPServerConfig } from "@/core/mcp/types";
 import { McpCard } from "./mcp-card";
 import { McpDialog } from "./mcp-dialog";
 
-/** Built-in preset MCP servers that are free and require no API key. */
+/** Built-in preset MCP servers (free or with datasource-managed credentials). */
 const MCP_PRESETS: MCPServerConfig[] = [
   {
     enabled: true,
@@ -68,6 +68,12 @@ const MCP_PRESETS: MCPServerConfig[] = [
     command: "npx",
     args: ["-y", "@modelcontextprotocol/server-filesystem", "/tmp"],
     description: "Secure file system access (edit /tmp in args to your path)",
+  },
+  {
+    enabled: true,
+    type: "http",
+    url: "https://zyhub.finance.sina.cn/mcp",
+    description: "新浪财经 MCP：实时行情、财务数据、资金流向等中国金融市场数据",
   },
 ];
 
@@ -157,14 +163,29 @@ export function McpGallery({ embedded = false }: { embedded?: boolean }) {
 
   const serverEntries = Object.entries(servers);
 
-  /** Derive a unique server name from a preset's package name. */
+  /** Derive a unique server name from a preset's package name or URL host. */
   const derivePresetName = (preset: MCPServerConfig): string => {
+    // For stdio servers: derive from package name
     const pkg = preset.args?.find((a) => a.includes("mcp-server")) ?? "";
-    const base = pkg
-      .replace(/^.+\//, "")
-      .replace(/^mcp-server-/, "")
-      .replace(/^@modelcontextprotocol\/server-/, "");
-    return base || "mcp-server";
+    if (pkg) {
+      const base = pkg
+        .replace(/^.+\//, "")
+        .replace(/^mcp-server-/, "")
+        .replace(/^@modelcontextprotocol\/server-/, "");
+      return base || "mcp-server";
+    }
+    // For http/sse servers: derive from URL host
+    if (preset.url) {
+      try {
+        const host = new URL(preset.url).hostname;
+        const parts = host.split(".");
+        // e.g. zyhub.finance.sina.cn → "sina"
+        return parts.length >= 2 ? parts[parts.length - 2]! : host;
+      } catch {
+        return "mcp-server";
+      }
+    }
+    return "mcp-server";
   };
 
   const handleAddPreset = async (preset: MCPServerConfig) => {
