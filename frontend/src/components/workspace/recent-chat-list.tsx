@@ -59,6 +59,7 @@ import {
 import { prefetchThreadState } from "@/core/threads/prefetch";
 import type { AgentThread, AgentThreadState } from "@/core/threads/types";
 import { pathOfThread, titleOfThread } from "@/core/threads/utils";
+import { formatSmartTime } from "@/core/utils/datetime";
 import { env } from "@/env";
 import { isIMEComposing } from "@/lib/ime";
 
@@ -87,7 +88,7 @@ function parseAgentNameFromPath(pathname: string | null): string | undefined {
 }
 
 export function RecentChatList() {
-  const { t } = useI18n();
+  const { t, locale } = useI18n();
   const router = useRouter();
   const pathname = usePathname();
   const { historyCollapsed, toggleHistory } = useWorkspaceLayout();
@@ -239,15 +240,18 @@ export function RecentChatList() {
                     className="group/side-menu-item"
                   >
                     <SidebarMenuButton isActive={isActive} asChild>
-                      <div>
+                      <div className="flex w-full items-center gap-2">
                         <Link
-                          className="text-muted-foreground block w-full whitespace-nowrap group-hover/side-menu-item:overflow-hidden"
+                          className="text-muted-foreground min-w-0 flex-1 truncate"
                           href={pathOfThread(thread)}
                           onMouseEnter={() => void prefetchThreadState(thread.thread_id)}
                           onFocus={() => void prefetchThreadState(thread.thread_id)}
                         >
                           {titleOfThread(thread)}
                         </Link>
+                        <span className="text-muted-foreground/70 shrink-0 text-[10px] tabular-nums transition-opacity group-hover/side-menu-item:opacity-0">
+                          {formatSmartTime(thread.updated_at, locale)}
+                        </span>
                         {env.NEXT_PUBLIC_STATIC_WEBSITE_ONLY !== "true" && (
                           <DropdownMenu>
                             <DropdownMenuTrigger asChild>
