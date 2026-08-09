@@ -72,7 +72,7 @@ const MCP_PRESETS: MCPServerConfig[] = [
     enabled: true,
     type: "stdio",
     command: "uvx",
-    args: ["mcp-server-git"],
+    args: ["--with", "mcp>=1.9,<1.10", "mcp-server-git"],
     description: "Git repository operations: log, diff, status, and more",
   },
   {
