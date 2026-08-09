@@ -5,9 +5,7 @@ import {
   ChevronDown,
   ClockIcon,
   Code2Icon,
-  DatabaseIcon,
   FileUpIcon,
-  HardDriveIcon,
   Loader2Icon,
   PowerIcon,
   Settings2Icon,
@@ -16,7 +14,6 @@ import {
   ZapIcon,
 } from "lucide-react";
 import { useState } from "react";
-import { toast } from "sonner";
 
 import { Button } from "@/components/ui/button";
 import {
@@ -25,26 +22,20 @@ import {
   CollapsibleTrigger,
 } from "@/components/ui/collapsible";
 import { ScrollArea } from "@/components/ui/scroll-area";
-import { isDesktopBackendManagedMode } from "@/core/config";
-import { restartBackend } from "@/core/desktop";
-import { restartGateway, waitForGateway } from "@/core/settings-config/api";
 import { cn } from "@/lib/utils";
 
 import { CronForm } from "./config/settings-forms/cron-form";
-import { DatabaseForm } from "./config/settings-forms/database-form";
 import { LogLevelForm } from "./config/settings-forms/log-level-form";
 import { MemoryForm } from "./config/settings-forms/memory-form";
-import { RunEventsForm } from "./config/settings-forms/run-events-form";
 import { SandboxForm } from "./config/settings-forms/sandbox-form";
 import { TitleForm } from "./config/settings-forms/title-form";
 import { TokenUsageForm } from "./config/settings-forms/token-usage-form";
 import { UploadsForm } from "./config/settings-forms/uploads-form";
 import { YamlEditorSection } from "./config/yaml-editor-section";
+import { useApplyAndRestart } from "./use-apply-and-restart";
 
 type ConfigSubPage =
   | "sandbox"
-  | "database"
-  | "run_events"
   | "cron"
   | "title"
   | "memory"
@@ -66,52 +57,13 @@ interface NavGroup {
 
 export function ConfigSettingsPage() {
   const [active, setActive] = useState<ConfigSubPage>("sandbox");
-  const [restarting, setRestarting] = useState(false);
-
-  const handleApplyAndRestart = async () => {
-    if (!confirm("确定要重启后端便配置生效吗？重启期间服务将短暂不可用。"))
-      return;
-
-    setRestarting(true);
-
-    try {
-      if (isDesktopBackendManagedMode()) {
-        const result = await restartBackend();
-        if (result) {
-          toast.success("后端已重启，配置已生效");
-        } else {
-          toast.error("重启失败，请查看托盘菜单手动重启");
-        }
-      } else {
-        // Web and desktop dev: backend self-restart via API + health polling.
-        toast.info("正在重启后端…");
-        try {
-          await restartGateway();
-        } catch {
-          // Connection reset is expected during shutdown
-        }
-        // Wait for gateway to come back online
-        const ok = await waitForGateway(30_000, 1_000);
-        if (ok) {
-          toast.success("后端已重启，配置已生效");
-        } else {
-          toast.error("后端重启超时，请检查服务状态");
-        }
-      }
-    } catch (e) {
-      toast.error(e instanceof Error ? e.message : "重启失败");
-    } finally {
-      setRestarting(false);
-    }
-  };
+  const { restarting, applyAndRestart } = useApplyAndRestart();
 
   const groups: NavGroup[] = [
     {
       title: "运行时",
       items: [
         { id: "sandbox", label: "沙箱", icon: TerminalIcon },
-        { id: "database", label: "数据库", icon: DatabaseIcon },
-        { id: "run_events", label: "运行事件", icon: HardDriveIcon },
         { id: "cron", label: "定时任务", icon: ClockIcon },
       ],
     },
@@ -146,13 +98,13 @@ export function ConfigSettingsPage() {
           <div className="min-w-0">
             <h3 className="text-base font-semibold">系统配置</h3>
             <p className="text-muted-foreground text-xs">
-              管理 config.yaml 中的所有配置项，修改后点击「应用并重启」生效
+              管理 config.yaml 中的配置项，修改后点击「应用并重启」生效
             </p>
           </div>
         </div>
         <Button
           size="sm"
-          onClick={handleApplyAndRestart}
+          onClick={applyAndRestart}
           disabled={restarting}
           className="w-fit gap-1.5 self-start sm:self-auto"
         >
@@ -212,8 +164,6 @@ export function ConfigSettingsPage() {
         <ScrollArea className="h-[calc(75vh-10rem)] min-h-[400px] min-w-0 flex-1 rounded-lg border">
           <div className="min-w-0 p-5">
             {active === "sandbox" && <SandboxForm />}
-            {active === "database" && <DatabaseForm />}
-            {active === "run_events" && <RunEventsForm />}
             {active === "cron" && <CronForm />}
             {active === "title" && <TitleForm />}
             {active === "memory" && <MemoryForm />}
