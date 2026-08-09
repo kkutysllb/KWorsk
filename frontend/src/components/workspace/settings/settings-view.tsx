@@ -13,7 +13,6 @@ import {
   ScrollTextIcon,
   SearchIcon,
   Settings2Icon,
-  SlidersHorizontalIcon,
   SparklesIcon,
   WrenchIcon,
 } from "lucide-react";
@@ -27,7 +26,6 @@ import { useI18n } from "@/core/i18n/hooks";
 import { cn } from "@/lib/utils";
 
 import { BackendControlBar } from "./backend-control-bar";
-import { ConfigSettingsPage } from "./config-settings-page";
 import { DataPersistenceSettingsPage } from "./data-persistence-settings-page";
 import { DatasourcesSettingsPage } from "./datasources-settings-page";
 import { GeneralSettingsPage } from "./general-settings-page";
@@ -55,7 +53,6 @@ type SectionId =
   | "toolsSandbox"
   | "webTools"
   | "uploads"
-  | "config"
   | "dataSources"
   | "dataPersistence"
   | "skillModels"
@@ -76,7 +73,6 @@ const SECTIONS: SectionDef[] = [
   { id: "tools", icon: WrenchIcon, groupKey: "toolsData" },
   { id: "dataSources", icon: DatabaseIcon, groupKey: "toolsData" },
   { id: "models", icon: CpuIcon, groupKey: "engine" },
-  { id: "config", icon: SlidersHorizontalIcon, groupKey: "engine" },
   { id: "dataPersistence", icon: HardDriveIcon, groupKey: "engine" },
   { id: "memorySummary", icon: ScrollTextIcon, groupKey: "engine" },
   { id: "tokenUsageBudget", icon: GaugeIcon, groupKey: "engine" },
@@ -263,7 +259,6 @@ export function SettingsView({
               {active.id === "toolsSandbox" && <ToolsSandboxSettingsPage />}
               {active.id === "webTools" && <WebToolsSettingsPage />}
               {active.id === "uploads" && <UploadsSettingsPage />}
-              {active.id === "config" && <ConfigSettingsPage />}
               {active.id === "dataPersistence" && <DataPersistenceSettingsPage />}
               {active.id === "dataSources" && <DatasourcesSettingsPage />}
               {active.id === "skillModels" && <SkillModelsSettingsPage />}

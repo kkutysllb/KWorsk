@@ -27,6 +27,10 @@ import { getBackendBaseURL, isDesktop } from "@/core/config";
 import { enUS, isLocale, zhCN, type Locale } from "@/core/i18n";
 import { useI18n } from "@/core/i18n/hooks";
 
+import { CronForm } from "./config/settings-forms/cron-form";
+import { LogLevelForm } from "./config/settings-forms/log-level-form";
+import { YamlEditorSection } from "./config/yaml-editor-section";
+
 const languageOptions: { value: Locale; label: string }[] = [
   { value: "en-US", label: enUS.locale.localName },
   { value: "zh-CN", label: zhCN.locale.localName },
@@ -300,6 +304,31 @@ export function GeneralSettingsPage() {
           </Select>
         </SettingsRow>
       </SettingsGroup>
+
+      {/* 系统 */}
+      <section className="space-y-2">
+        <h3 className="text-muted-foreground px-1 text-xs font-medium tracking-wide uppercase">
+          {t.settings.general.systemGroup}
+        </h3>
+        <div className="divide-y overflow-hidden rounded-xl border">
+          <div className="p-5">
+            <LogLevelForm />
+          </div>
+          <div className="p-5">
+            <CronForm />
+          </div>
+        </div>
+      </section>
+
+      {/* 高级 */}
+      <section className="space-y-2">
+        <h3 className="text-muted-foreground px-1 text-xs font-medium tracking-wide uppercase">
+          {t.settings.general.advancedGroup}
+        </h3>
+        <div className="rounded-xl border p-5">
+          <YamlEditorSection />
+        </div>
+      </section>
     </div>
   );
 }

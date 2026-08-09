@@ -515,7 +515,6 @@ export interface Translations {
       uploads: string;
       skills: string;
       tokenUsage: string;
-      config: string;
       dataSources: string;
       skillModels: string;
     };
@@ -539,7 +538,6 @@ export interface Translations {
         webTools: string;
         uploads: string;
         skill: string;
-        config: string;
         dataSources: string;
         dataPersistence: string;
         skillModels: string;
@@ -554,7 +552,6 @@ export interface Translations {
         toolsSandbox: string;
         webTools: string;
         uploads: string;
-        config: string;
         dataSources: string;
         dataPersistence: string;
         skillModels: string;
@@ -574,6 +571,8 @@ export interface Translations {
     general: {
       accountGroup: string;
       appearanceGroup: string;
+      systemGroup: string;
+      advancedGroup: string;
     };
     account: {
       email: string;
