@@ -501,6 +501,7 @@ export interface Translations {
       account: string;
       appearance: string;
       memorySummary: string;
+      tokenUsageBudget: string;
       tools: string;
       skills: string;
       tokenUsage: string;
@@ -522,6 +523,7 @@ export interface Translations {
         general: string;
         models: string;
         memorySummary: string;
+        tokenUsageBudget: string;
         tools: string;
         skill: string;
         config: string;
@@ -533,6 +535,7 @@ export interface Translations {
         general: string;
         models: string;
         memorySummary: string;
+        tokenUsageBudget: string;
         skill: string;
         tools: string;
         config: string;

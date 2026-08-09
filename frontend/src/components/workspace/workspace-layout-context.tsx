@@ -25,6 +25,7 @@ export type SettingsSectionId =
   | "general"
   | "models"
   | "memorySummary"
+  | "tokenUsageBudget"
   | "tools"
   | "config"
   | "dataSources"

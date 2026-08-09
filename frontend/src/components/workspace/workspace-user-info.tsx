@@ -1,6 +1,7 @@
 "use client";
 
 import {
+  GaugeIcon,
   LogOutIcon,
   ScrollTextIcon,
   Settings2Icon,
@@ -31,16 +32,18 @@ import { useWorkspaceLayout } from "./workspace-layout-context";
 type SettingsSection =
   | "general"
   | "memorySummary"
+  | "tokenUsageBudget"
   | "tools";
 
 const SETTINGS_ITEMS: {
   id: SettingsSection;
   icon: typeof Settings2Icon;
   color: string;
-  labelKey: "general" | "memorySummary" | "tools";
+  labelKey: "general" | "memorySummary" | "tokenUsageBudget" | "tools";
 }[] = [
   { id: "general", icon: Settings2Icon, color: "text-sky-500", labelKey: "general" },
   { id: "memorySummary", icon: ScrollTextIcon, color: "text-amber-500", labelKey: "memorySummary" },
+  { id: "tokenUsageBudget", icon: GaugeIcon, color: "text-emerald-500", labelKey: "tokenUsageBudget" },
   { id: "tools", icon: WrenchIcon, color: "text-orange-500", labelKey: "tools" },
 ];
 

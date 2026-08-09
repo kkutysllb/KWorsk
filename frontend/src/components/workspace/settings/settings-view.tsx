@@ -4,6 +4,7 @@ import {
   ArrowLeftIcon,
   CpuIcon,
   DatabaseIcon,
+  GaugeIcon,
   HardDriveIcon,
   KeyRoundIcon,
   type LucideIcon,
@@ -32,6 +33,7 @@ import { MemorySummarySettingsPage } from "./memory-summary-settings-page";
 import { ModelsSettingsPage } from "./models/models-settings-page";
 import { SkillModelsSettingsPage } from "./skill-models-settings-page";
 import { SkillSettingsPage } from "./skill-settings-page";
+import { TokenUsageBudgetSettingsPage } from "./token-usage-budget-settings-page";
 import { ToolSettingsPage } from "./tool-settings-page";
 
 const SIDEBAR_WIDTH_KEY = "kworks.settings.sidebarWidth";
@@ -43,6 +45,7 @@ type SectionId =
   | "general"
   | "models"
   | "memorySummary"
+  | "tokenUsageBudget"
   | "tools"
   | "config"
   | "dataSources"
@@ -68,6 +71,7 @@ const SECTIONS: SectionDef[] = [
   { id: "config", icon: SlidersHorizontalIcon, groupKey: "engine" },
   { id: "dataPersistence", icon: HardDriveIcon, groupKey: "engine" },
   { id: "memorySummary", icon: ScrollTextIcon, groupKey: "engine" },
+  { id: "tokenUsageBudget", icon: GaugeIcon, groupKey: "engine" },
   {
     id: "skillModels",
     icon: KeyRoundIcon,
@@ -242,6 +246,7 @@ export function SettingsView({
               {active.id === "general" && <GeneralSettingsPage />}
               {active.id === "models" && <ModelsSettingsPage />}
               {active.id === "memorySummary" && <MemorySummarySettingsPage />}
+              {active.id === "tokenUsageBudget" && <TokenUsageBudgetSettingsPage />}
               {active.id === "skill" && <SkillSettingsPage />}
               {active.id === "tools" && <ToolSettingsPage />}
               {active.id === "config" && <ConfigSettingsPage />}

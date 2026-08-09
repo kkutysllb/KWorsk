@@ -9,7 +9,6 @@ import {
   PowerIcon,
   Settings2Icon,
   TerminalIcon,
-  ZapIcon,
 } from "lucide-react";
 import { useState } from "react";
 
@@ -25,7 +24,6 @@ import { cn } from "@/lib/utils";
 import { CronForm } from "./config/settings-forms/cron-form";
 import { LogLevelForm } from "./config/settings-forms/log-level-form";
 import { SandboxForm } from "./config/settings-forms/sandbox-form";
-import { TokenUsageForm } from "./config/settings-forms/token-usage-form";
 import { UploadsForm } from "./config/settings-forms/uploads-form";
 import { YamlEditorSection } from "./config/yaml-editor-section";
 import { useApplyAndRestart } from "./use-apply-and-restart";
@@ -35,7 +33,6 @@ type ConfigSubPage =
   | "cron"
   | "uploads"
   | "log_level"
-  | "token_usage"
   | "yaml";
 
 interface NavItem {
@@ -69,7 +66,6 @@ export function ConfigSettingsPage() {
       title: "高级",
       items: [
         { id: "log_level", label: "日志级别", icon: Code2Icon },
-        { id: "token_usage", label: "Token 使用", icon: ZapIcon },
         { id: "yaml", label: "YAML 编辑器", icon: Settings2Icon },
       ],
     },
@@ -154,7 +150,6 @@ export function ConfigSettingsPage() {
             {active === "cron" && <CronForm />}
             {active === "uploads" && <UploadsForm />}
             {active === "log_level" && <LogLevelForm />}
-            {active === "token_usage" && <TokenUsageForm />}
             {active === "yaml" && <YamlEditorSection />}
           </div>
         </ScrollArea>
