@@ -586,12 +586,73 @@ export function stripInternalContent(text: string): string {
 
   let output = result.join("\n").replace(/\n{3,}/g, "\n\n").trim();
 
+  // Strip lines that begin with middleware/tool-status announcements that
+  // the engine occasionally injects into the assistant content. These
+  // are not part of the agent's own reply and must not leak into the
+  // rendered message body.
+  output = output.replace(
+    /^[ \t]*Task Succeeded[.\s][^\n]*Result\s*:[^\n]*$/gim,
+    "",
+  );
+
+  // Strip web_search / web_fetch / image_search tool result blobs that
+  // the engine echoes back into the assistant content. These objects are
+  // already rendered inside the tool-call card (ChainOfThought /
+  // ToolCard), so showing them again in the prose is noise. We balance
+  // braces line-by-line so nested arrays/objects are handled correctly.
+  output = stripTopLevelJsonBlocks(output);
+
   // Mask sensitive values that might remain in the text
   output = output.replace(
     /\b([A-Z_]*(?:TOKEN|API_KEY|SECRET|PASSWORD|ACCESS_KEY|PRIVATE_KEY|CREDENTIAL)[A-Z_]*)\s*[:=]\s*['"]?[0-9a-zA-Z_\-+/=]{8,}['"]?/gi,
     "$1=***masked***",
   );
+
+  // Collapse blank lines that the strip above may have left behind.
+  output = output.replace(/\n{3,}/g, "\n\n").trim();
+
   return output;
+}
+
+/**
+ * Strip top-level JSON blocks whose first key is a known tool-result field
+ * ("query", "results", "records"). Brace-balanced, line-by-line scan so
+ * nested arrays/objects do not terminate the match early.
+ */
+function stripTopLevelJsonBlocks(text: string): string {
+  const lines = text.split("\n");
+  const out: string[] = [];
+  let i = 0;
+  while (i < lines.length) {
+    const trimmed = lines[i]!.trim();
+    if (/^\{[\s]*"(?:query|results|records)":/.test(trimmed)) {
+      // Consume from line i forward, balancing braces.
+      let depth = 0;
+      let end = -1;
+      for (let j = i; j < lines.length; j++) {
+        for (const ch of lines[j]!) {
+          if (ch === "{") depth++;
+          else if (ch === "}") {
+            depth--;
+            if (depth === 0) {
+              end = j;
+              break;
+            }
+          }
+        }
+        if (end !== -1) break;
+      }
+      if (end === -1) {
+        // Unbalanced — bail out so the remaining text isn't dropped.
+        break;
+      }
+      i = end + 1;
+      continue;
+    }
+    out.push(lines[i]!);
+    i++;
+  }
+  return out.join("\n");
 }
 
 /** Find the index of the next non-blank line starting from `start`. */

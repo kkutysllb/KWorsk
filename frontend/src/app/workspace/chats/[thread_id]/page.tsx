@@ -168,15 +168,12 @@ export default function ChatPage() {
               // [-webkit-app-region:drag] makes the header a window-drag
               // zone on Electron so double-click toggles macOS maximize,
               // matching the landing page title-bar behavior.
-              "absolute top-0 right-0 left-0 z-30 flex h-12 shrink-0 items-center px-4 [-webkit-app-region:drag]",
+              "absolute top-0 right-0 left-0 z-30 flex h-12 shrink-0 items-center justify-end px-4 [-webkit-app-region:drag]",
               isNewThread
                 ? "bg-background/0 backdrop-blur-none"
                 : "bg-background/80 shadow-xs backdrop-blur",
             )}
           >
-            <div className="flex w-full items-center gap-2 text-sm font-medium [-webkit-app-region:no-drag]">
-              <ThreadTitle threadId={threadId} thread={thread} />
-            </div>
             <div className="flex items-center gap-2 [-webkit-app-region:no-drag]">
               <ArtifactTrigger />
             </div>

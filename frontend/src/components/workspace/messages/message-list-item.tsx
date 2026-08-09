@@ -1,9 +1,12 @@
 import type { Message } from "@langchain/langgraph-sdk";
 import {
+  CheckIcon,
   FileIcon,
   Loader2Icon,
+  PencilIcon,
   ThumbsDownIcon,
   ThumbsUpIcon,
+  XIcon,
 } from "lucide-react";
 import {
   memo,
@@ -26,6 +29,7 @@ import {
 } from "@/components/ai-elements/reasoning";
 import { Task, TaskTrigger } from "@/components/ai-elements/task";
 import { Badge } from "@/components/ui/badge";
+import { Button } from "@/components/ui/button";
 import {
   deleteFeedback,
   upsertFeedback,
@@ -46,6 +50,7 @@ import { SafeReasoningContent } from "@/core/streamdown/components";
 import { cn } from "@/lib/utils";
 
 import { CopyButton } from "../copy-button";
+import { Tooltip } from "../tooltip";
 
 import { MarkdownContent } from "./markdown-content";
 
@@ -123,6 +128,7 @@ export function MessageListItem({
   isLoading,
   feedback,
   runId,
+  onEditMessage,
 }: {
   className?: string;
   message: Message;
@@ -130,8 +136,43 @@ export function MessageListItem({
   threadId: string;
   feedback?: FeedbackData | null;
   runId?: string;
+  /**
+   * Optional callback invoked when the user saves an edited user message.
+   * The UI optimistically updates the local bubble; upper layers (e.g. a
+   * thread stream) can hook this to replay / regenerate the turn.
+   */
+  onEditMessage?: (messageId: string, replacementText: string) => void;
 }) {
   const isHuman = message.type === "human";
+  const [editing, setEditing] = useState(false);
+  const [editText, setEditText] = useState("");
+  const [editedText, setEditedText] = useState<string | null>(null);
+
+  const startEditing = useCallback(() => {
+    const current =
+      editedText ??
+      extractContentFromMessage(message) ??
+      extractReasoningContentFromMessage(message) ??
+      "";
+    setEditText(current);
+    setEditing(true);
+  }, [message, editedText]);
+
+  const saveEdit = useCallback(() => {
+    const replacement = editText.trim();
+    if (!replacement) return;
+    setEditedText(replacement);
+    setEditing(false);
+    if (message.id) {
+      onEditMessage?.(message.id, replacement);
+    }
+  }, [editText, message.id, onEditMessage]);
+
+  const cancelEdit = useCallback(() => {
+    setEditing(false);
+    setEditText("");
+  }, []);
+
   return (
     <AIElementMessage
       className={cn("group/conversation-message relative w-full", className)}
@@ -142,6 +183,13 @@ export function MessageListItem({
         message={message}
         isLoading={isLoading}
         threadId={threadId}
+        editing={editing}
+        editText={editText}
+        editedText={editedText}
+        onEditTextChange={setEditText}
+        onSaveEdit={saveEdit}
+        onCancelEdit={cancelEdit}
+        onStartEdit={startEditing}
       />
       {!isLoading && (
         <MessageToolbar
@@ -153,11 +201,25 @@ export function MessageListItem({
           <div className="flex gap-1">
             <CopyButton
               clipboardData={
+                editedText ??
                 extractContentFromMessage(message) ??
                 extractReasoningContentFromMessage(message) ??
                 ""
               }
             />
+            {isHuman && (
+              <Tooltip content="编辑消息">
+                <Button
+                  size="icon-sm"
+                  type="button"
+                  variant="ghost"
+                  onClick={startEditing}
+                  disabled={editing || isLoading}
+                >
+                  <PencilIcon size={12} />
+                </Button>
+              </Tooltip>
+            )}
             {feedback !== undefined && runId && threadId && (
               <FeedbackButtons
                 threadId={threadId}
@@ -234,11 +296,25 @@ function MessageContent_({
   message,
   isLoading = false,
   threadId,
+  editing = false,
+  editText = "",
+  editedText = null,
+  onEditTextChange,
+  onSaveEdit,
+  onCancelEdit,
+  onStartEdit,
 }: {
   className?: string;
   message: Message;
   isLoading?: boolean;
   threadId: string;
+  editing?: boolean;
+  editText?: string;
+  editedText?: string | null;
+  onEditTextChange?: (value: string) => void;
+  onSaveEdit?: () => void;
+  onCancelEdit?: () => void;
+  onStartEdit?: () => void;
 }) {
   const isHuman = message.type === "human";
   const components = useMemo(
@@ -324,10 +400,53 @@ function MessageContent_({
     // Markdown mangles pasted code/logs (indented lines become code blocks,
     // "$...$" spans become math) and lets pathological input crash the page,
     // so render it verbatim.
-    const humanText = contentToDisplay ? (
+    const displayText = editedText ?? contentToDisplay;
+
+    // Edit mode: textarea + save/cancel actions inside a bordered frame.
+    if (editing) {
+      return (
+        <div
+          className={cn(
+            "ml-auto flex w-full max-w-[85%] flex-col gap-2",
+            className,
+          )}
+        >
+          <textarea
+            value={editText}
+            onChange={(event) => onEditTextChange?.(event.target.value)}
+            rows={Math.max(3, editText.split("\n").length)}
+            autoFocus
+            className="border-border/60 bg-background/60 focus:border-primary/50 text-foreground min-h-20 w-full resize-y rounded-lg border px-3 py-2 text-sm leading-relaxed outline-none transition-colors"
+            aria-label="编辑消息"
+          />
+          <div className="flex justify-end gap-1.5">
+            <button
+              type="button"
+              onClick={onCancelEdit}
+              className="text-muted-foreground hover:text-foreground hover:bg-muted/60 flex items-center gap-1 rounded-md px-2 py-1 text-xs transition-colors"
+            >
+              <XIcon className="size-3.5" />
+              取消
+            </button>
+            <button
+              type="button"
+              onClick={onSaveEdit}
+              disabled={!editText.trim()}
+              className="bg-primary text-primary-foreground hover:bg-primary/90 flex items-center gap-1 rounded-md px-2.5 py-1 text-xs font-medium transition-colors disabled:opacity-50"
+            >
+              <CheckIcon className="size-3.5" />
+              保存
+            </button>
+          </div>
+        </div>
+      );
+    }
+
+    const humanText = displayText ? (
       <AIElementMessageContent className="w-fit">
-        <div className="break-words whitespace-pre-wrap">
-          {contentToDisplay}
+        {/* Bordered frame around the user's message. */}
+        <div className="border-border/70 bg-background/50 text-foreground break-words rounded-lg border px-3 py-2 whitespace-pre-wrap">
+          {displayText}
         </div>
       </AIElementMessageContent>
     ) : null;
@@ -501,9 +620,9 @@ function RichFileCard({
   }
 
   return (
-    <div className="bg-background border-border/40 flex max-w-50 min-w-30 flex-col gap-1 rounded-lg border p-3 shadow-sm">
+    <div className="bg-background hover:bg-muted/40 hover:border-border/70 border-border/40 flex max-w-50 min-w-30 flex-col gap-1 rounded-lg border p-3 shadow-sm transition-colors">
       <div className="flex items-start gap-2">
-        <FileIcon className="text-muted-foreground mt-0.5 size-4 shrink-0" />
+        <FileIcon className="text-violet-500 mt-0.5 size-4 shrink-0" />
         <span
           className="text-foreground truncate text-sm font-medium"
           title={file.filename}

@@ -202,44 +202,184 @@
 
 /* Compact markdown typography for assistant message cards — tighter than
    streamdown's defaults (space-y-4, mt-6). Applied via .streamdown-tight. */
+.streamdown-tight {
+  color: var(--foreground);
+  font-size: 0.925rem;
+  line-height: 1.8;
+  word-break: break-word;
+}
+
 .streamdown-tight > * + * {
   margin-top: 0.5rem;
 }
 
-.streamdown-tight h1,
-.streamdown-tight h2,
-.streamdown-tight h3 {
-  margin-top: 1rem;
-  margin-bottom: 0.5rem;
+.streamdown-tight > :first-child {
+  margin-top: 0;
 }
 
-.streamdown-tight h4,
-.streamdown-tight h5,
-.streamdown-tight h6 {
-  margin-top: 0.75rem;
-  margin-bottom: 0.375rem;
+.streamdown-tight > :last-child {
+  margin-bottom: 0;
 }
 
 .streamdown-tight p {
-  line-height: 1.65;
+  margin: 0 0 0.75rem;
+  line-height: 1.8;
 }
 
-.streamdown-tight pre {
-  margin: 0.5rem 0;
+.streamdown-tight h1,
+.streamdown-tight h2,
+.streamdown-tight h3,
+.streamdown-tight h4,
+.streamdown-tight h5,
+.streamdown-tight h6 {
+  margin: 1.125rem 0 0.625rem;
+  font-weight: 600;
+  line-height: 1.3;
+  color: var(--foreground);
+}
+
+.streamdown-tight h1 {
+  font-size: 1.4em;
+  padding-bottom: 0.3em;
+  border-bottom: 1px solid var(--border);
+}
+
+.streamdown-tight h2 {
+  font-size: 1.25em;
+  padding-bottom: 0.3em;
+  border-bottom: 1px solid var(--border);
+}
+
+.streamdown-tight h3 {
+  font-size: 1.1em;
+}
+
+.streamdown-tight h4 {
+  font-size: 1em;
 }
 
 .streamdown-tight ul,
 .streamdown-tight ol {
-  margin: 0.5rem 0;
-  padding-left: 1.25rem;
+  margin: 0 0 0.75rem;
+  padding-left: 1.5rem;
+}
+
+.streamdown-tight ul {
+  list-style: disc;
+}
+
+.streamdown-tight ol {
+  list-style: decimal;
+}
+
+.streamdown-tight li {
+  margin: 0.25rem 0;
+}
+
+.streamdown-tight li > p {
+  margin: 0;
 }
 
 .streamdown-tight li + li {
   margin-top: 0.25rem;
 }
 
+/* Task lists (GFM: - [ ] / - [x]) */
+.streamdown-tight li[data-task] {
+  list-style: none;
+  margin-left: -1.25rem;
+}
+
+.streamdown-tight input[type="checkbox"] {
+  margin-right: 0.375rem;
+  vertical-align: middle;
+}
+
+.streamdown-tight a {
+  color: var(--primary);
+  text-decoration: none;
+}
+
+.streamdown-tight a:hover {
+  text-decoration: underline;
+}
+
+.streamdown-tight strong {
+  color: var(--foreground);
+  font-weight: 600;
+}
+
+.streamdown-tight em {
+  font-style: italic;
+}
+
+.streamdown-tight hr {
+  margin: 1rem 0;
+  border: 0;
+  border-top: 1px solid var(--border);
+}
+
 .streamdown-tight blockquote {
-  margin: 0.5rem 0;
+  margin: 0 0 0.75rem;
+  padding: 0.25rem 0.75rem;
+  border-left: 3px solid color-mix(in oklch, var(--primary) 40%, transparent);
+  color: var(--muted-foreground);
+}
+
+.streamdown-tight blockquote > :last-child {
+  margin-bottom: 0;
+}
+
+.streamdown-tight pre {
+  margin: 0 0 0.75rem;
+  padding: 0.75rem 0.875rem;
+  border-radius: 0.5rem;
+  background: color-mix(in oklch, var(--foreground) 6%, var(--background));
+  overflow-x: auto;
+}
+
+.streamdown-tight pre code {
+  padding: 0;
+  background: transparent;
+  color: inherit;
+  font-size: 0.78rem;
+  line-height: 1.6;
+}
+
+.streamdown-tight :not(pre) > code {
+  font-family: var(--font-mono);
+  font-size: 0.88em;
+  padding: 1px 5px;
+  border-radius: 4px;
+  background: var(--muted);
+  color: color-mix(in oklch, var(--primary) 70%, var(--foreground));
+}
+
+/* GFM tables */
+.streamdown-tight table {
+  margin: 0 0 0.75rem;
+  border-collapse: collapse;
+  width: 100%;
+  font-size: 0.92em;
+  overflow-wrap: anywhere;
+}
+
+.streamdown-tight th,
+.streamdown-tight td {
+  padding: 0.375rem 0.625rem;
+  border: 1px solid var(--border);
+  text-align: left;
+}
+
+.streamdown-tight th {
+  background: color-mix(in oklch, var(--muted) 70%, transparent);
+  font-weight: 600;
+  color: var(--foreground);
+}
+
+.streamdown-tight img {
+  border-radius: 0.5rem;
+  max-width: 100%;
 }
 
 @theme inline {

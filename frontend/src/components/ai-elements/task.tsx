@@ -6,8 +6,16 @@ import {
   CollapsibleTrigger,
 } from "@/components/ui/collapsible";
 import { cn } from "@/lib/utils";
-import { ChevronDownIcon, SearchIcon } from "lucide-react";
-import type { ComponentProps } from "react";
+import {
+  AlertCircleIcon,
+  CheckIcon,
+  ChevronRightIcon,
+  Loader2Icon,
+  SearchIcon,
+} from "lucide-react";
+import type { ComponentProps, ReactNode } from "react";
+
+export type TaskStatus = "running" | "done" | "error";
 
 export type TaskItemFileProps = ComponentProps<"div">;
 
@@ -18,7 +26,7 @@ export const TaskItemFile = ({
 }: TaskItemFileProps) => (
   <div
     className={cn(
-      "bg-secondary text-foreground inline-flex items-center gap-1 rounded-md border px-1.5 py-0.5 text-xs",
+      "bg-muted/60 text-muted-foreground inline-flex items-center gap-1 rounded-md border px-1.5 py-0.5 text-xs",
       className,
     )}
     {...props}
@@ -47,20 +55,44 @@ export const Task = ({
 
 export type TaskTriggerProps = ComponentProps<typeof CollapsibleTrigger> & {
   title: string;
+  /** Optional tool icon. Defaults to a search glyph. */
+  icon?: ReactNode;
+  /** Optional status; renders a small status badge next to the title. */
+  status?: TaskStatus;
 };
+
+function TaskStatusIcon({ status }: { status: TaskStatus }) {
+  if (status === "running") {
+    return <Loader2Icon className="size-3 animate-spin text-blue-500" />;
+  }
+  if (status === "error") {
+    return <AlertCircleIcon className="size-3 text-rose-500" />;
+  }
+  return <CheckIcon className="size-3 text-emerald-500" />;
+}
 
 export const TaskTrigger = ({
   children,
   className,
   title,
+  icon,
+  status,
   ...props
 }: TaskTriggerProps) => (
   <CollapsibleTrigger asChild className={cn("group", className)} {...props}>
     {children ?? (
-      <div className="text-muted-foreground hover:text-foreground flex w-full cursor-pointer items-center gap-2 text-sm transition-colors">
-        <SearchIcon className="size-4" />
-        <p className="text-sm">{title}</p>
-        <ChevronDownIcon className="size-4 transition-transform group-data-[state=open]:rotate-180" />
+      <div className="flex w-full cursor-pointer items-center gap-2 px-2.5 py-1.5 text-left text-xs transition-colors">
+        {status ? (
+          <TaskStatusIcon status={status} />
+        ) : (
+          <span className="text-violet-500">
+            {icon ?? <SearchIcon className="size-3.5" />}
+          </span>
+        )}
+        <span className="font-mono text-emerald-600 dark:text-emerald-400">
+          {title}
+        </span>
+        <ChevronRightIcon className="text-muted-foreground ml-auto size-3 transition-transform duration-150 group-data-[state=open]:rotate-90" />
       </div>
     )}
   </CollapsibleTrigger>
@@ -80,7 +112,7 @@ export const TaskContent = ({
     )}
     {...props}
   >
-    <div className="border-muted mt-4 space-y-2 border-l-2 pl-4">
+    <div className="space-y-1.5 border-t border-border/60 px-2.5 py-2">
       {children}
     </div>
   </CollapsibleContent>

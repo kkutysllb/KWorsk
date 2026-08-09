@@ -29,13 +29,17 @@ export const SourcesTrigger = ({
   ...props
 }: SourcesTriggerProps) => (
   <CollapsibleTrigger
-    className={cn("flex items-center gap-2", className)}
+    className={cn(
+      "hover:bg-muted/70 flex items-center gap-2 rounded-lg border border-muted bg-muted/40 px-3 py-1.5 text-xs transition-colors",
+      className,
+    )}
     {...props}
   >
     {children ?? (
       <>
-        <p className="font-medium">Used {count} sources</p>
-        <ChevronDownIcon className="h-4 w-4" />
+        <BookIcon className="text-violet-500 size-3.5" />
+        <p className="font-medium">已使用 {count} 个来源</p>
+        <ChevronDownIcon className="text-muted-foreground h-4 w-4 transition-transform duration-200 data-[state=open]:rotate-180" />
       </>
     )}
   </CollapsibleTrigger>
@@ -61,7 +65,7 @@ export type SourceProps = ComponentProps<"a">;
 
 export const Source = ({ href, title, children, ...props }: SourceProps) => (
   <a
-    className="flex items-center gap-2"
+    className="hover:bg-muted/70 text-muted-foreground hover:text-foreground flex items-center gap-2 rounded-md border border-border/60 bg-background/60 px-2.5 py-1.5 text-xs transition-colors"
     href={href}
     rel="noopener noreferrer"
     target="_blank"
@@ -69,7 +73,7 @@ export const Source = ({ href, title, children, ...props }: SourceProps) => (
   >
     {children ?? (
       <>
-        <BookIcon className="h-4 w-4" />
+        <BookIcon className="text-violet-500 h-3.5 w-3.5" />
         <span className="block font-medium">{title}</span>
       </>
     )}

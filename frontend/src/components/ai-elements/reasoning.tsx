@@ -7,7 +7,7 @@ import {
   CollapsibleTrigger,
 } from "@/components/ui/collapsible";
 import { cn } from "@/lib/utils";
-import { BrainIcon, ChevronDownIcon } from "lucide-react";
+import { BrainIcon, ChevronRightIcon } from "lucide-react";
 import type { ComponentProps, ReactNode } from "react";
 import { createContext, memo, useContext, useEffect, useState } from "react";
 import { reasoningPlugins } from "@/core/streamdown/plugins";
@@ -111,7 +111,13 @@ export const Reasoning = memo(
         value={{ isStreaming, isOpen, setIsOpen, duration, startTime }}
       >
         <Collapsible
-          className={cn("not-prose mb-4", className)}
+          className={cn(
+            "not-prose",
+            // KStock-style: left accent border + left padding.
+            "border-l-2 border-emerald-500/25 pl-3",
+            isStreaming && "border-blue-500/50",
+            className,
+          )}
           onOpenChange={handleOpenChange}
           open={isOpen}
           {...props}
@@ -149,8 +155,8 @@ const LiveTimer = ({ startTime }: { startTime: number }) => {
   }, [startTime]);
 
   return (
-    <span className="flex items-center gap-2">
-      <Shimmer duration={1}>Thinking...</Shimmer>
+    <span className="flex items-center gap-1.5">
+      <Shimmer duration={1}>思考中…</Shimmer>
       <span className="text-muted-foreground/80">({elapsed}s)</span>
     </span>
   );
@@ -165,12 +171,12 @@ const defaultGetThinkingMessage = (
     return <LiveTimer startTime={startTime} />;
   }
   if (isStreaming || duration === 0) {
-    return <Shimmer duration={1}>Thinking...</Shimmer>;
+    return <Shimmer duration={1}>思考中…</Shimmer>;
   }
   if (duration === undefined) {
-    return <span>Thought for a few seconds</span>;
+    return <span>已思考</span>;
   }
-  return <span>Thought for {duration} seconds</span>;
+  return <span>已思考 {duration}s</span>;
 };
 
 export const ReasoningTrigger = memo(
@@ -186,7 +192,10 @@ export const ReasoningTrigger = memo(
     return (
       <CollapsibleTrigger
         className={cn(
-          "text-muted-foreground hover:text-foreground flex w-full items-center gap-2 text-sm transition-colors",
+          // KStock-style: inline transparent summary button.
+          "inline-flex items-center gap-1.5 rounded-md px-2 py-1 text-xs transition-colors",
+          "text-muted-foreground hover:bg-muted/50 hover:text-foreground",
+          isStreaming && "text-blue-500",
           !hasContent && "cursor-default",
           className,
         )}
@@ -194,13 +203,13 @@ export const ReasoningTrigger = memo(
       >
         {children ?? (
           <>
-            <BrainIcon className="size-4" />
-            {getThinkingMessage(isStreaming, duration, startTime)}
+            <BrainIcon className="size-3.5 shrink-0" />
+            <span>{getThinkingMessage(isStreaming, duration, startTime)}</span>
             {hasContent && (
-              <ChevronDownIcon
+              <ChevronRightIcon
                 className={cn(
-                  "size-4 transition-transform",
-                  isOpen ? "rotate-180" : "rotate-0",
+                  "size-3 shrink-0 transition-transform duration-150",
+                  isOpen && "rotate-90",
                 )}
               />
             )}
@@ -221,15 +230,17 @@ export const ReasoningContent = memo(
   ({ className, children, ...props }: ReasoningContentProps) => (
     <CollapsibleContent
       className={cn(
-        "mt-4 text-sm",
-        "data-[state=closed]:fade-out-0 data-[state=closed]:slide-out-to-top-2 data-[state=open]:slide-in-from-top-2 text-muted-foreground data-[state=closed]:animate-out data-[state=open]:animate-in outline-none",
+        "mt-2",
+        "data-[state=closed]:fade-out-0 data-[state=closed]:slide-out-to-top-2 data-[state=open]:slide-in-from-top-2 data-[state=closed]:animate-out data-[state=open]:animate-in outline-none",
         className,
       )}
       {...props}
     >
-      <ClipboardSafeStreamdown {...reasoningPlugins}>
-        {children}
-      </ClipboardSafeStreamdown>
+      <div className="text-muted-foreground text-[13px] leading-relaxed italic">
+        <ClipboardSafeStreamdown {...reasoningPlugins}>
+          {children}
+        </ClipboardSafeStreamdown>
+      </div>
     </CollapsibleContent>
   ),
 );

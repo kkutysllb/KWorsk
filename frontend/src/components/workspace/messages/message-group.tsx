@@ -78,7 +78,7 @@ export function MessageGroup({
   }, [lastToolCallStep, steps]);
   return (
     <ChainOfThought
-      className={cn("w-full gap-2 rounded-lg border p-0.5", className)}
+      className={cn("w-full gap-2", className)}
       open={true}
     >
       {aboveLastToolCallSteps.length > 0 && (

@@ -42,16 +42,20 @@ export const MessageContent = ({
   className,
   ...props
 }: MessageContentProps) => (
-    <div
-      className={cn(
-        "is-user:dark flex w-fit max-w-full min-w-0 flex-col gap-2 overflow-visible",
-        "group-[.is-user]:overflow-hidden",
-        "group-[.is-user]:bg-secondary group-[.is-user]:text-foreground group-[.is-user]:ml-auto group-[.is-user]:rounded-lg group-[.is-user]:px-4 group-[.is-user]:py-3",
-        "group-[.is-assistant]:bg-muted/40 group-[.is-assistant]:rounded-lg group-[.is-assistant]:px-4 group-[.is-assistant]:py-3 group-[.is-assistant]:text-foreground",
-        className,
-      )}
-      {...props}
-    >
+  <div
+    className={cn(
+      "flex w-fit min-w-0 flex-col gap-2 overflow-visible",
+      // User: transparent, right-aligned text. No max-width — let the
+      // single line of text follow its own intrinsic width so short
+      // Chinese sentences stay on one line.
+      "group-[.is-user]:ml-auto group-[.is-user]:px-0 group-[.is-user]:py-1",
+      "group-[.is-user]:text-foreground group-[.is-user]:text-right",
+      // Assistant: flat, borderless content for a calm reading surface.
+      "group-[.is-assistant]:w-full group-[.is-assistant]:text-foreground",
+      className,
+    )}
+    {...props}
+  >
     {children}
   </div>
 );

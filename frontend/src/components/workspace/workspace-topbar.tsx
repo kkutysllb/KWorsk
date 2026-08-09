@@ -55,7 +55,7 @@ export function WorkspaceTopbar() {
   const pathname = usePathname();
   const backendStatus = useBackendStatus();
   const { rightPanelOpen, toggleRightPanel } = useWorkspaceLayout();
-  const { messages } = useActiveThreadMessages();
+  const { messages, values } = useActiveThreadMessages();
   const { tokenUsageEnabled } = useModels();
 
   const collapsed = state === "collapsed";
@@ -82,10 +82,10 @@ export function WorkspaceTopbar() {
         />
       </div>
 
-      {/* 中段：标题 ｜ 状态 */}
+      {/* 中段：当前会话标题（动态）｜ 状态 */}
       <div className="flex min-w-0 flex-1 items-center gap-2 px-3">
         <span className="truncate text-sm font-medium">
-          {pageTitle(pathname, t)}
+          {values?.title || pageTitle(pathname, t)}
         </span>
         <Separator orientation="vertical" className="h-4" />
         <Tooltip>
