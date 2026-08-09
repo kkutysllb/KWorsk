@@ -29,7 +29,6 @@ import { useI18n } from "@/core/i18n/hooks";
 
 import { CronForm } from "./config/settings-forms/cron-form";
 import { LogLevelForm } from "./config/settings-forms/log-level-form";
-import { YamlEditorSection } from "./config/yaml-editor-section";
 
 const languageOptions: { value: Locale; label: string }[] = [
   { value: "en-US", label: enUS.locale.localName },
@@ -320,15 +319,6 @@ export function GeneralSettingsPage() {
         </div>
       </section>
 
-      {/* 高级 */}
-      <section className="space-y-2">
-        <h3 className="text-muted-foreground px-1 text-xs font-medium tracking-wide uppercase">
-          {t.settings.general.advancedGroup}
-        </h3>
-        <div className="rounded-xl border p-5">
-          <YamlEditorSection />
-        </div>
-      </section>
     </div>
   );
 }
