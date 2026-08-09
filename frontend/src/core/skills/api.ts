@@ -137,6 +137,86 @@ export async function installSkillFromUpload(
 }
 
 /**
+ * Fetch a single custom skill with its raw SKILL.md content.
+ *
+ * Calls `GET /api/skills/custom/{skillName}`.
+ *
+ * @throws {Error} with `message` set to the backend `detail` string on
+ *   non-2xx (e.g. skill not found, not editable).
+ */
+export async function getCustomSkill(
+  skillName: string,
+): Promise<CustomSkillContent> {
+  const response = await fetch(
+    `${getBackendBaseURL()}/api/skills/custom/${encodeURIComponent(skillName)}`,
+  );
+  if (!response.ok) {
+    const errorData = await response.json().catch(() => ({}));
+    const errorMessage =
+      (errorData as { detail?: string }).detail ??
+      `HTTP ${response.status}: ${response.statusText}`;
+    throw new Error(errorMessage);
+  }
+  return response.json();
+}
+
+/**
+ * Update a custom skill's raw SKILL.md content.
+ *
+ * Calls `PUT /api/skills/custom/{skillName}`. The backend validates,
+ * runs a security scan, writes atomically, and appends to history.
+ *
+ * @throws {Error} with `message` set to the backend `detail` string on
+ *   non-2xx (e.g. skill not found, frontmatter validation, security
+ *   scan block).
+ */
+export async function updateCustomSkill(
+  skillName: string,
+  content: string,
+): Promise<CustomSkillContent> {
+  const response = await fetch(
+    `${getBackendBaseURL()}/api/skills/custom/${encodeURIComponent(skillName)}`,
+    {
+      method: "PUT",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({ content }),
+    },
+  );
+  if (!response.ok) {
+    const errorData = await response.json().catch(() => ({}));
+    const errorMessage =
+      (errorData as { detail?: string }).detail ??
+      `HTTP ${response.status}: ${response.statusText}`;
+    throw new Error(errorMessage);
+  }
+  return response.json();
+}
+
+/**
+ * Delete a custom skill and all its files.
+ *
+ * Calls `DELETE /api/skills/custom/{skillName}`.
+ *
+ * @throws {Error} with `message` set to the backend `detail` string on
+ *   non-2xx (e.g. skill not found).
+ */
+export async function deleteCustomSkill(
+  skillName: string,
+): Promise<void> {
+  const response = await fetch(
+    `${getBackendBaseURL()}/api/skills/custom/${encodeURIComponent(skillName)}`,
+    { method: "DELETE" },
+  );
+  if (!response.ok) {
+    const errorData = await response.json().catch(() => ({}));
+    const errorMessage =
+      (errorData as { detail?: string }).detail ??
+      `HTTP ${response.status}: ${response.statusText}`;
+    throw new Error(errorMessage);
+  }
+}
+
+/**
  * Upload one or more support files (scripts / references / templates /
  * assets) into an existing custom skill's subdirectory.
  *

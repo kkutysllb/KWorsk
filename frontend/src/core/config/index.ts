@@ -91,12 +91,22 @@ function getBaseOrigin() {
 
 export function getBackendBaseURL(): string {
   if (isDesktop()) {
-    // In dev mode the frontend is served by Next.js on 18569 and proxies to
-    // the gateway, so use a same-origin (empty) base. In the packaged static
-    // export, talk to the embedded gateway directly.
+    // Dev mode: connect DIRECTLY to the gateway at `localhost:<port>` — NOT
+    // via the Next.js rewrite proxy. Same rationale as getLangGraphBaseURL:
+    //
+    // 1. The Next.js rewrite proxy's fallback port (9193) is a legacy Docker
+    //    deployment port that is dead in dev mode. Relying on the
+    //    KWORKS_INTERNAL_GATEWAY_BASE_URL env var to override it is fragile.
+    // 2. SameSite cookies: the renderer loads from `localhost:<devPort>`.
+    //    Using `localhost` keeps the request same-site so cookie auth + CSRF
+    //    double-submit work.
+    //
+    // The fetcher injects `credentials: "include"` and the Bearer token for
+    // desktop requests, so auth works on the cross-port direct connection.
     if (isDesktopDevMode()) {
-      return "";
+      return `http://localhost:${_desktopPort}`;
     }
+    // Packaged (managed) mode: talk to the embedded gateway directly.
     return `http://127.0.0.1:${_desktopPort}`;
   }
 

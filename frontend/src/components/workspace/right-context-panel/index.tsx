@@ -14,7 +14,7 @@ export function RightContextPanel() {
   const { rightPanelOpen } = useWorkspaceLayout();
   const threadId = useActiveThreadId();
 
-  // 无会话页面（settings/mcp/channels/crons 等）隐藏右面板
+  // 无会话页面（settings/mcp/crons 等）隐藏右面板
   const showPanel = rightPanelOpen && threadId !== null;
 
   return (

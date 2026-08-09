@@ -149,7 +149,6 @@ export interface Translations {
     agents: string;
     models: string;
     skills: string;
-    channels: string;
     mcp: string;
     crons: string;
     tokenUsage: string;
@@ -236,28 +235,6 @@ export interface Translations {
       admin: string;
       user: string;
     };
-  };
-
-  // Channels
-  channels: {
-    title: string;
-    description: string;
-    enabled: string;
-    disabled: string;
-    running: string;
-    stopped: string;
-    configured: string;
-    notConfigured: string;
-    editConfig: string;
-    restart: string;
-    restartSuccess: string;
-    help: string;
-    saveSuccess: string;
-    emptyTitle: string;
-    emptyDescription: string;
-    credentials: string;
-    status: string;
-    guide: string;
   };
 
   // MCP
@@ -517,6 +494,8 @@ export interface Translations {
       tokenUsage: string;
       dataSources: string;
       skillModels: string;
+      agents: string;
+      subagents: string;
     };
     view: {
       backToApp: string;
@@ -541,6 +520,8 @@ export interface Translations {
         dataSources: string;
         dataPersistence: string;
         skillModels: string;
+        agents: string;
+        subagents: string;
       };
       summaries: {
         general: string;
@@ -555,6 +536,8 @@ export interface Translations {
         dataSources: string;
         dataPersistence: string;
         skillModels: string;
+        agents: string;
+        subagents: string;
       };
     };
     backend: {

@@ -201,7 +201,6 @@ export const zhCN: Translations = {
     agents: "智能体",
     models: "模型管理",
     skills: "技能",
-    channels: "渠道管理",
     mcp: "MCP 管理",
     crons: "定时任务",
     tokenUsage: "Token 用量",
@@ -294,28 +293,6 @@ export const zhCN: Translations = {
       admin: "管理员",
       user: "用户",
     },
-  },
-
-  // Channels
-  channels: {
-    title: "IM 渠道管理",
-    description: "管理外部即时通讯平台集成，配置后可通过飞书、钉钉、微信等 IM 工具与 KWorks 交互。",
-    enabled: "已启用",
-    disabled: "未启用",
-    running: "运行中",
-    stopped: "已停止",
-    configured: "已配置凭证",
-    notConfigured: "未配置凭证",
-    editConfig: "编辑配置",
-    restart: "重启渠道",
-    restartSuccess: "渠道已重启",
-    help: "配置帮助",
-    saveSuccess: "渠道配置已保存",
-    emptyTitle: "暂无已配置的渠道",
-    emptyDescription: "配置 IM 渠道后，用户可通过飞书、钉钉等平台与 KWorks 对话。",
-    credentials: "凭证",
-    status: "状态",
-    guide: "配置指引",
   },
 
   // MCP
@@ -576,6 +553,8 @@ export const zhCN: Translations = {
       tokenUsage: "Token 用量",
       dataSources: "数据源",
       skillModels: "技能模型",
+      agents: "代理",
+      subagents: "子代理与编排",
     },
     view: {
       backToApp: "返回应用",
@@ -600,6 +579,8 @@ export const zhCN: Translations = {
         dataSources: "数据源",
         dataPersistence: "数据与持久化",
         skillModels: "技能模型",
+        agents: "代理",
+        subagents: "子代理与编排",
       },
       summaries: {
         general: "账户信息、密码、主题、语言偏好、日志级别与 YAML 配置编辑器。",
@@ -614,6 +595,8 @@ export const zhCN: Translations = {
         dataSources: "配置外部数据源凭证（如 Tushare Pro）。",
         dataPersistence: "管理数据落盘策略、查看持久化状态与磁盘占用。",
         skillModels: "桌面端技能模型 API 凭证管理。",
+        agents: "管理自定义代理、启用/禁用代理 API。",
+        subagents: "配置子代理全局参数与多 Agent 编排模式。",
       },
     },
     backend: {

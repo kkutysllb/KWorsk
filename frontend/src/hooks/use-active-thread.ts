@@ -38,7 +38,7 @@ export function useActiveThreadId(): string | null {
  * 模块级 runtime-store，因此任何层级的组件（Topbar、RightContextPanel 等）
  * 都能读到正在 streaming 的会话数据，无需依赖 `<ThreadContext.Provider>`。
  *
- * 非会话页面（settings/mcp/channels/crons 等）或新建会话页返回空数组。
+ * 非会话页面（settings/mcp/crons 等）或新建会话页返回空数组。
  */
 export function useActiveThreadMessages() {
   const threadId = useActiveThreadId();

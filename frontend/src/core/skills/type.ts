@@ -1,9 +1,17 @@
+/**
+ * Skill model mirroring the backend `SkillResponse`.
+ *
+ * - ``category``: one of "public" | "custom" | "integrations" | "legacy"
+ *   (see backend `SkillCategory` StrEnum).
+ * - ``editable``: true only for custom skills (can be edited / deleted).
+ */
 export interface Skill {
   name: string;
   description: string;
   category: string;
-  license: string;
+  license: string | null;
   enabled: boolean;
+  editable: boolean;
 }
 
 /**

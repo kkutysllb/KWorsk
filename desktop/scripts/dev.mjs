@@ -224,41 +224,38 @@ function initDesktopExtensionsConfig(configPath) {
   console.log("[dev] initialized desktop extensions config");
 }
 
-function syncDesktopBuiltinSkills(skillsPath) {
+function syncDesktopPublicSkills(skillsPath) {
   if (!skillsPath) return;
-  const customTarget = join(skillsPath, "custom");
-  mkdirSync(customTarget, { recursive: true });
-
-  // Look for bundled builtin skills in the qilin/ submodule first (the engine
-  // is the source of builtin skills now), then fall back to the legacy
-  // repo-root skills/ directory.
-  let builtinRoot = join(REPO_ROOT, "qilin", "skills", "builtin");
-  if (!existsSync(builtinRoot)) {
-    builtinRoot = join(REPO_ROOT, "skills", "builtin");
+  // Ensure category subdirs exist (SkillCategory enum: public, custom,
+  // integrations, legacy).
+  for (const cat of ["public", "custom", "integrations", "legacy"]) {
+    mkdirSync(join(skillsPath, cat), { recursive: true });
   }
-  if (!existsSync(builtinRoot)) {
-    // No bundled skills shipped — this is expected when the QiLin submodule
-    // does not include a skills tree yet. The user can still create custom
-    // skills under ~/.kworks/skills/custom/.
+
+  // Source: repo-root skills/public/ (the monorepo's canonical location for
+  // bundled public skills). Each subdirectory containing a SKILL.md is a
+  // skill package.
+  const publicRoot = join(REPO_ROOT, "skills", "public");
+  if (!existsSync(publicRoot)) {
+    // No bundled skills shipped — the user can still create custom skills
+    // under ~/.kworks/skills/custom/.
     return;
   }
 
   let totalCopied = 0;
-  for (const sub of ["core", "task", "coding"]) {
-    const bundledSub = join(builtinRoot, sub);
-    if (!existsSync(bundledSub)) continue;
-    const targetDir = join(skillsPath, "builtin", sub);
-    mkdirSync(targetDir, { recursive: true });
-
-    const existing = new Set(readdirSync(targetDir));
-    for (const name of readdirSync(bundledSub)) {
-      if (existing.has(name)) continue;
-      cpSync(join(bundledSub, name), join(targetDir, name), { recursive: true });
-      totalCopied++;
-    }
+  const targetDir = join(skillsPath, "public");
+  const existing = new Set(readdirSync(targetDir));
+  for (const name of readdirSync(publicRoot)) {
+    const srcSkillDir = join(publicRoot, name);
+    const srcSkillMd = join(srcSkillDir, "SKILL.md");
+    // Skip non-directories and directories without SKILL.md (not a skill).
+    if (!existsSync(srcSkillMd)) continue;
+    if (existing.has(name)) continue;
+    cpSync(srcSkillDir, join(targetDir, name), { recursive: true });
+    totalCopied++;
   }
   if (totalCopied > 0) {
-    console.log(`[dev] synced ${totalCopied} builtin skill(s) to ${skillsPath}`);
+    console.log(`[dev] synced ${totalCopied} public skill(s) to ${skillsPath}`);
   }
 }
 
@@ -317,7 +314,7 @@ function startGateway() {
     }
     migrateDesktopConfigFile(configPath);
     initDesktopExtensionsConfig(extensionsConfigPath);
-    syncDesktopBuiltinSkills(skillsPath);
+    syncDesktopPublicSkills(skillsPath);
   }
 
   // Load ~/.kworks/.env so $ENV_VAR references in config.yaml resolve at

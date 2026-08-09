@@ -208,7 +208,6 @@ export const enUS: Translations = {
     agents: "Agents",
     models: "Models",
     skills: "Skills",
-    channels: "Channels",
         mcp: "MCP",
     crons: "Cron Jobs",
     tokenUsage: "Token Usage",
@@ -307,28 +306,6 @@ export const enUS: Translations = {
       admin: "Admin",
       user: "User",
     },
-  },
-
-  // Channels
-  channels: {
-    title: "IM Channel Management",
-    description: "Manage external messaging platform integrations. Once configured, users can interact with KWorks via Feishu, DingTalk, WeChat, and other IM tools.",
-    enabled: "Enabled",
-    disabled: "Disabled",
-    running: "Running",
-    stopped: "Stopped",
-    configured: "Credentials Configured",
-    notConfigured: "No Credentials",
-    editConfig: "Edit Config",
-    restart: "Restart",
-    restartSuccess: "Channel restarted",
-    help: "Setup Guide",
-    saveSuccess: "Channel config saved",
-    emptyTitle: "No channels configured",
-    emptyDescription: "Configure IM channels to let users interact with KWorks via Feishu, DingTalk, and other platforms.",
-    credentials: "Credentials",
-    status: "Status",
-    guide: "Setup Guide",
   },
 
   // MCP
@@ -593,6 +570,8 @@ export const enUS: Translations = {
       tokenUsage: "Token Usage",
       dataSources: "Data Sources",
       skillModels: "Skill Models",
+      agents: "Agents",
+      subagents: "Sub-agents",
     },
     view: {
       backToApp: "Back to app",
@@ -617,6 +596,8 @@ export const enUS: Translations = {
         dataSources: "Data Sources",
         dataPersistence: "Data & Persistence",
         skillModels: "Skill Models",
+        agents: "Agents",
+        subagents: "Sub-agents",
       },
       summaries: {
         general: "Account info, password, theme, language, log level, and YAML editor.",
@@ -631,6 +612,8 @@ export const enUS: Translations = {
         dataSources: "Configure external data source credentials (e.g. Tushare Pro).",
         dataPersistence: "Manage persistence backends, view status and disk usage.",
         skillModels: "Desktop skill model API credential management.",
+        agents: "Manage custom agents, enable/disable the agent API.",
+        subagents: "Configure sub-agent global parameters and multi-agent orchestration.",
       },
     },
     backend: {

@@ -2,6 +2,7 @@
 
 import {
   ArrowLeftIcon,
+  BotIcon,
   CpuIcon,
   DatabaseIcon,
   GaugeIcon,
@@ -14,6 +15,7 @@ import {
   SearchIcon,
   Settings2Icon,
   SparklesIcon,
+  UsersIcon,
   WrenchIcon,
 } from "lucide-react";
 import { useEffect, useMemo, useState } from "react";
@@ -25,6 +27,7 @@ import { isDesktop } from "@/core/config";
 import { useI18n } from "@/core/i18n/hooks";
 import { cn } from "@/lib/utils";
 
+import { AgentsSettingsPage } from "./agents-settings-page";
 import { BackendControlBar } from "./backend-control-bar";
 import { DataPersistenceSettingsPage } from "./data-persistence-settings-page";
 import { DatasourcesSettingsPage } from "./datasources-settings-page";
@@ -34,6 +37,7 @@ import { MemorySummarySettingsPage } from "./memory-summary-settings-page";
 import { ModelsSettingsPage } from "./models/models-settings-page";
 import { SkillModelsSettingsPage } from "./skill-models-settings-page";
 import { SkillSettingsPage } from "./skill-settings-page";
+import { SubagentsSettingsPage } from "./subagents-settings-page";
 import { TokenUsageBudgetSettingsPage } from "./token-usage-budget-settings-page";
 import { ToolsSandboxSettingsPage } from "./tools-sandbox-settings-page";
 import { UploadsSettingsPage } from "./uploads-settings-page";
@@ -56,7 +60,9 @@ type SectionId =
   | "dataSources"
   | "dataPersistence"
   | "skillModels"
-  | "skill";
+  | "skill"
+  | "agents"
+  | "subagents";
 
 type SectionGroup = "personal" | "engine" | "agent" | "toolsData";
 
@@ -69,6 +75,8 @@ interface SectionDef {
 
 const SECTIONS: SectionDef[] = [
   { id: "general", icon: Settings2Icon, groupKey: "personal" },
+  { id: "agents", icon: BotIcon, groupKey: "agent" },
+  { id: "subagents", icon: UsersIcon, groupKey: "agent" },
   { id: "skill", icon: SparklesIcon, groupKey: "agent" },
   { id: "mcp", icon: WrenchIcon, groupKey: "toolsData" },
   { id: "dataSources", icon: DatabaseIcon, groupKey: "toolsData" },
@@ -261,6 +269,8 @@ export function SettingsView({
               {active.id === "uploads" && <UploadsSettingsPage />}
               {active.id === "dataPersistence" && <DataPersistenceSettingsPage />}
               {active.id === "dataSources" && <DatasourcesSettingsPage />}
+              {active.id === "agents" && <AgentsSettingsPage />}
+              {active.id === "subagents" && <SubagentsSettingsPage />}
               {active.id === "skillModels" && <SkillModelsSettingsPage />}
             </div>
           </ScrollArea>

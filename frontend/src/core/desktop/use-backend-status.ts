@@ -9,7 +9,7 @@ export type BackendStatus = "connected" | "disconnected" | "checking";
 const POLL_INTERVAL_MS = 3000;
 
 /**
- * 轮询后端 /healthz 端点，返回连接状态。
+ * 轮询后端 /health 端点，返回连接状态。
  * 3s 间隔，避免侵入 SSE 流。
  */
 export function useBackendStatus(): BackendStatus {
@@ -21,7 +21,7 @@ export function useBackendStatus(): BackendStatus {
 
     async function check() {
       try {
-        const res = await fetch(`${base}/healthz`, {
+        const res = await fetch(`${base}/health`, {
           cache: "no-store",
           signal: AbortSignal.timeout(2000),
         });

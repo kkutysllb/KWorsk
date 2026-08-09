@@ -33,7 +33,9 @@ export type SettingsSectionId =
   | "dataSources"
   | "dataPersistence"
   | "skillModels"
-  | "skill";
+  | "skill"
+  | "agents"
+  | "subagents";
 
 interface WorkspaceLayoutValue {
   rightPanelOpen: boolean;

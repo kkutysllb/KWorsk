@@ -2,7 +2,6 @@
 
 import {
   ClockIcon,
-  MessageCircleIcon,
   SparklesIcon,
   TerminalIcon,
 } from "lucide-react";
@@ -35,17 +34,6 @@ export function WorkspaceNavChatList() {
             <Link className="text-muted-foreground" href="/workspace/skills">
               <SparklesIcon className="text-amber-500" />
               <span>{t.sidebar.skills}</span>
-            </Link>
-          </SidebarMenuButton>
-        </SidebarMenuItem>
-        <SidebarMenuItem>
-          <SidebarMenuButton
-            isActive={pathname.startsWith("/workspace/channels")}
-            asChild
-          >
-            <Link className="text-muted-foreground" href="/workspace/channels">
-              <MessageCircleIcon className="text-violet-500" />
-              <span>{t.sidebar.channels}</span>
             </Link>
           </SidebarMenuButton>
         </SidebarMenuItem>

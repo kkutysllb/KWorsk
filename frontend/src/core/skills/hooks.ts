@@ -2,9 +2,12 @@ import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 
 import {
   createSkill,
+  deleteCustomSkill,
   enableSkill,
+  getCustomSkill,
   installSkill,
   installSkillFromUpload,
+  updateCustomSkill,
   uploadSupportFiles,
 } from "./api";
 import type { InstallSkillRequest } from "./api";
@@ -113,6 +116,48 @@ export function useUploadSupportFiles() {
       subdir: SupportSubdir;
     }) => {
       return await uploadSupportFiles(skillName, files, subdir);
+    },
+    onSuccess: () => {
+      void queryClient.invalidateQueries({ queryKey: ["skills"] });
+    },
+  });
+}
+
+/** Fetch a single custom skill's raw SKILL.md content. */
+export function useCustomSkill(skillName: string | null) {
+  const { data, isLoading, error } = useQuery({
+    queryKey: ["skills", "custom", skillName],
+    queryFn: () => getCustomSkill(skillName!),
+    enabled: !!skillName,
+  });
+  return { skill: data ?? null, isLoading, error };
+}
+
+/** Update a custom skill's raw SKILL.md content. */
+export function useUpdateCustomSkill() {
+  const queryClient = useQueryClient();
+  return useMutation({
+    mutationFn: async ({
+      skillName,
+      content,
+    }: {
+      skillName: string;
+      content: string;
+    }) => {
+      return await updateCustomSkill(skillName, content);
+    },
+    onSuccess: () => {
+      void queryClient.invalidateQueries({ queryKey: ["skills"] });
+    },
+  });
+}
+
+/** Delete a custom skill. */
+export function useDeleteCustomSkill() {
+  const queryClient = useQueryClient();
+  return useMutation({
+    mutationFn: async (skillName: string) => {
+      await deleteCustomSkill(skillName);
     },
     onSuccess: () => {
       void queryClient.invalidateQueries({ queryKey: ["skills"] });

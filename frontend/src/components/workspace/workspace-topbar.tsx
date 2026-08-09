@@ -42,7 +42,6 @@ function pageTitle(
   if (pathname.startsWith("/workspace/chats")) return t.breadcrumb.chats;
   if (pathname.startsWith("/workspace/agents")) return t.sidebar.agents;
   if (pathname.startsWith("/workspace/skills")) return t.sidebar.skills;
-  if (pathname.startsWith("/workspace/channels")) return t.sidebar.channels;
   if (pathname.startsWith("/workspace/crons")) return t.sidebar.crons;
   if (pathname.startsWith("/workspace/token-usage"))
     return t.sidebar.tokenUsage;

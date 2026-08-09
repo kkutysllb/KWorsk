@@ -46,12 +46,17 @@ const config = {
           defaultLocale: "en",
         },
         async rewrites() {
+          // Rewrites are ONLY used in web dev mode (non-desktop). Desktop dev
+          // mode connects directly to the gateway via getBackendBaseURL() /
+          // getLangGraphBaseURL(), bypassing the Next.js proxy entirely.
           const rewrites = [];
           const gatewayURL = getInternalServiceURL(
             "KWORKS_INTERNAL_GATEWAY_BASE_URL",
             "http://127.0.0.1:9193",
           );
 
+          // LangGraph SDK routes keep their /api/langgraph prefix in web
+          // mode and are rewritten to the gateway's native /api path.
           if (!process.env.NEXT_PUBLIC_LANGGRAPH_BASE_URL) {
             rewrites.push({
               source: "/api/langgraph",
@@ -63,35 +68,15 @@ const config = {
             });
           }
 
+          // Catch-all for all remaining gateway API routes. Individual
+          // route rules (/api/agents, /api/skills, etc.) are no longer
+          // listed separately because the catch-all covers them all.
           if (!process.env.NEXT_PUBLIC_BACKEND_BASE_URL) {
             rewrites.push({
               source: "/health",
               destination: `${gatewayURL}/health`,
             });
-            rewrites.push({
-              source: "/api/agents",
-              destination: `${gatewayURL}/api/agents`,
-            });
-            rewrites.push({
-              source: "/api/agents/:path*",
-              destination: `${gatewayURL}/api/agents/:path*`,
-            });
-            rewrites.push({
-              source: "/api/skills",
-              destination: `${gatewayURL}/api/skills`,
-            });
-            rewrites.push({
-              source: "/api/skills/:path*",
-              destination: `${gatewayURL}/api/skills/:path*`,
-            });
-
-            // Catch-all for remaining gateway API routes (models, threads, memory,
-            // mcp, artifacts, uploads, suggestions, runs, etc.) that don't have
-            // their own NEXT_PUBLIC_* env var toggle.
-            //
-            // NOTE: this must come AFTER the /api/langgraph rewrite above so that
-            // LangGraph-compatible routes keep their public prefix while Gateway
-            // receives its native /api/* paths.
+            // Must come AFTER /api/langgraph so that prefix is preserved.
             rewrites.push({
               source: "/api/:path*",
               destination: `${gatewayURL}/api/:path*`,
