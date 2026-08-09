@@ -511,6 +511,7 @@ export interface Translations {
       tokenUsageBudget: string;
       tools: string;
       toolsSandbox: string;
+      webTools: string;
       skills: string;
       tokenUsage: string;
       config: string;
@@ -534,6 +535,7 @@ export interface Translations {
         tokenUsageBudget: string;
         tools: string;
         toolsSandbox: string;
+        webTools: string;
         skill: string;
         config: string;
         dataSources: string;
@@ -548,6 +550,7 @@ export interface Translations {
         skill: string;
         tools: string;
         toolsSandbox: string;
+        webTools: string;
         config: string;
         dataSources: string;
         dataPersistence: string;

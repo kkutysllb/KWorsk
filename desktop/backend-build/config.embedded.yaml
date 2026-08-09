@@ -105,6 +105,21 @@ sandbox:
   ls_output_max_chars: 20000
   bash_command_timeout: 600
 
+# ── 网络与 Web 工具 ───────────────────────────────────────────
+# 全局代理供所有 web 工具共享（web_search / image_search / web_fetch / browser_*）。
+# 留空或 null 表示直连。常见格式：
+#   http://127.0.0.1:7890  （Clash/Mihomo HTTP 代理）
+#   socks5://127.0.0.1:7891
+network:
+  proxy: null
+  web_search_max_results: 5
+  web_fetch_timeout: 10
+  image_search_max_results: 5
+  browser_headless: true
+  browser_viewport_width: 1280
+  browser_viewport_height: 720
+  browser_timeout_ms: 30000
+
 # ── 工具组与工具声明 ────────────────────────────────────────────────────
 # 与上游 config.example.yaml 默认值对齐。agent 运行时可用工具由 config.yaml
 # `tools:` 段声明（不含框架内置的 present_files / ask_clarification / task 等）。

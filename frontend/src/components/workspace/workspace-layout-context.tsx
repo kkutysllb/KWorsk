@@ -28,6 +28,7 @@ export type SettingsSectionId =
   | "tokenUsageBudget"
   | "tools"
   | "toolsSandbox"
+  | "webTools"
   | "config"
   | "dataSources"
   | "dataPersistence"
