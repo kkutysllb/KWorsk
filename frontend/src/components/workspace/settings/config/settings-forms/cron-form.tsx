@@ -17,7 +17,7 @@ interface CronConfig {
 
 export function CronForm() {
   const { data, loading, saving, save } = useConfigSection<CronConfig>(
-    "cron_management",
+    "scheduler",
     { enabled: false },
   );
   const [enabled, setEnabled] = useState(data.enabled);
