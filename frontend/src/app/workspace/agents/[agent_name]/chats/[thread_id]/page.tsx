@@ -10,13 +10,11 @@ import { Button } from "@/components/ui/button";
 import { AgentWelcome } from "@/components/workspace/agent-welcome";
 import { ArtifactTrigger } from "@/components/workspace/artifacts";
 import { ChatBox, useThreadChat } from "@/components/workspace/chats";
-import { FollowupsProvider } from "@/components/workspace/followups-context";
-import { InputBox } from "@/components/workspace/input-box";
 import {
-  MessageList,
-  MESSAGE_LIST_DEFAULT_PADDING_BOTTOM,
-  MESSAGE_LIST_FOLLOWUPS_EXTRA_PADDING_BOTTOM,
-} from "@/components/workspace/messages";
+  MESSAGE_FEED_DEFAULT_PADDING_BOTTOM,
+  MessageFeed,
+} from "@/components/workspace/chat/message-feed";
+import { InputBox } from "@/components/workspace/input-box";
 import { ThreadContext } from "@/components/workspace/messages/context";
 import { ThreadTitle } from "@/components/workspace/thread-title";
 import { Tooltip } from "@/components/workspace/tooltip";
@@ -45,7 +43,6 @@ function parseAgentNameFromPath(pathname: string | null): string {
 
 export default function AgentChatPage() {
   const { t } = useI18n();
-  const [showFollowups, setShowFollowups] = useState(false);
   const router = useRouter();
   const pathname = usePathname();
 
@@ -153,14 +150,10 @@ export default function AgentChatPage() {
     [coordinator],
   );
 
-  const messageListPaddingBottom = showFollowups
-    ? MESSAGE_LIST_DEFAULT_PADDING_BOTTOM +
-      MESSAGE_LIST_FOLLOWUPS_EXTRA_PADDING_BOTTOM
-    : undefined;
+  const messageListPaddingBottom = undefined;
 
   return (
     <ThreadContext.Provider value={{ thread }}>
-      <FollowupsProvider>
       <ChatBox threadId={threadId}>
         <div className="relative flex size-full min-h-0 justify-between">
           <header
@@ -202,7 +195,7 @@ export default function AgentChatPage() {
 
           <main className="flex min-h-0 max-w-full grow flex-col">
             <div className="flex size-full justify-center">
-              <MessageList
+              <MessageFeed
                 className={cn("size-full", !isNewThread && "pt-10")}
                 threadId={threadId}
                 thread={thread}
@@ -244,7 +237,6 @@ export default function AgentChatPage() {
                   context={settings.context}
                   disabled={env.NEXT_PUBLIC_STATIC_WEBSITE_ONLY === "true"}
                   onContextChange={(context) => setSettings("context", context)}
-                  onFollowupsVisibilityChange={setShowFollowups}
                   onSubmit={handleSubmit}
                   onStop={handleStop}
                   onEnqueue={handleEnqueue}
@@ -266,7 +258,6 @@ export default function AgentChatPage() {
           </main>
         </div>
       </ChatBox>
-      </FollowupsProvider>
     </ThreadContext.Provider>
   );
 }

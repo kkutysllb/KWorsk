@@ -78,7 +78,6 @@ import {
   DropdownMenuTrigger,
 } from "../ui/dropdown-menu";
 
-import { useFollowupsContext } from "./followups-context";
 import { useThread } from "./messages/context";
 import { ModeHoverGuide } from "./mode-hover-guide";
 import { QueuedMessagesBar } from "./queued-messages-bar";
@@ -166,17 +165,6 @@ export function InputBox({
   const { textInput } = usePromptInputController();
   const hasText = (textInput.value ?? "").trim().length > 0;
   const promptRootRef = useRef<HTMLDivElement | null>(null);
-  // Destructure the stable setters out of the context. These come from
-  // useState/useCallback inside the Provider, so their identities are stable
-  // across renders. Using them (rather than the whole `followupsCtx` object)
-  // as useEffect deps is what prevents the infinite update loop: the context
-  // value object identity changes whenever `data`/`hidden` change, but the
-  // setter identities never do.
-  const {
-    setData: setCtxFollowupsData,
-    setHidden: setCtxFollowupsHidden,
-    registerClickHandler: registerCtxClickHandler,
-  } = useFollowupsContext();
 
   const [followups, setFollowups] = useState<string[]>([]);
   const [followupsHidden, setFollowupsHidden] = useState(false);
@@ -471,21 +459,6 @@ export function InputBox({
   // NOTE: depend only on the stable setters (from useState/useCallback), not
   // on the whole context object — otherwise the effect re-runs every time the
   // Provider's value identity changes, calling setData again and looping.
-  useEffect(() => {
-    setCtxFollowupsData({
-      suggestions: showFollowups ? followups : [],
-      loading: showFollowups ? followupsLoading : false,
-    });
-  }, [setCtxFollowupsData, showFollowups, followups, followupsLoading]);
-
-  useEffect(() => {
-    setCtxFollowupsHidden(followupsHidden);
-  }, [setCtxFollowupsHidden, followupsHidden]);
-
-  useEffect(() => {
-    registerCtxClickHandler(handleFollowupClick);
-  }, [registerCtxClickHandler, handleFollowupClick]);
-
   return (
     <div ref={promptRootRef} className="relative flex flex-col gap-4">
       {queuedMessages && queuedMessages.length > 0 && (
@@ -899,32 +872,10 @@ export function InputBox({
           </PromptInputTools>
         </PromptInputFooter>
         {!isNewThread && (
-          <div className="bg-background absolute right-0 -bottom-[17px] left-0 z-0 h-4"></div>
+<div className="bg-background absolute right-0 -bottom-[17px] left-0 z-0 h-4"></div>
         )}
       </PromptInput>
-
-      <Dialog open={confirmOpen} onOpenChange={setConfirmOpen}>
-        <DialogContent>
-          <DialogHeader>
-            <DialogTitle>{t.inputBox.followupConfirmTitle}</DialogTitle>
-            <DialogDescription>
-              {t.inputBox.followupConfirmDescription}
-            </DialogDescription>
-          </DialogHeader>
-          <DialogFooter>
-            <Button variant="outline" onClick={() => setConfirmOpen(false)}>
-              {t.common.cancel}
-            </Button>
-            <Button variant="secondary" onClick={confirmAppendAndSend}>
-              {t.inputBox.followupConfirmAppend}
-            </Button>
-            <Button onClick={confirmReplaceAndSend}>
-              {t.inputBox.followupConfirmReplace}
-            </Button>
-          </DialogFooter>
-        </DialogContent>
-      </Dialog>
-    </div>
+</div>
   );
 }
 

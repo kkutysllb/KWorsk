@@ -324,18 +324,12 @@ export function extractURLFromImageURLContent(
 }
 
 export function hasContent(message: Message) {
-  if (typeof message.content === "string") {
-    return (
-      (
-        splitInlineReasoningFromAIMessage(message)?.content ??
-        message.content.trim()
-      ).length > 0
-    );
-  }
-  if (Array.isArray(message.content)) {
-    return message.content.length > 0;
-  }
-  return false;
+  // Use extractContentFromMessage so that content which is entirely
+  // internal/tool-result noise (JSON blobs, middleware tags, etc.) is
+  // correctly detected as empty. Otherwise messages whose raw content
+  // is pure tool-result JSON would pass hasContent and be classified
+  // as final-answer bubbles, leaking raw JSON into the UI.
+  return extractContentFromMessage(message).length > 0;
 }
 
 export function hasReasoning(message: Message) {
@@ -623,9 +617,10 @@ export function stripInternalContent(text: string): string {
 }
 
 /**
- * Strip top-level JSON blocks whose first key is a known tool-result field
- * ("query", "results", "records"). Brace-balanced, line-by-line scan so
- * nested arrays/objects do not terminate the match early.
+ * Strip top-level JSON blocks whose first key is a known tool-result field.
+ * Brace-balanced, line-by-line scan so nested arrays/objects are handled
+ * correctly. Covers web_search results (query/results/total_results),
+ * web_fetch payloads (url/title/content), and generic record sets.
  */
 function stripTopLevelJsonBlocks(text: string): string {
   const lines = text.split("\n");
@@ -633,7 +628,11 @@ function stripTopLevelJsonBlocks(text: string): string {
   let i = 0;
   while (i < lines.length) {
     const trimmed = lines[i]!.trim();
-    if (/^\{[\s]*"(?:query|results|records)":/.test(trimmed)) {
+    if (
+      /^\{[\s]*"(?:query|results|records|total_results|title|url|content|source|answer)"\s*:/.test(
+        trimmed,
+      )
+    ) {
       // Consume from line i forward, balancing braces.
       let depth = 0;
       let end = -1;

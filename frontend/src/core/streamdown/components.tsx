@@ -4,16 +4,12 @@ import type { ComponentType, JSX } from "react";
 import type { Components, ExtraProps } from "streamdown";
 
 import {
-  ReasoningContent,
-  type ReasoningContentProps,
-} from "@/components/ai-elements/reasoning";
-import {
   ClipboardSafeStreamdown,
   type ClipboardSafeStreamdownProps,
 } from "@/components/ai-elements/streamdown";
 import { cn } from "@/lib/utils";
 
-import { streamdownRenderingPlugins } from "./plugins";
+import { streamdownRenderingPlugins, reasoningPlugins } from "./plugins";
 import {
   useSafeStreamdownChildren,
   useSafeStreamdownMarkdown,
@@ -82,9 +78,27 @@ export function SafeMessageResponse({
 
 export function SafeReasoningContent({
   children,
+  className,
   ...props
-}: ReasoningContentProps) {
+}: {
+  children: string;
+  className?: string;
+}) {
   const safeChildren = useSafeStreamdownMarkdown(children);
-
-  return <ReasoningContent {...props}>{safeChildren}</ReasoningContent>;
+  // Inline implementation of the reasoning panel (left accent border +
+  // italic muted prose) so the streamdown core doesn't depend on the
+  // message-rendering components.
+  return (
+    <div
+      className={cn(
+        "text-muted-foreground mt-1.5 text-[13px] leading-relaxed italic",
+        className,
+      )}
+      {...props}
+    >
+      <ClipboardSafeStreamdown {...reasoningPlugins}>
+        {safeChildren}
+      </ClipboardSafeStreamdown>
+    </div>
+  );
 }

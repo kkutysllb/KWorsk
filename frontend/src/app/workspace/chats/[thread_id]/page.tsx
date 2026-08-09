@@ -12,13 +12,11 @@ import {
 } from "@/components/workspace/chats";
 import { SuggestionList } from "@/components/workspace/chats/suggestion-list";
 import { TaskTokenSummary } from "@/components/workspace/token-usage/task-token-summary";
-import { FollowupsProvider } from "@/components/workspace/followups-context";
 import { InputBox } from "@/components/workspace/input-box";
 import {
-  MessageList,
-  MESSAGE_LIST_DEFAULT_PADDING_BOTTOM,
-  MESSAGE_LIST_FOLLOWUPS_EXTRA_PADDING_BOTTOM,
-} from "@/components/workspace/messages";
+  MESSAGE_FEED_DEFAULT_PADDING_BOTTOM,
+  MessageFeed,
+} from "@/components/workspace/chat/message-feed";
 import { ThreadContext } from "@/components/workspace/messages/context";
 import { Welcome } from "@/components/workspace/welcome";
 import { useI18n } from "@/core/i18n/hooks";
@@ -37,7 +35,6 @@ import { cn } from "@/lib/utils";
 
 export default function ChatPage() {
   const { t } = useI18n();
-  const [showFollowups, setShowFollowups] = useState(false);
   const { threadId, setThreadId, isNewThread, setIsNewThread, isMock } =
     useThreadChat();
   const [settings, setSettings] = useThreadSettings(threadId);
@@ -152,14 +149,10 @@ export default function ChatPage() {
     [coordinator],
   );
 
-  const messageListPaddingBottom = showFollowups
-    ? MESSAGE_LIST_DEFAULT_PADDING_BOTTOM +
-      MESSAGE_LIST_FOLLOWUPS_EXTRA_PADDING_BOTTOM
-    : undefined;
+  const messageListPaddingBottom = undefined;
 
   return (
     <ThreadContext.Provider value={{ thread, isMock }}>
-      <FollowupsProvider>
       <ChatBox threadId={threadId}>
         <div className="relative flex size-full min-h-0 justify-between">
           <header
@@ -188,7 +181,7 @@ export default function ChatPage() {
               </div>
             ) : (
               <div className="flex min-h-0 flex-1 justify-center">
-                <MessageList
+                <MessageFeed
                   className={cn("size-full pt-10")}
                   threadId={threadId}
                   thread={thread}
@@ -223,7 +216,6 @@ export default function ChatPage() {
                     onContextChange={(context) =>
                       setSettings("context", context)
                     }
-                    onFollowupsVisibilityChange={setShowFollowups}
                     onSubmit={handleSubmit}
                     onStop={handleStop}
                     onEnqueue={handleEnqueue}
@@ -255,7 +247,6 @@ export default function ChatPage() {
           </main>
         </div>
       </ChatBox>
-      </FollowupsProvider>
     </ThreadContext.Provider>
   );
 }

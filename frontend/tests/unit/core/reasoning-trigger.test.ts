@@ -7,22 +7,24 @@ vi.mock("streamdown", () => ({
     createElement("div", null, children),
 }));
 
-import {
-  Reasoning,
-  ReasoningContent,
-  ReasoningTrigger,
-} from "@/components/ai-elements/reasoning";
+import { ReasoningBlock } from "@/components/workspace/chat/segments/reasoning-block";
 
-test("ReasoningTrigger default message uses phrasing content", () => {
+test("ReasoningBlock renders a collapsible thinking summary", () => {
   const html = renderToStaticMarkup(
-    createElement(
-      Reasoning,
-      { isStreaming: false, defaultOpen: false },
-      createElement(ReasoningTrigger, null),
-      createElement(ReasoningContent, null, "test"),
-    ),
+    createElement(ReasoningBlock, { content: "thinking text" }),
   );
 
-  expect(html).toContain("Thought for a few seconds");
-  expect(html).not.toMatch(/<button\b[^>]*>[\s\S]*?<p\b/i);
+  expect(html).toContain("已思考");
+  // Collapsed by default — the summary row is present, body is hidden.
+  expect(html).not.toContain("thinking text");
+});
+
+test("ReasoningBlock shows streaming label while streaming", () => {
+  const html = renderToStaticMarkup(
+    createElement(ReasoningBlock, { content: "streaming thoughts", isStreaming: true }),
+  );
+
+  expect(html).toContain("思考中");
+  // Streaming starts expanded, so the body is rendered.
+  expect(html).toContain("streaming thoughts");
 });
