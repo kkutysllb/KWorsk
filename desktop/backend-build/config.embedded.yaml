@@ -169,37 +169,37 @@ tools:
     group: bash
     use: qilin.sandbox.tools:bash_tool
 
-  # 浏览器自动化（需安装 playwright 依赖：cd backend && uv sync --extra browser）
-  # 取消注释以下整块以启用。浏览器会话驻留在单 worker 内存中，保持 GATEWAY_WORKERS=1。
-  # - name: browser_navigate
-  #   group: browser
-  #   use: qilin.community.browser_automation.tools:browser_navigate_tool
-  #   headless: true
-  #   timeout_ms: 30000
-  #   viewport_width: 1280
-  #   viewport_height: 720
-  # - name: browser_snapshot
-  #   group: browser
-  #   use: qilin.community.browser_automation.tools:browser_snapshot_tool
-  # - name: browser_click
-  #   group: browser
-  #   use: qilin.community.browser_automation.tools:browser_click_tool
-  # - name: browser_type
-  #   group: browser
-  #   use: qilin.community.browser_automation.tools:browser_type_tool
-  # - name: browser_get_text
-  #   group: browser
-  #   use: qilin.community.browser_automation.tools:browser_get_text_tool
-  #   max_chars: 8000
-  # - name: browser_back
-  #   group: browser
-  #   use: qilin.community.browser_automation.tools:browser_back_tool
-  # - name: browser_screenshot
-  #   group: browser
-  #   use: qilin.community.browser_automation.tools:browser_screenshot_tool
-  # - name: browser_close
-  #   group: browser
-  #   use: qilin.community.browser_automation.tools:browser_close_tool
+  # 浏览器自动化（已安装 playwright + Chromium，headless 模式运行）
+  # 浏览器会话驻留在单 worker 内存中，保持 GATEWAY_WORKERS=1。
+  - name: browser_navigate
+    group: browser
+    use: qilin.community.browser_automation.tools:browser_navigate_tool
+    headless: true
+    timeout_ms: 30000
+    viewport_width: 1280
+    viewport_height: 720
+  - name: browser_snapshot
+    group: browser
+    use: qilin.community.browser_automation.tools:browser_snapshot_tool
+  - name: browser_click
+    group: browser
+    use: qilin.community.browser_automation.tools:browser_click_tool
+  - name: browser_type
+    group: browser
+    use: qilin.community.browser_automation.tools:browser_type_tool
+  - name: browser_get_text
+    group: browser
+    use: qilin.community.browser_automation.tools:browser_get_text_tool
+    max_chars: 8000
+  - name: browser_back
+    group: browser
+    use: qilin.community.browser_automation.tools:browser_back_tool
+  - name: browser_screenshot
+    group: browser
+    use: qilin.community.browser_automation.tools:browser_screenshot_tool
+  - name: browser_close
+    group: browser
+    use: qilin.community.browser_automation.tools:browser_close_tool
 
 # ── 文件上传 ──────────────────────────────────────────────────────────────
 # 网关级上传限制（字符数 = 字节）。自动 Office/PDF 转换在沙箱隔离前于宿主机
