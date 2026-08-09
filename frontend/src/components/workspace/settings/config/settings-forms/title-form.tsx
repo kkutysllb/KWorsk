@@ -28,15 +28,17 @@ const defaultConfig: TitleConfig = {
 };
 
 export function TitleForm() {
-  const { data, loading, saving, save } = useConfigSection<TitleConfig>(
+  const { data: rawData, loading, saving, save } = useConfigSection<TitleConfig>(
     "title",
     defaultConfig,
   );
+  // Merge defaults over partial API data so no field is ever undefined.
+  const data: TitleConfig = { ...defaultConfig, ...rawData };
   const [local, setLocal] = useState<TitleConfig>(data);
 
   useEffect(() => {
-    setLocal(data);
-  }, [data]);
+    setLocal({ ...defaultConfig, ...rawData });
+  }, [rawData]);
 
   const dirty = JSON.stringify(local) !== JSON.stringify(data);
 

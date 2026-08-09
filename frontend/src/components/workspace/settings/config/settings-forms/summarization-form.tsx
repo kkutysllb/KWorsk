@@ -43,14 +43,25 @@ const defaultConfig: SummarizationConfig = {
   trim_tokens_to_summarize: 4000,
 };
 
+/** Merge defaults over partial API data so no field is ever undefined. */
+function normalizeConfig(raw: Partial<SummarizationConfig> | undefined): SummarizationConfig {
+  return {
+    ...defaultConfig,
+    ...raw,
+    trigger: raw?.trigger ?? defaultConfig.trigger,
+    keep: raw?.keep ?? defaultConfig.keep,
+  };
+}
+
 export function SummarizationForm() {
-  const { data, loading, saving, save } =
+  const { data: rawData, loading, saving, save } =
     useConfigSection<SummarizationConfig>("summarization", defaultConfig);
+  const data = normalizeConfig(rawData);
   const [local, setLocal] = useState<SummarizationConfig>(data);
 
   useEffect(() => {
-    setLocal(data);
-  }, [data]);
+    setLocal(normalizeConfig(rawData));
+  }, [rawData]);
 
   const dirty = JSON.stringify(local) !== JSON.stringify(data);
 

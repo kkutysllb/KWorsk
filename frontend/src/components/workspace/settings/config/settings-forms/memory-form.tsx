@@ -79,8 +79,10 @@ export function MemoryForm() {
     "memory",
     defaultConfig,
   );
-  // Normalize backend_config on load (backend may return a partial/empty dict).
+  // Merge defaults first so partial API responses never leave fields
+  // undefined (which would flip inputs from controlled to uncontrolled).
   const data: MemoryConfig = {
+    ...defaultConfig,
     ...rawData,
     backend_config: mergeBackendConfig(rawData?.backend_config),
   };
@@ -89,6 +91,7 @@ export function MemoryForm() {
 
   useEffect(() => {
     setLocal({
+      ...defaultConfig,
       ...rawData,
       backend_config: mergeBackendConfig(rawData?.backend_config),
     });
