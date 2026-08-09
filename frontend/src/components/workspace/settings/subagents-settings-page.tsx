@@ -235,7 +235,7 @@ function SubagentsForm() {
             />
             <NumberRow
               label="默认最大轮次"
-              description="所有子代理的最大轮次覆盖（留空 = 使用各代理内置默认值）"
+              description="留空时各代理使用内置默认值（general-purpose=200, bash=60）。填写后将统一覆盖所有内置代理的最大轮次"
               value={maxTurns}
               onChange={setMaxTurns}
               placeholder="留空使用默认值"
