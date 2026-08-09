@@ -23,6 +23,10 @@ function getWrapper(el: HTMLElement | null): HTMLElement | null {
  * 侧边栏宽度拖拽手柄。
  * 通过修改最近 [data-slot="sidebar-wrapper"] 的 --sidebar-width CSS 变量实现。
  * 宽度持久化到 localStorage，范围 180-360px。
+ *
+ * 使用增量式拖拽：以按下瞬间的宽度为基准，位移量决定新宽度，
+ * 不依赖任何容器 rect —— 避免 wrapper 是整页布局（sidebar + 内容 +
+ * 右面板）时把中间区域宽度算进去。
  */
 export function SidebarResizeHandle({
   collapsed,
@@ -45,42 +49,40 @@ export function SidebarResizeHandle({
     wrapper.style.setProperty("--sidebar-width", `${width}px`);
   }, []);
 
-  const applyWidth = useCallback((clientX: number) => {
+  const currentWidth = useCallback(() => {
     const wrapper = getWrapper(handleRef.current);
-    if (!wrapper) return;
-    const rect = wrapper.getBoundingClientRect();
-    const width = clampWidth(clientX - rect.left);
-    wrapper.style.setProperty("--sidebar-width", `${width}px`);
-    return width;
+    if (!wrapper) return DEFAULT_WIDTH;
+    const raw = wrapper.style.getPropertyValue("--sidebar-width");
+    const parsed = parseInt(raw, 10);
+    return Number.isNaN(parsed) ? DEFAULT_WIDTH : parsed;
   }, []);
 
   const onPointerDown = useCallback(
     (e: React.PointerEvent) => {
+      const wrapper = getWrapper(handleRef.current);
+      if (!wrapper) return;
       e.preventDefault();
+      const startX = e.clientX;
+      const startWidth = currentWidth();
+
       const move = (ev: PointerEvent) => {
-        applyWidth(ev.clientX);
+        const next = clampWidth(startWidth + (ev.clientX - startX));
+        wrapper.style.setProperty("--sidebar-width", `${next}px`);
       };
       const up = () => {
         window.removeEventListener("pointermove", move);
         window.removeEventListener("pointerup", up);
         // 持久化最终宽度
-        const wrapper = getWrapper(handleRef.current);
-        if (wrapper) {
-          const raw = wrapper.style.getPropertyValue("--sidebar-width");
-          const px = parseInt(raw, 10);
-          if (!Number.isNaN(px)) {
-            try {
-              localStorage.setItem(STORAGE_KEY, String(px));
-            } catch {
-              /* ignore */
-            }
-          }
+        try {
+          localStorage.setItem(STORAGE_KEY, String(currentWidth()));
+        } catch {
+          /* ignore */
         }
       };
       window.addEventListener("pointermove", move);
-      window.addEventListener("pointerup", up);
+      window.addEventListener("pointerup", up, { once: true });
     },
-    [applyWidth],
+    [currentWidth],
   );
 
   const onKeyDown = useCallback((e: React.KeyboardEvent) => {

@@ -1,6 +1,8 @@
 import type { Message } from "@langchain/langgraph-sdk";
 import {
   BookOpenTextIcon,
+  BrainIcon,
+  ChevronDownIcon,
   ChevronUp,
   FolderOpenIcon,
   GlobeIcon,
@@ -55,6 +57,13 @@ export function MessageGroup({
   const [showLastThinking, setShowLastThinking] = useState(
     env.NEXT_PUBLIC_STATIC_WEBSITE_ONLY === "true",
   );
+  // Whole tool-activity panel is collapsed by default — execution
+  // details (bash command, args, results) stay hidden until the user
+  // opts in. The summary row stays visible so the user knows the agent
+  // did some work.
+  const [showActivity, setShowActivity] = useState(
+    env.NEXT_PUBLIC_STATIC_WEBSITE_ONLY === "true",
+  );
   const steps = useMemo(() => convertToSteps(messages), [messages]);
   const lastToolCallStep = useMemo(() => {
     const filteredSteps = steps.filter((step) => step.type === "toolCall");
@@ -76,107 +85,144 @@ export function MessageGroup({
       return filteredSteps[filteredSteps.length - 1];
     }
   }, [lastToolCallStep, steps]);
+
+  const toolCallCount = steps.filter((step) => step.type === "toolCall").length;
+  const reasoningCount = steps.filter(
+    (step) => step.type === "reasoning",
+  ).length;
+  const totalSteps = toolCallCount + reasoningCount;
+  const hasActivity = totalSteps > 0;
+
   return (
-    <ChainOfThought
-      className={cn("w-full gap-2", className)}
-      open={true}
-    >
-      {aboveLastToolCallSteps.length > 0 && (
-        <Button
-          key="above"
-          className="w-full items-start justify-start text-left"
-          variant="ghost"
-          onClick={() => setShowAbove(!showAbove)}
+    <div className={cn("w-full", className)}>
+      {hasActivity && (
+        <button
+          type="button"
+          onClick={() => setShowActivity((value) => !value)}
+          aria-expanded={showActivity}
+          className="hover:bg-muted/40 text-muted-foreground hover:text-foreground flex w-full items-center gap-2 rounded-md px-2.5 py-1.5 text-xs transition-colors"
         >
-          <ChainOfThoughtStep
-            label={
-              <span className="opacity-60">
-                {showAbove
-                  ? t.toolCalls.lessSteps
-                  : t.toolCalls.moreSteps(aboveLastToolCallSteps.length)}
-              </span>
-            }
-            icon={
-              <ChevronUp
-                className={cn(
-                  "size-4 opacity-60 transition-transform duration-200",
-                  showAbove ? "rotate-180" : "",
-                )}
-              />
-            }
-          ></ChainOfThoughtStep>
-        </Button>
-      )}
-      {lastToolCallStep && (
-        <ChainOfThoughtContent className="px-4 pb-2">
-          {showAbove &&
-            aboveLastToolCallSteps.map((step) =>
-              step.type === "reasoning" ? (
-                <ChainOfThoughtStep
-                  key={step.id}
-                  label={
-                    <MarkdownContent
-                      content={step.reasoning ?? ""}
-                      isLoading={isLoading}
-                    />
-                  }
-                ></ChainOfThoughtStep>
-              ) : (
-                <ToolCall key={step.id} {...step} isLoading={isLoading} />
-              ),
+          <BrainIcon className="size-3.5" />
+          <span className="flex-1 text-left">
+            {showActivity
+              ? t.toolCalls.lessSteps
+              : t.toolCalls.moreSteps(totalSteps)}
+          </span>
+          <ChevronDownIcon
+            className={cn(
+              "size-3.5 transition-transform duration-200",
+              showActivity ? "rotate-180" : "rotate-0",
             )}
-          {lastToolCallStep && (
-            <FlipDisplay uniqueKey={lastToolCallStep.id ?? ""}>
-              <ToolCall
-                key={lastToolCallStep.id}
-                {...lastToolCallStep}
-                isLast={true}
-                isLoading={isLoading}
-              />
-            </FlipDisplay>
-          )}
-        </ChainOfThoughtContent>
+          />
+        </button>
       )}
-      {lastReasoningStep && (
-        <>
-          <Button
-            key={lastReasoningStep.id}
-            className="w-full items-start justify-start text-left"
-            variant="ghost"
-            onClick={() => setShowLastThinking(!showLastThinking)}
-          >
-            <div className="flex w-full items-center justify-between">
+      {hasActivity && showActivity && (
+        <ChainOfThought
+          className="mt-1 w-full gap-2"
+          open={true}
+        >
+          {aboveLastToolCallSteps.length > 0 && (
+            <Button
+              key="above"
+              className="w-full items-start justify-start text-left"
+              variant="ghost"
+              onClick={() => setShowAbove(!showAbove)}
+            >
               <ChainOfThoughtStep
-                className="font-normal"
-                label={t.common.thinking}
-                icon={LightbulbIcon}
-              ></ChainOfThoughtStep>
-              <div>
-                <ChevronUp
-                  className={cn(
-                    "text-muted-foreground size-4",
-                    showLastThinking ? "" : "rotate-180",
-                  )}
-                />
-              </div>
-            </div>
-          </Button>
-          {showLastThinking && (
-            <ChainOfThoughtContent className="px-4 pb-2">
-              <ChainOfThoughtStep
-                key={lastReasoningStep.id}
                 label={
-                  <MarkdownContent
-                    content={lastReasoningStep.reasoning ?? ""}
-                    isLoading={isLoading}
+                  <span className="opacity-60">
+                    {showAbove
+                      ? t.toolCalls.lessSteps
+                      : t.toolCalls.moreSteps(aboveLastToolCallSteps.length)}
+                  </span>
+                }
+                icon={
+                  <ChevronUp
+                    className={cn(
+                      "size-4 opacity-60 transition-transform duration-200",
+                      showAbove ? "rotate-180" : "",
+                    )}
                   />
                 }
               ></ChainOfThoughtStep>
+            </Button>
+          )}
+          {lastToolCallStep && (
+            <ChainOfThoughtContent className="px-4 pb-2">
+              {showAbove &&
+                aboveLastToolCallSteps.map((step) =>
+                  step.type === "reasoning" ? (
+                    <ChainOfThoughtStep
+                      key={step.id}
+                      label={
+                        <MarkdownContent
+                          content={step.reasoning ?? ""}
+                          isLoading={isLoading}
+                        />
+                      }
+                    ></ChainOfThoughtStep>
+                  ) : (
+                    <ToolCall
+                      key={step.id}
+                      {...step}
+                      isLoading={isLoading}
+                    />
+                  ),
+                )}
+              {lastToolCallStep && (
+                <FlipDisplay uniqueKey={lastToolCallStep.id ?? ""}>
+                  <ToolCall
+                    key={lastToolCallStep.id}
+                    {...lastToolCallStep}
+                    isLast={true}
+                    isLoading={isLoading}
+                  />
+                </FlipDisplay>
+              )}
             </ChainOfThoughtContent>
           )}
-        </>
+          {lastReasoningStep && (
+            <>
+              <Button
+                key={lastReasoningStep.id}
+                className="w-full items-start justify-start text-left"
+                variant="ghost"
+                onClick={() => setShowLastThinking(!showLastThinking)}
+              >
+                <div className="flex w-full items-center justify-between">
+                  <ChainOfThoughtStep
+                    className="font-normal"
+                    label={t.common.thinking}
+                    icon={LightbulbIcon}
+                  ></ChainOfThoughtStep>
+                  <div>
+                    <ChevronUp
+                      className={cn(
+                        "text-muted-foreground size-4",
+                        showLastThinking ? "" : "rotate-180",
+                      )}
+                    />
+                  </div>
+                </div>
+              </Button>
+              {showLastThinking && (
+                <ChainOfThoughtContent className="px-4 pb-2">
+                  <ChainOfThoughtStep
+                    key={lastReasoningStep.id}
+                    label={
+                      <MarkdownContent
+                        content={lastReasoningStep.reasoning ?? ""}
+                        isLoading={isLoading}
+                      />
+                    }
+                  ></ChainOfThoughtStep>
+                </ChainOfThoughtContent>
+              )}
+            </>
+          )}
+        </ChainOfThought>
       )}
-    </ChainOfThought>
+    </div>
   );
 }
 

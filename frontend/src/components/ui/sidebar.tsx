@@ -170,7 +170,9 @@ function Sidebar({
       <div
         data-slot="sidebar"
         className={cn(
-          "bg-sidebar text-sidebar-foreground flex h-full w-(--sidebar-width) flex-col",
+          // relative so the resize handle (absolute right-0) anchors to the
+          // sidebar's own right edge instead of the viewport / full wrapper.
+          "bg-sidebar text-sidebar-foreground relative flex h-full w-(--sidebar-width) flex-col",
           className,
         )}
         {...props}
