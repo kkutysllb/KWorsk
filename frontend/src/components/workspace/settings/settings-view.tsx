@@ -9,6 +9,7 @@ import {
   HardDriveIcon,
   KeyRoundIcon,
   type LucideIcon,
+  PaperclipIcon,
   ScrollTextIcon,
   SearchIcon,
   Settings2Icon,
@@ -37,6 +38,7 @@ import { SkillSettingsPage } from "./skill-settings-page";
 import { TokenUsageBudgetSettingsPage } from "./token-usage-budget-settings-page";
 import { ToolSettingsPage } from "./tool-settings-page";
 import { ToolsSandboxSettingsPage } from "./tools-sandbox-settings-page";
+import { UploadsSettingsPage } from "./uploads-settings-page";
 import { WebToolsSettingsPage } from "./web-tools-settings-page";
 
 const SIDEBAR_WIDTH_KEY = "kworks.settings.sidebarWidth";
@@ -52,6 +54,7 @@ type SectionId =
   | "tools"
   | "toolsSandbox"
   | "webTools"
+  | "uploads"
   | "config"
   | "dataSources"
   | "dataPersistence"
@@ -79,6 +82,7 @@ const SECTIONS: SectionDef[] = [
   { id: "tokenUsageBudget", icon: GaugeIcon, groupKey: "engine" },
   { id: "toolsSandbox", icon: WrenchIcon, groupKey: "engine" },
   { id: "webTools", icon: GlobeIcon, groupKey: "engine" },
+  { id: "uploads", icon: PaperclipIcon, groupKey: "toolsData" },
   {
     id: "skillModels",
     icon: KeyRoundIcon,
@@ -258,6 +262,7 @@ export function SettingsView({
               {active.id === "tools" && <ToolSettingsPage />}
               {active.id === "toolsSandbox" && <ToolsSandboxSettingsPage />}
               {active.id === "webTools" && <WebToolsSettingsPage />}
+              {active.id === "uploads" && <UploadsSettingsPage />}
               {active.id === "config" && <ConfigSettingsPage />}
               {active.id === "dataPersistence" && <DataPersistenceSettingsPage />}
               {active.id === "dataSources" && <DatasourcesSettingsPage />}

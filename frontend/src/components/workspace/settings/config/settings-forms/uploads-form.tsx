@@ -148,8 +148,8 @@ export function UploadsForm() {
               </SelectTrigger>
               <SelectContent>
                 <SelectItem value="auto">自动检测 (auto)</SelectItem>
-                <SelectItem value="pymupdf">PyMuPDF</SelectItem>
-                <SelectItem value="pdfplumber">pdfplumber</SelectItem>
+                <SelectItem value="pymupdf4llm">pymupdf4llm</SelectItem>
+                <SelectItem value="markitdown">markitdown</SelectItem>
               </SelectContent>
             </Select>
             <p className={hintCls}>指定 PDF 文件转文本时使用的库</p>
