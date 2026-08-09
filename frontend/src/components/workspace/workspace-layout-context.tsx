@@ -11,8 +11,13 @@ import {
 } from "react";
 
 const RIGHT_PANEL_KEY = "kworks.workspace.rightPanelOpen";
+const RIGHT_PANEL_WIDTH_KEY = "kworks.workspace.rightPanelWidth";
 const HISTORY_KEY = "kworks.workspace.historyCollapsed";
 const SECTIONS_KEY = "kworks.workspace.panelSections";
+
+const RIGHT_PANEL_MIN_WIDTH = 280;
+const RIGHT_PANEL_MAX_WIDTH = 520;
+const RIGHT_PANEL_DEFAULT_WIDTH = 360;
 
 export type PanelSectionId =
   | "todos"
@@ -41,6 +46,8 @@ interface WorkspaceLayoutValue {
   rightPanelOpen: boolean;
   toggleRightPanel: () => void;
   setRightPanelOpen: (open: boolean) => void;
+  rightPanelWidth: number;
+  setRightPanelWidth: (width: number) => void;
   historyCollapsed: boolean;
   toggleHistory: () => void;
   isSectionCollapsed: (id: PanelSectionId) => boolean;
@@ -91,6 +98,7 @@ export function WorkspaceLayoutProvider({
   children: ReactNode;
 }) {
   const [rightPanelOpen, setRightPanelOpenState] = useState(false);
+  const [rightPanelWidth, setRightPanelWidthState] = useState(RIGHT_PANEL_DEFAULT_WIDTH);
   const [historyCollapsed, setHistoryCollapsed] = useState(false);
   const [sections, setSections] = useState<Record<PanelSectionId, boolean>>({
     todos: false,
@@ -116,12 +124,38 @@ export function WorkspaceLayoutProvider({
     setRightPanelOpenState(readBoolean(RIGHT_PANEL_KEY, false));
     setHistoryCollapsed(readBoolean(HISTORY_KEY, false));
     setSections(readSections());
+    try {
+      const raw = localStorage.getItem(RIGHT_PANEL_WIDTH_KEY);
+      if (raw) {
+        const parsed = parseInt(raw, 10);
+        if (!Number.isNaN(parsed)) {
+          setRightPanelWidthState(
+            Math.min(RIGHT_PANEL_MAX_WIDTH, Math.max(RIGHT_PANEL_MIN_WIDTH, parsed)),
+          );
+        }
+      }
+    } catch {
+      /* ignore */
+    }
   }, []);
 
   const setRightPanelOpen = useCallback((open: boolean) => {
     setRightPanelOpenState(open);
     try {
       localStorage.setItem(RIGHT_PANEL_KEY, String(open));
+    } catch {
+      /* ignore */
+    }
+  }, []);
+
+  const setRightPanelWidth = useCallback((width: number) => {
+    const clamped = Math.min(
+      RIGHT_PANEL_MAX_WIDTH,
+      Math.max(RIGHT_PANEL_MIN_WIDTH, width),
+    );
+    setRightPanelWidthState(clamped);
+    try {
+      localStorage.setItem(RIGHT_PANEL_WIDTH_KEY, String(clamped));
     } catch {
       /* ignore */
     }
@@ -166,6 +200,8 @@ export function WorkspaceLayoutProvider({
       rightPanelOpen,
       toggleRightPanel,
       setRightPanelOpen,
+      rightPanelWidth,
+      setRightPanelWidth,
       historyCollapsed,
       toggleHistory,
       isSectionCollapsed,
@@ -179,6 +215,8 @@ export function WorkspaceLayoutProvider({
       rightPanelOpen,
       toggleRightPanel,
       setRightPanelOpen,
+      rightPanelWidth,
+      setRightPanelWidth,
       historyCollapsed,
       toggleHistory,
       isSectionCollapsed,
