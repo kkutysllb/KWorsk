@@ -14,6 +14,7 @@
 #   - orchestration.mode    multi（启用多智能体编排，上游默认 single）
 #   - sandbox.allow_host_bash  true（桌面端可信本地环境，上游默认 false）
 #   - agents_api.enabled    true（桌面端 UI 管理自定义 Agent，上游默认 false）
+#   - tools / tool_groups    与上游 config.example.yaml 默认值对齐（见下方）
 #
 # 环境变量：$VAR 语法由 AppConfig.resolve_env_variables 解析；缺失变量会抛
 # ValueError。模型 api_key 推荐用 $VAR 引用 ~/.kworks/.env 中的凭证（UI 创建
@@ -103,6 +104,102 @@ sandbox:
   read_file_output_max_chars: 50000
   ls_output_max_chars: 20000
   bash_command_timeout: 600
+
+# ── 工具组与工具声明 ────────────────────────────────────────────────────
+# 与上游 config.example.yaml 默认值对齐。agent 运行时可用工具由 config.yaml
+# `tools:` 段声明（不含框架内置的 present_files / ask_clarification / task 等）。
+#
+# 工具组（用于按组过滤，自定义 Agent 可声明 tool_groups 限制可用工具集）:
+tool_groups:
+  - name: web
+  - name: file:read
+  - name: file:write
+  - name: bash
+  - name: browser          # 组保留；browser_* 工具默认未启用（需 playwright 依赖）
+
+# Web 搜索（DuckDuckGo — 无需 API key）
+tools:
+  - name: web_search
+    group: web
+    use: qilin.community.ddg_search.tools:web_search_tool
+    max_results: 5
+
+  # 网页抓取（Jina AI Reader — 无需 API key）
+  - name: web_fetch
+    group: web
+    use: qilin.community.jina_ai.tools:web_fetch_tool
+    timeout: 10
+
+  # 图片搜索（DuckDuckGo — 无需 API key）
+  - name: image_search
+    group: web
+    use: qilin.community.image_search.tools:image_search_tool
+    max_results: 5
+
+  # 文件读取组
+  - name: ls
+    group: file:read
+    use: qilin.sandbox.tools:ls_tool
+
+  - name: read_file
+    group: file:read
+    use: qilin.sandbox.tools:read_file_tool
+
+  - name: glob
+    group: file:read
+    use: qilin.sandbox.tools:glob_tool
+    max_results: 200
+
+  - name: grep
+    group: file:read
+    use: qilin.sandbox.tools:grep_tool
+    max_results: 100
+
+  # 文件写入组
+  - name: write_file
+    group: file:write
+    use: qilin.sandbox.tools:write_file_tool
+
+  - name: str_replace
+    group: file:write
+    use: qilin.sandbox.tools:str_replace_tool
+
+  # Bash 执行（桌面端 allow_host_bash: true，始终可用）
+  - name: bash
+    group: bash
+    use: qilin.sandbox.tools:bash_tool
+
+  # 浏览器自动化（需安装 playwright 依赖：cd backend && uv sync --extra browser）
+  # 取消注释以下整块以启用。浏览器会话驻留在单 worker 内存中，保持 GATEWAY_WORKERS=1。
+  # - name: browser_navigate
+  #   group: browser
+  #   use: qilin.community.browser_automation.tools:browser_navigate_tool
+  #   headless: true
+  #   timeout_ms: 30000
+  #   viewport_width: 1280
+  #   viewport_height: 720
+  # - name: browser_snapshot
+  #   group: browser
+  #   use: qilin.community.browser_automation.tools:browser_snapshot_tool
+  # - name: browser_click
+  #   group: browser
+  #   use: qilin.community.browser_automation.tools:browser_click_tool
+  # - name: browser_type
+  #   group: browser
+  #   use: qilin.community.browser_automation.tools:browser_type_tool
+  # - name: browser_get_text
+  #   group: browser
+  #   use: qilin.community.browser_automation.tools:browser_get_text_tool
+  #   max_chars: 8000
+  # - name: browser_back
+  #   group: browser
+  #   use: qilin.community.browser_automation.tools:browser_back_tool
+  # - name: browser_screenshot
+  #   group: browser
+  #   use: qilin.community.browser_automation.tools:browser_screenshot_tool
+  # - name: browser_close
+  #   group: browser
+  #   use: qilin.community.browser_automation.tools:browser_close_tool
 
 # ── 文件上传 ──────────────────────────────────────────────────────────────
 # 网关级上传限制（字符数 = 字节）。自动 Office/PDF 转换在沙箱隔离前于宿主机
