@@ -112,8 +112,29 @@ export function getBackendBaseURL(): string {
 export function getLangGraphBaseURL(isMock?: boolean): string {
   if (isDesktop()) {
     if (isDesktopDevMode()) {
-      return `${window.location.origin}/api/langgraph`;
+      // Dev mode: connect DIRECTLY to the gateway at `localhost:<port>` — NOT
+      // via the Next.js rewrite proxy, and NOT via 127.0.0.1. Two reasons:
+      //
+      // 1. SSE streaming: the Next.js rewrite proxy buffers SSE responses, so
+      //    model replies would appear all at once instead of streaming
+      //    token-by-token.
+      // 2. SameSite cookies: the renderer loads from `localhost:<devPort>`.
+      //    Browsers treat `localhost` and `127.0.0.1` as DIFFERENT sites, so
+      //    `127.0.0.1` would block the access_token (SameSite=Lax) and
+      //    csrf_token (SameSite=Strict) cookies — causing 403 CSRF errors.
+      //    Using `localhost` keeps the request same-site so cookie auth +
+      //    CSRF double-submit work exactly like KStock's dev setup.
+      //
+      // The SDK fetch is configured with `credentials: "include"` in
+      // prepareLangGraphRequest so cookies are carried despite the
+      // cross-origin port.
+      return `http://localhost:${_desktopPort}/api`;
     }
+    // Packaged (managed) mode: renderer is `app://`, cross-scheme to the HTTP
+    // gateway, so SameSite cookies are unavailable. Auth uses the Bearer
+    // token injected by injectDesktopAuthorization; gateway deps.py +
+    // auth_middleware.py fall back to the Authorization header, and the CSRF
+    // middleware exempts Bearer requests (token is not CSRF-vulnerable).
     return `http://127.0.0.1:${_desktopPort}/api`;
   }
 

@@ -93,6 +93,9 @@ describe("getBackendBaseURL", () => {
   });
 
   test("returns empty string in desktop dev mode (port 18569)", () => {
+    // Dev mode keeps REST API calls same-origin via the Next.js rewrite proxy
+    // so login/cookie auth works reliably. Only the LangGraph SDK (streaming)
+    // connects directly — see getLangGraphBaseURL.
     setDesktopBridge(true);
     stubLocationPort("18569");
     expect(getBackendBaseURL()).toBe("");
@@ -125,11 +128,19 @@ describe("getLangGraphBaseURL", () => {
     expect(url).toContain("/api/langgraph");
   });
 
-  test("returns rewrite proxy URL in desktop dev mode (port 18569)", () => {
+  test("returns direct localhost gateway URL in desktop dev mode (SSE streaming bypasses Next.js proxy)", () => {
+    // Dev mode LangGraph SDK (streaming) connects DIRECTLY to the gateway at
+    // `localhost:<port>` to bypass the Next.js rewrite proxy (which buffers
+    // SSE responses). Same-site `localhost` is used so any cookies that DO
+    // survive the cross-port fetch are carried; Bearer auth (from login's
+    // access_token response field) is the primary auth signal for this path.
     setDesktopBridge(true);
     stubLocationPort("18569", "http://localhost:18569");
     const url = getLangGraphBaseURL();
-    expect(url).toContain("/api/langgraph");
+    expect(url).toContain("localhost");
+    expect(url).toContain("/api");
+    expect(url).not.toContain("127.0.0.1");
+    expect(url).not.toContain("/api/langgraph");
   });
 
   test("returns direct gateway URL in desktop production mode", () => {

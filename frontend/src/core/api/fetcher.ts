@@ -77,11 +77,12 @@ export async function fetch(
   }
 
   // Inject the desktop session token for BOTH managed (production) and dev
-  // desktop modes. In dev mode the gateway does not receive an access_token
-  // cookie (the request is proxied via Next.js and only the locale cookie
-  // survives), so the Bearer token is the only auth signal the gateway's
-  // get_access_token_from_request will find. Without this, /api/models,
-  // /api/skills, etc. return 401 in desktop dev.
+  // desktop modes. Dev mode LangGraph SDK calls bypass the Next.js proxy and
+  // connect directly cross-port to the gateway; SameSite cookies proved
+  // unreliable for that path in Electron, so the Bearer token (persisted at
+  // login from the gateway's access_token response field) authenticates these
+  // direct calls. The gateway's CSRF middleware exempts Bearer requests, so
+  // state-changing SDK calls (POST /runs/stream) pass without a CSRF cookie.
   const desktopToken = isDesktop()
     ? getDesktopSessionToken()
     : null;

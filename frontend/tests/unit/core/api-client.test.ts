@@ -62,7 +62,7 @@ describe("LangGraph API client request hook", () => {
     expect(headers.get("Authorization")).toBe("Bearer desktop-token");
   });
 
-  test("injects csrf cookie and bearer token in desktop dev mode with dynamic frontend port", () => {
+  test("injects bearer token in desktop dev mode (SDK direct connection bypasses proxy)", () => {
     setDesktopModeWithFrontendPort(18569);
     stubLocationPort("18569");
     document.cookie = "csrf_token=csrf-dev-token";
@@ -73,7 +73,11 @@ describe("LangGraph API client request hook", () => {
     );
 
     const headers = new Headers(init.headers);
-    // Desktop dev mode injects the Bearer token (same rationale as fetcher).
+    // Dev mode: SDK connects directly to localhost:<gatewayPort> (bypassing
+    // the Next.js proxy for SSE streaming). SameSite cookies proved unreliable
+    // across ports in Electron, so the Bearer token (from login's access_token
+    // response field) is the primary auth signal. CSRF cookie is still injected
+    // opportunistically (gateway exempts Bearer from CSRF double-submit).
     expect(headers.get("Authorization")).toBe("Bearer desktop-token");
     expect(headers.get("X-CSRF-Token")).toBe("csrf-dev-token");
   });

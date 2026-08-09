@@ -3,7 +3,7 @@
 import { Client as LangGraphClient } from "@langchain/langgraph-sdk/client";
 
 import { getDesktopSessionToken } from "../auth/session";
-import { getLangGraphBaseURL, isDesktop, isDesktopBackendManagedMode } from "../config";
+import { getLangGraphBaseURL, isDesktop } from "../config";
 
 import { isStateChangingMethod, readCsrfCookie } from "./fetcher";
 import { sanitizeRunStreamOptions } from "./stream-mode";
@@ -33,11 +33,18 @@ function injectCsrfHeader(_url: URL, init: RequestInit): RequestInit {
 }
 
 function injectDesktopAuthorization(init: RequestInit): RequestInit {
-  // Inject the desktop session token in BOTH managed (production) and dev
-  // desktop modes — same rationale as fetcher.ts: in dev mode the gateway
-  // only gets the locale cookie (not access_token), so the Bearer token is
-  // the only auth signal. Without this, SDK-mediated calls (thread/run/stream)
-  // return 401 in desktop dev.
+  // Inject the desktop session token in BOTH dev and managed desktop modes.
+  // Dev mode: the LangGraph SDK connects directly to the gateway
+  // (localhost:<gatewayPort>) bypassing the Next.js rewrite proxy so SSE
+  // streams flush token-by-token. This cross-port fetch is same-site but
+  // SameSite cookies proved unreliable in Electron across ports — the
+  // access_token + csrf_token cookies set via the same-origin proxy at login
+  // are not reliably carried on the direct cross-port call, so the Bearer
+  // token (persisted to localStorage by the login page from the gateway's
+  // access_token response field) is the reliable auth signal. The gateway's
+  // CSRF middleware exempts Bearer requests, so streaming POSTs pass.
+  // Managed mode: renderer is app:// (cross-scheme), no cookies available,
+  // Bearer is the sole auth signal.
   if (!isDesktop()) return init;
 
   const token = getDesktopSessionToken();

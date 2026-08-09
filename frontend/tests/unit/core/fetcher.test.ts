@@ -63,7 +63,7 @@ describe("fetcher desktop auth", () => {
     expect(headers.get("Authorization")).toBe("Bearer desktop-token");
   });
 
-  test("uses cookie and csrf flow in desktop dev mode with dynamic frontend port", async () => {
+  test("injects bearer token in desktop dev mode alongside cookie auth", async () => {
     setDesktopModeWithFrontendPort(3000);
     stubLocationPort("3000");
     document.cookie = "csrf_token=csrf-dev-token";
@@ -73,8 +73,9 @@ describe("fetcher desktop auth", () => {
     const [, init] = vi.mocked(globalThis.fetch).mock.calls[0] ?? [];
     const request = init;
     const headers = new Headers(request?.headers);
-    // Desktop dev mode injects the Bearer token (the gateway only receives the
-    // locale cookie via the Next.js proxy, so the token is the auth signal).
+    // Dev mode: REST calls go through the same-origin Next.js proxy (cookies
+    // work), but the Bearer token is also injected so that any direct
+    // gateway calls authenticate consistently.
     expect(headers.get("Authorization")).toBe("Bearer desktop-token");
     expect(headers.get("X-CSRF-Token")).toBe("csrf-dev-token");
     expect(request?.credentials).toBe("include");
