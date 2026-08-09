@@ -1,6 +1,8 @@
 ---
 name: zm-cn-sector-analysis
 description: 查询京沪深行业资金、行情、板块排名、行业成分股，以及查询某只股票所属行业的整体表现。支持自然语言问句输入，返回相关行业数据结果。当用户询问行业数据、行业行情、行业成分股、板块资金流向、板块排名、某股票属于哪个行业及该行业表现等问题时，必须使用此技能。
+required-secrets:
+  - X_AUTH_TOKEN
 ---
 
 # cn-sector-analysis：京沪深行业板块分析

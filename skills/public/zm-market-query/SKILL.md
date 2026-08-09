@@ -1,6 +1,8 @@
 ---
 name: zm-market-query
 description: 支持自然语言查询行情数据，覆盖A港美、期货等多种资产，含实时行情、历史行情、资金流向、财务报表、公司信息、估值、板块等。适用于投资研究、交易复盘、市场监控、行业分析等场景。
+required-secrets:
+  - X_AUTH_TOKEN
 ---
 
 # 市场行情查询（Market Query）

@@ -1,6 +1,8 @@
 ---
 name: zm-finance-news-search
 description: 财经新闻搜索引擎，支持关键词搜索财经资讯和快讯，以及按股票代码查询个股新闻。囊括官媒、主流财经媒体、垂直行业网站、知名上市/非上市公司官网等多类媒体，可帮助了解最新财经事件、政策动态、行业革新、企业业务进展。当用户需要搜索财经新闻、查询事件动态、了解政策/行业/企业资讯，或查看某只股票的相关新闻时使用此 skill。
+required-secrets:
+  - X_AUTH_TOKEN
 ---
 
 # finance-news-search
