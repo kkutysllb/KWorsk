@@ -35,6 +35,7 @@ import { SkillModelsSettingsPage } from "./skill-models-settings-page";
 import { SkillSettingsPage } from "./skill-settings-page";
 import { TokenUsageBudgetSettingsPage } from "./token-usage-budget-settings-page";
 import { ToolSettingsPage } from "./tool-settings-page";
+import { ToolsSandboxSettingsPage } from "./tools-sandbox-settings-page";
 
 const SIDEBAR_WIDTH_KEY = "kworks.settings.sidebarWidth";
 const DEFAULT_SIDEBAR_WIDTH = 240;
@@ -47,6 +48,7 @@ type SectionId =
   | "memorySummary"
   | "tokenUsageBudget"
   | "tools"
+  | "toolsSandbox"
   | "config"
   | "dataSources"
   | "dataPersistence"
@@ -72,6 +74,7 @@ const SECTIONS: SectionDef[] = [
   { id: "dataPersistence", icon: HardDriveIcon, groupKey: "engine" },
   { id: "memorySummary", icon: ScrollTextIcon, groupKey: "engine" },
   { id: "tokenUsageBudget", icon: GaugeIcon, groupKey: "engine" },
+  { id: "toolsSandbox", icon: WrenchIcon, groupKey: "engine" },
   {
     id: "skillModels",
     icon: KeyRoundIcon,
@@ -249,6 +252,7 @@ export function SettingsView({
               {active.id === "tokenUsageBudget" && <TokenUsageBudgetSettingsPage />}
               {active.id === "skill" && <SkillSettingsPage />}
               {active.id === "tools" && <ToolSettingsPage />}
+              {active.id === "toolsSandbox" && <ToolsSandboxSettingsPage />}
               {active.id === "config" && <ConfigSettingsPage />}
               {active.id === "dataPersistence" && <DataPersistenceSettingsPage />}
               {active.id === "dataSources" && <DatasourcesSettingsPage />}

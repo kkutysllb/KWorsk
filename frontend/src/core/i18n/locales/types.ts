@@ -510,6 +510,7 @@ export interface Translations {
       memorySummary: string;
       tokenUsageBudget: string;
       tools: string;
+      toolsSandbox: string;
       skills: string;
       tokenUsage: string;
       config: string;
@@ -532,6 +533,7 @@ export interface Translations {
         memorySummary: string;
         tokenUsageBudget: string;
         tools: string;
+        toolsSandbox: string;
         skill: string;
         config: string;
         dataSources: string;
@@ -545,6 +547,7 @@ export interface Translations {
         tokenUsageBudget: string;
         skill: string;
         tools: string;
+        toolsSandbox: string;
         config: string;
         dataSources: string;
         dataPersistence: string;

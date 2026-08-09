@@ -27,6 +27,7 @@ export type SettingsSectionId =
   | "memorySummary"
   | "tokenUsageBudget"
   | "tools"
+  | "toolsSandbox"
   | "config"
   | "dataSources"
   | "dataPersistence"

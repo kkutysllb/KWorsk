@@ -26,6 +26,7 @@ interface SandboxConfig {
   bash_output_max_chars: number;
   read_file_output_max_chars: number;
   ls_output_max_chars: number;
+  bash_command_timeout: number;
 }
 
 const defaultConfig: SandboxConfig = {
@@ -34,20 +35,23 @@ const defaultConfig: SandboxConfig = {
   bash_output_max_chars: 20000,
   read_file_output_max_chars: 50000,
   ls_output_max_chars: 20000,
+  bash_command_timeout: 600,
 };
 
 export function SandboxForm() {
-  const { data, loading, saving, save } = useConfigSection<SandboxConfig>(
+  const { data: rawData, loading, saving, save } = useConfigSection<SandboxConfig>(
     "sandbox",
     defaultConfig,
   );
+  // Merge defaults so partial API data never leaves fields undefined.
+  const data: SandboxConfig = { ...defaultConfig, ...rawData };
   const [local, setLocal] = useState<SandboxConfig>(data);
   const [providerKey, setProviderKey] = useState("local");
 
   useEffect(() => {
-    setLocal(data);
-    setProviderKey(data.use?.includes("Local") ? "local" : "docker");
-  }, [data]);
+    setLocal({ ...defaultConfig, ...rawData });
+    setProviderKey(rawData.use?.includes("Local") ? "local" : "docker");
+  }, [rawData]);
 
   const dirty = JSON.stringify(local) !== JSON.stringify(data);
 
@@ -167,6 +171,23 @@ export function SandboxForm() {
             </div>
           </div>
           <p className={hintCls}>以上数值单位为字符数，超过将被截断</p>
+
+          {/* Bash command timeout */}
+          <div className="grid gap-1.5">
+            <label className={labelCls}>Bash 命令超时（秒）</label>
+            <Input
+              type="number"
+              min={1}
+              value={local.bash_command_timeout}
+              onChange={(e) =>
+                update("bash_command_timeout", Number(e.target.value))
+              }
+              disabled={saving}
+            />
+            <p className={hintCls}>
+              单条主机 Bash 命令的最大执行时间，超时后进程组将被终止
+            </p>
+          </div>
 
           <div className="flex gap-2 pt-1">
             <Button
