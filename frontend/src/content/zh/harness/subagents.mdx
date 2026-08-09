@@ -30,7 +30,7 @@ KWorks 内置两个子 Agent：
 通用推理和执行 Agent，适合委派需要多步骤推理、网络搜索、文件操作和产出物生成的复杂子任务。
 
 - **默认超时**：900 秒（15 分钟）
-- **默认最大轮次**：160
+- **默认最大轮次**：200
 
 ### bash
 
@@ -75,7 +75,7 @@ subagents:
   agents:
     general-purpose:
       timeout_seconds: 1800 # 复杂任务 30 分钟
-      max_turns: 160
+      max_turns: 200
     bash:
       timeout_seconds: 300 # 快速命令 5 分钟
       max_turns: 80
