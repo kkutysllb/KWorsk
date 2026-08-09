@@ -43,6 +43,13 @@ const MCP_PRESETS: MCPServerConfig[] = [
   {
     enabled: true,
     type: "stdio",
+    command: "npx",
+    args: ["-y", "@upstash/context7-mcp"],
+    description: "Query up-to-date documentation for any library or framework",
+  },
+  {
+    enabled: true,
+    type: "stdio",
     command: "uvx",
     args: ["--with", "mcp>=1.9,<1.10", "mcp-server-fetch"],
     description: "Fetch and summarize web content directly from URLs",
@@ -165,13 +172,14 @@ export function McpGallery({ embedded = false }: { embedded?: boolean }) {
 
   /** Derive a unique server name from a preset's package name or URL host. */
   const derivePresetName = (preset: MCPServerConfig): string => {
-    // For stdio servers: derive from package name
-    const pkg = preset.args?.find((a) => a.includes("mcp-server")) ?? "";
+    // For stdio servers: derive from the package arg (contains "mcp")
+    const pkg = preset.args?.find((a) => a.includes("mcp")) ?? "";
     if (pkg) {
       const base = pkg
-        .replace(/^.+\//, "")
+        .replace(/^@modelcontextprotocol\/server-/, "")
+        .replace(/^@[\w.-]+\//, "")
         .replace(/^mcp-server-/, "")
-        .replace(/^@modelcontextprotocol\/server-/, "");
+        .replace(/-mcp$/, "");
       return base || "mcp-server";
     }
     // For http/sse servers: derive from URL host
