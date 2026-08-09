@@ -1,6 +1,6 @@
 "use client";
 
-import { AlertTriangleIcon, PlusIcon, TerminalIcon } from "lucide-react";
+import { AlertTriangleIcon, PlusIcon, SparklesIcon, TerminalIcon } from "lucide-react";
 import { useCallback, useEffect, useState } from "react";
 import { toast } from "sonner";
 
@@ -25,7 +25,53 @@ import type { MCPServerConfig } from "@/core/mcp/types";
 import { McpCard } from "./mcp-card";
 import { McpDialog } from "./mcp-dialog";
 
-export function McpGallery() {
+/** Built-in preset MCP servers that are free and require no API key. */
+const MCP_PRESETS: MCPServerConfig[] = [
+  {
+    enabled: true,
+    type: "stdio",
+    command: "npx",
+    args: ["-y", "@modelcontextprotocol/server-sequential-thinking"],
+    description: "Dynamic and reflective problem-solving through thought sequences",
+  },
+  {
+    enabled: true,
+    type: "stdio",
+    command: "uvx",
+    args: ["mcp-server-fetch"],
+    description: "Fetch and summarize web content directly from URLs",
+  },
+  {
+    enabled: true,
+    type: "stdio",
+    command: "npx",
+    args: ["-y", "@modelcontextprotocol/server-memory"],
+    description: "Knowledge-graph based persistent memory for long-term recall",
+  },
+  {
+    enabled: true,
+    type: "stdio",
+    command: "uvx",
+    args: ["mcp-server-time"],
+    description: "Time zone conversion and current time across regions",
+  },
+  {
+    enabled: true,
+    type: "stdio",
+    command: "uvx",
+    args: ["mcp-server-git"],
+    description: "Git repository operations: log, diff, status, and more",
+  },
+  {
+    enabled: true,
+    type: "stdio",
+    command: "npx",
+    args: ["-y", "@modelcontextprotocol/server-filesystem", "/tmp"],
+    description: "Secure file system access (edit /tmp in args to your path)",
+  },
+];
+
+export function McpGallery({ embedded = false }: { embedded?: boolean }) {
   const { t } = useI18n();
   const [servers, setServers] = useState<Record<string, MCPServerConfig>>({});
   const [loading, setLoading] = useState(true);
@@ -111,18 +157,58 @@ export function McpGallery() {
 
   const serverEntries = Object.entries(servers);
 
-  return (
-    <div className="flex size-full flex-col">
-      {/* Page header */}
-      <div className="relative shrink-0 border-b bg-gradient-to-b from-muted/30 to-transparent">
-        {/* Decorative background */}
-        <div className="absolute inset-0 overflow-hidden pointer-events-none">
-          <div className="absolute -top-24 -right-24 size-64 rounded-full bg-amber-500/5 blur-3xl" />
-          <div className="absolute -bottom-16 left-1/3 size-48 rounded-full bg-orange-500/5 blur-3xl" />
-        </div>
+  /** Derive a unique server name from a preset's package name. */
+  const derivePresetName = (preset: MCPServerConfig): string => {
+    const pkg = preset.args?.find((a) => a.includes("mcp-server")) ?? "";
+    const base = pkg
+      .replace(/^.+\//, "")
+      .replace(/^mcp-server-/, "")
+      .replace(/^@modelcontextprotocol\/server-/, "");
+    return base || "mcp-server";
+  };
 
-        <div className="relative flex items-center justify-between px-6 py-5">
-          <div className="space-y-1.5">
+  const handleAddPreset = async (preset: MCPServerConfig) => {
+    const baseName = derivePresetName(preset);
+    let name = baseName;
+    let suffix = 1;
+    while (servers[name]) {
+      name = `${baseName}-${suffix++}`;
+    }
+    try {
+      await addMCPServer(name, preset);
+      toast.success(t.mcp.createSuccess);
+      await refresh();
+    } catch (e) {
+      toast.error(e instanceof Error ? e.message : "Failed to add preset");
+    }
+  };
+
+  const header = (
+    <div
+      className={
+        embedded
+          ? "flex flex-wrap items-center justify-between gap-3 pb-4"
+          : "relative flex items-center justify-between px-6 py-5"
+      }
+    >
+      <div
+        className={
+          embedded
+            ? "flex items-center gap-2"
+            : "space-y-1.5"
+        }
+      >
+        {embedded ? (
+          <div className="flex items-center gap-2">
+            {serverEntries.length > 0 && !loading && (
+              <div className="flex items-center gap-2 text-xs text-muted-foreground">
+                <span className="inline-flex size-2 rounded-full bg-amber-400" />
+                {serverEntries.length} {t.mcp.title}
+              </div>
+            )}
+          </div>
+        ) : (
+          <>
             <h1 className="text-2xl font-extrabold tracking-tight flex items-center gap-2">
               <TerminalIcon className="w-6 h-6 text-rose-500" />
               <span className="bg-gradient-to-r from-amber-500 via-orange-400 to-rose-400 bg-clip-text text-transparent">
@@ -132,27 +218,39 @@ export function McpGallery() {
             <p className="text-muted-foreground text-sm max-w-xl">
               {t.mcp.description}
             </p>
-          </div>
-          <div className="flex items-center gap-3">
-            {serverEntries.length > 0 && !loading && (
-              <div className="hidden sm:flex items-center gap-2 text-xs text-muted-foreground">
-                <span className="inline-flex size-2 rounded-full bg-amber-400" />
-                {serverEntries.length} 个服务器
-              </div>
-            )}
-            <Button
-              onClick={handleAdd}
-              className="bg-gradient-to-r from-amber-500 to-orange-500 text-white hover:from-amber-600 hover:to-orange-600 shadow-md shadow-amber-500/25 transition-all duration-200 hover:shadow-lg hover:shadow-amber-500/30"
-            >
-              <PlusIcon className="mr-1.5 h-4 w-4" />
-              {t.mcp.addServer}
-            </Button>
-          </div>
-        </div>
+          </>
+        )}
       </div>
+      <Button
+        onClick={handleAdd}
+        className={
+          embedded
+            ? "gap-1.5"
+            : "bg-gradient-to-r from-amber-500 to-orange-500 text-white hover:from-amber-600 hover:to-orange-600 shadow-md shadow-amber-500/25 transition-all duration-200 hover:shadow-lg hover:shadow-amber-500/30"
+        }
+      >
+        <PlusIcon className="mr-1.5 h-4 w-4" />
+        {t.mcp.addServer}
+      </Button>
+    </div>
+  );
+
+  return (
+    <div className={embedded ? "space-y-6" : "flex size-full flex-col"}>
+      {!embedded && (
+        <div className="relative shrink-0 border-b bg-gradient-to-b from-muted/30 to-transparent">
+          {/* Decorative background */}
+          <div className="absolute inset-0 overflow-hidden pointer-events-none">
+            <div className="absolute -top-24 -right-24 size-64 rounded-full bg-amber-500/5 blur-3xl" />
+            <div className="absolute -bottom-16 left-1/3 size-48 rounded-full bg-orange-500/5 blur-3xl" />
+          </div>
+          {header}
+        </div>
+      )}
+      {embedded && header}
 
       {/* Content */}
-      <div className="flex-1 overflow-y-auto p-6">
+      <div className={embedded ? "space-y-0" : "flex-1 overflow-y-auto p-6"}>
         {loading ? (
           <div className="flex flex-col gap-2">
             {Array.from({ length: 4 }).map((_, i) => (
@@ -208,6 +306,57 @@ export function McpGallery() {
           </div>
         )}
       </div>
+
+      {/* Built-in presets */}
+      {!loading && !error && (
+        <div className={embedded ? "space-y-3" : "px-6 pb-6"}>
+          <div className="flex items-center gap-2">
+            <SparklesIcon className="size-4 text-amber-500" />
+            <h3
+              className={embedded ? "text-sm font-semibold" : "text-sm font-semibold"}
+            >
+              {t.mcp.guideLinks}
+            </h3>
+          </div>
+          <div className="grid gap-2 sm:grid-cols-2">
+            {MCP_PRESETS.map((preset, i) => {
+              const name = derivePresetName(preset);
+              const exists = !!servers[name];
+              return (
+                <div
+                  key={i}
+                  className="flex items-center justify-between gap-3 rounded-lg border bg-card px-3 py-2.5"
+                >
+                  <div className="min-w-0">
+                    <div className="flex items-center gap-1.5">
+                      <span className="text-sm font-medium">{name}</span>
+                    </div>
+                    <p className="text-muted-foreground truncate text-xs">
+                      {preset.description}
+                    </p>
+                  </div>
+                  <Button
+                    variant={exists ? "secondary" : "outline"}
+                    size="sm"
+                    disabled={exists}
+                    onClick={() => handleAddPreset(preset)}
+                    className="shrink-0"
+                  >
+                    {exists ? (
+                      "✓"
+                    ) : (
+                      <>
+                        <PlusIcon className="mr-1 size-3" />
+                        {t.common.install}
+                      </>
+                    )}
+                  </Button>
+                </div>
+              );
+            })}
+          </div>
+        </div>
+      )}
 
       {/* Add / Edit dialog */}
       <McpDialog

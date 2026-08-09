@@ -29,12 +29,12 @@ import { BackendControlBar } from "./backend-control-bar";
 import { DataPersistenceSettingsPage } from "./data-persistence-settings-page";
 import { DatasourcesSettingsPage } from "./datasources-settings-page";
 import { GeneralSettingsPage } from "./general-settings-page";
+import { McpSettingsPage } from "./mcp-settings-page";
 import { MemorySummarySettingsPage } from "./memory-summary-settings-page";
 import { ModelsSettingsPage } from "./models/models-settings-page";
 import { SkillModelsSettingsPage } from "./skill-models-settings-page";
 import { SkillSettingsPage } from "./skill-settings-page";
 import { TokenUsageBudgetSettingsPage } from "./token-usage-budget-settings-page";
-import { ToolSettingsPage } from "./tool-settings-page";
 import { ToolsSandboxSettingsPage } from "./tools-sandbox-settings-page";
 import { UploadsSettingsPage } from "./uploads-settings-page";
 import { WebToolsSettingsPage } from "./web-tools-settings-page";
@@ -49,7 +49,7 @@ type SectionId =
   | "models"
   | "memorySummary"
   | "tokenUsageBudget"
-  | "tools"
+  | "mcp"
   | "toolsSandbox"
   | "webTools"
   | "uploads"
@@ -70,7 +70,7 @@ interface SectionDef {
 const SECTIONS: SectionDef[] = [
   { id: "general", icon: Settings2Icon, groupKey: "personal" },
   { id: "skill", icon: SparklesIcon, groupKey: "agent" },
-  { id: "tools", icon: WrenchIcon, groupKey: "toolsData" },
+  { id: "mcp", icon: WrenchIcon, groupKey: "toolsData" },
   { id: "dataSources", icon: DatabaseIcon, groupKey: "toolsData" },
   { id: "models", icon: CpuIcon, groupKey: "engine" },
   { id: "dataPersistence", icon: HardDriveIcon, groupKey: "engine" },
@@ -255,7 +255,7 @@ export function SettingsView({
               {active.id === "memorySummary" && <MemorySummarySettingsPage />}
               {active.id === "tokenUsageBudget" && <TokenUsageBudgetSettingsPage />}
               {active.id === "skill" && <SkillSettingsPage />}
-              {active.id === "tools" && <ToolSettingsPage />}
+              {active.id === "mcp" && <McpSettingsPage />}
               {active.id === "toolsSandbox" && <ToolsSandboxSettingsPage />}
               {active.id === "webTools" && <WebToolsSettingsPage />}
               {active.id === "uploads" && <UploadsSettingsPage />}

@@ -585,7 +585,7 @@ export const enUS: Translations = {
       appearance: "Appearance",
       memorySummary: "Memory & Summary",
       tokenUsageBudget: "Token & Budget",
-      tools: "Tools",
+      mcp: "MCP",
       toolsSandbox: "Tools & Sandbox",
       webTools: "Web Tools",
       uploads: "Uploads",
@@ -609,7 +609,7 @@ export const enUS: Translations = {
         models: "Models",
         memorySummary: "Memory & Summary",
         tokenUsageBudget: "Token & Budget",
-        tools: "Tools",
+        mcp: "MCP",
         toolsSandbox: "Tools & Sandbox",
         webTools: "Web Tools",
         uploads: "Uploads",
@@ -624,7 +624,7 @@ export const enUS: Translations = {
         memorySummary: "Configure long-term memory, conversation summarization, and title generation.",
         tokenUsageBudget: "Configure token usage tracking and per-run token budget limits.",
         skill: "Enable built-in and custom skills, manage the skill matrix.",
-        tools: "MCP server toggles and tool policies.",
+        mcp: "MCP server CRUD management and one-click preset installation.",
         toolsSandbox: "Sandbox environment, tool output truncation, lazy loading, progress tracking, and loop detection.",
         webTools: "Network proxy, search tools, and browser automation settings.",
         uploads: "File upload count and size limits, PDF/Word/Excel auto-conversion.",
@@ -680,8 +680,8 @@ export const enUS: Translations = {
       languageTitle: "Language",
       languageDescription: "Switch between languages.",
     },
-    tools: {
-      title: "Tools",
+    mcpSettings: {
+      title: "MCP",
       description: "Manage the configuration and enabled status of MCP tools.",
     },
     skills: {

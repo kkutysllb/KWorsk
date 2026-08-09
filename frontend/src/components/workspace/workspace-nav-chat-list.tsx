@@ -17,9 +17,12 @@ import {
 } from "@/components/ui/sidebar";
 import { useI18n } from "@/core/i18n/hooks";
 
+import { useWorkspaceLayout } from "./workspace-layout-context";
+
 export function WorkspaceNavChatList() {
   const { t } = useI18n();
   const pathname = usePathname();
+  const { openSettings } = useWorkspaceLayout();
 
   return (
     <SidebarGroup className="pt-1">
@@ -48,13 +51,13 @@ export function WorkspaceNavChatList() {
         </SidebarMenuItem>
         <SidebarMenuItem>
           <SidebarMenuButton
-            isActive={pathname.startsWith("/workspace/mcp")}
-            asChild
+            onClick={() => openSettings("mcp")}
+            tooltip={t.sidebar.mcp}
           >
-            <Link className="text-muted-foreground" href="/workspace/mcp">
+            <span className="text-muted-foreground">
               <TerminalIcon className="text-amber-500" />
               <span>{t.sidebar.mcp}</span>
-            </Link>
+            </span>
           </SidebarMenuButton>
         </SidebarMenuItem>
         <SidebarMenuItem>

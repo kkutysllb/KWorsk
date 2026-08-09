@@ -568,7 +568,7 @@ export const zhCN: Translations = {
       appearance: "外观",
       memorySummary: "记忆与摘要",
       tokenUsageBudget: "Token 统计与预算",
-      tools: "工具",
+      mcp: "MCP 管理",
       toolsSandbox: "工具与沙箱",
       webTools: "Web 工具",
       uploads: "附件上传",
@@ -592,7 +592,7 @@ export const zhCN: Translations = {
         models: "模型",
         memorySummary: "记忆与摘要",
         tokenUsageBudget: "Token 统计与预算",
-        tools: "工具",
+        mcp: "MCP 管理",
         toolsSandbox: "工具与沙箱",
         webTools: "Web 工具",
         uploads: "附件上传",
@@ -607,7 +607,7 @@ export const zhCN: Translations = {
         memorySummary: "配置长期记忆机制、对话历史摘要压缩和标题生成策略。",
         tokenUsageBudget: "配置 Token 使用统计开关与每次运行的 Token 预算限制。",
         skill: "启停内置与自定义技能，管理技能矩阵。",
-        tools: "MCP 服务器开关与工具策略。",
+        mcp: "MCP 服务器 CRUD 管理、内置预设一键安装。",
         toolsSandbox: "沙箱环境、工具输出截断、延迟加载、进度追踪与循环检测。",
         webTools: "网络代理、搜索工具与浏览器自动化设置。",
         uploads: "文件上传数量与大小限制、PDF/Word/Excel 文档自动转换。",
@@ -661,8 +661,8 @@ export const zhCN: Translations = {
       languageTitle: "语言",
       languageDescription: "在不同语言之间切换。",
     },
-    tools: {
-      title: "工具",
+    mcpSettings: {
+      title: "MCP 管理",
       description: "管理 MCP 工具的配置和启用状态。",
     },
     skills: {

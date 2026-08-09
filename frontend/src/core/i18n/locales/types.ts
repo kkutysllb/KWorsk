@@ -509,7 +509,7 @@ export interface Translations {
       appearance: string;
       memorySummary: string;
       tokenUsageBudget: string;
-      tools: string;
+      mcp: string;
       toolsSandbox: string;
       webTools: string;
       uploads: string;
@@ -533,7 +533,7 @@ export interface Translations {
         models: string;
         memorySummary: string;
         tokenUsageBudget: string;
-        tools: string;
+        mcp: string;
         toolsSandbox: string;
         webTools: string;
         uploads: string;
@@ -548,7 +548,7 @@ export interface Translations {
         memorySummary: string;
         tokenUsageBudget: string;
         skill: string;
-        tools: string;
+        mcp: string;
         toolsSandbox: string;
         webTools: string;
         uploads: string;
@@ -601,7 +601,7 @@ export interface Translations {
       languageTitle: string;
       languageDescription: string;
     };
-    tools: {
+    mcpSettings: {
       title: string;
       description: string;
     };

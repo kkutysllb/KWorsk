@@ -26,7 +26,7 @@ export type SettingsSectionId =
   | "models"
   | "memorySummary"
   | "tokenUsageBudget"
-  | "tools"
+  | "mcp"
   | "toolsSandbox"
   | "webTools"
   | "uploads"
