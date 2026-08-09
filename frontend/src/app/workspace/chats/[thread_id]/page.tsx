@@ -10,6 +10,8 @@ import {
   useSpecificChatMode,
   useThreadChat,
 } from "@/components/workspace/chats";
+import { SuggestionList } from "@/components/workspace/chats/suggestion-list";
+import { TaskTokenSummary } from "@/components/workspace/token-usage/task-token-summary";
 import { FollowupsProvider } from "@/components/workspace/followups-context";
 import { InputBox } from "@/components/workspace/input-box";
 import {
@@ -180,35 +182,33 @@ export default function ChatPage() {
             </div>
           </header>
           <main className="flex min-h-0 max-w-full grow flex-col">
-            <div className="flex size-full justify-center">
-              <MessageList
-                className={cn("size-full", !isNewThread && "pt-10")}
-                threadId={threadId}
-                thread={thread}
-                paddingBottom={messageListPaddingBottom}
-                hasMoreHistory={hasMoreHistory}
-                loadMoreHistory={loadMoreHistory}
-                isHistoryLoading={isHistoryLoading}
-              />
-            </div>
-            <div className="absolute right-0 bottom-0 left-0 z-30 flex justify-center px-4">
-              <div
-                className={cn(
-                  "relative w-full",
-                  isNewThread && "-translate-y-[calc(50vh-96px)]",
-                  isNewThread
-                    ? "max-w-(--container-width-sm)"
-                    : "max-w-(--container-width-md)",
-                )}
-              >
-                {isNewThread && (
-                  <div className={cn("max-w-(--container-width-sm) mx-auto w-full space-y-6 pb-6")}>
-                    <Welcome mode={settings.context.mode} />
-                  </div>
-                )}
+            {/* Main content area: existing conversation OR new-thread welcome */}
+            {isNewThread ? (
+              <div className="flex min-h-0 flex-1 items-center justify-center overflow-y-auto px-4">
+                <div className="mx-auto w-full max-w-(--container-width-sm) space-y-6 py-8">
+                  <Welcome mode={settings.context.mode} />
+                  <SuggestionList />
+                </div>
+              </div>
+            ) : (
+              <div className="flex min-h-0 flex-1 justify-center">
+                <MessageList
+                  className={cn("size-full pt-10")}
+                  threadId={threadId}
+                  thread={thread}
+                  paddingBottom={messageListPaddingBottom}
+                  hasMoreHistory={hasMoreHistory}
+                  loadMoreHistory={loadMoreHistory}
+                  isHistoryLoading={isHistoryLoading}
+                />
+              </div>
+            )}
+            {/* Input box: anchored to the bottom on both new and existing threads */}
+            <div className="flex shrink-0 justify-center px-4 pb-4">
+              <div className="relative w-full max-w-(--container-width-md)">
                 {mountedRef.current ? (
                   <InputBox
-                    className={cn("bg-background/5 w-full", isNewThread ? "" : "-translate-y-4")}
+                    className="bg-background/5 w-full"
                     isNewThread={isNewThread}
                     threadId={threadId}
                     autoFocus={isNewThread}
@@ -242,9 +242,7 @@ export default function ChatPage() {
                 ) : (
                   <div
                     aria-hidden="true"
-                    className={cn(
-                      "bg-background/5 h-32 w-full -translate-y-4 rounded-2xl",
-                    )}
+                    className="bg-background/5 h-32 w-full rounded-2xl"
                   />
                 )}
                 {env.NEXT_PUBLIC_STATIC_WEBSITE_ONLY === "true" && (
@@ -252,6 +250,10 @@ export default function ChatPage() {
                     {t.common.notAvailableInDemoMode}
                   </div>
                 )}
+                <TaskTokenSummary
+                  className="mt-2"
+                  messages={thread.messages ?? []}
+                />
               </div>
             </div>
           </main>

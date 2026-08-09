@@ -509,6 +509,13 @@ export const enUS: Translations = {
     completeTodo: (content: string) => `Complete To-do: ${content}`,
     updateTodo: (content: string) => `Update To-do: ${content}`,
     removeTodo: (content: string) => `Remove To-do: ${content}`,
+    // Per-task summary bar (rendered below the input box on the chat page)
+    taskTitle: "This task",
+    taskEmpty: "No token usage yet",
+    taskCalls: "Model calls",
+    taskCacheHitRate: "Cache hit rate",
+    taskCacheSaved: "Input tokens saved",
+    taskByModel: "By model",
   },
 
   // Shortcuts

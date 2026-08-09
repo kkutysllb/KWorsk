@@ -494,6 +494,13 @@ export const zhCN: Translations = {
     completeTodo: (content: string) => `完成 To-do：${content}`,
     updateTodo: (content: string) => `更新 To-do：${content}`,
     removeTodo: (content: string) => `移除 To-do：${content}`,
+    // Per-task summary bar (rendered below the input box on the chat page)
+    taskTitle: "本次任务",
+    taskEmpty: "尚无 token 用量",
+    taskCalls: "调用次数",
+    taskCacheHitRate: "缓存命中率",
+    taskCacheSaved: "节省输入 Tokens",
+    taskByModel: "按模型分布",
   },
 
   // Shortcuts

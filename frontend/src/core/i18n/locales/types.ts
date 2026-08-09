@@ -436,6 +436,13 @@ export interface Translations {
     completeTodo: (content: string) => string;
     updateTodo: (content: string) => string;
     removeTodo: (content: string) => string;
+    // Per-task summary bar (rendered below the chat input box)
+    taskTitle: string;
+    taskEmpty: string;
+    taskCalls: string;
+    taskCacheHitRate: string;
+    taskCacheSaved: string;
+    taskByModel: string;
   };
 
   // Shortcuts

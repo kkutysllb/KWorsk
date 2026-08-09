@@ -4,27 +4,56 @@ export interface TokenUsage {
   inputTokens: number;
   outputTokens: number;
   totalTokens: number;
+  /**
+   * Prompt-cache-hit input tokens. Filled in when the underlying provider
+   * reports cache hits (OpenAI `input_token_details.cached_tokens`,
+   * Anthropic `cache_read_input_tokens`, or the LangChain
+   * `input_token_details.cache_read` mirror). Optional so existing callers
+   * that only read the three primary fields stay untouched.
+   */
+  cacheReadTokens?: number;
 }
 
 /**
  * Extract usage_metadata from an AI message if present.
  * The field is added by the backend (PR #1218) but not typed in the SDK.
+ *
+ * Also reads prompt-cache-hit counters from whichever naming the provider
+ * uses so we can render cache hit rates in the per-thread summary bar.
  */
 export function getUsageMetadata(message: Message): TokenUsage | null {
   if (message.type !== "ai") {
     return null;
   }
   const usage = (message as Record<string, unknown>).usage_metadata as
-    | { input_tokens?: number; output_tokens?: number; total_tokens?: number }
+    | {
+        input_tokens?: number;
+        output_tokens?: number;
+        total_tokens?: number;
+        input_token_details?: {
+          cache_read?: number;
+          cached_tokens?: number;
+        };
+        cache_read_input_tokens?: number;
+      }
     | undefined;
   if (!usage) {
     return null;
   }
-  return {
+  const cacheRead =
+    usage.input_token_details?.cache_read ??
+    usage.input_token_details?.cached_tokens ??
+    usage.cache_read_input_tokens ??
+    0;
+  const result: TokenUsage = {
     inputTokens: usage.input_tokens ?? 0,
     outputTokens: usage.output_tokens ?? 0,
     totalTokens: usage.total_tokens ?? 0,
   };
+  if (cacheRead > 0) {
+    result.cacheReadTokens = cacheRead;
+  }
+  return result;
 }
 
 /**
@@ -37,6 +66,7 @@ export function accumulateUsage(messages: Message[]): TokenUsage | null {
     totalTokens: 0,
   };
   let hasUsage = false;
+  let cacheReadTotal = 0;
   for (const message of messages) {
     const usage = getUsageMetadata(message);
     if (usage) {
@@ -44,9 +74,98 @@ export function accumulateUsage(messages: Message[]): TokenUsage | null {
       cumulative.inputTokens += usage.inputTokens;
       cumulative.outputTokens += usage.outputTokens;
       cumulative.totalTokens += usage.totalTokens;
+      cacheReadTotal += usage.cacheReadTokens ?? 0;
     }
   }
-  return hasUsage ? cumulative : null;
+  if (!hasUsage) return null;
+  if (cacheReadTotal > 0) {
+    cumulative.cacheReadTokens = cacheReadTotal;
+  }
+  return cumulative;
+}
+
+/**
+ * Per-model token breakdown for a single AI message. Model name is read
+ * from the message's `response_metadata.model_name` (LangGraph convention)
+ * but falls back to the SDK-native `model` field if available.
+ */
+interface ModelBreakdown {
+  name: string;
+  inputTokens: number;
+  outputTokens: number;
+  cacheReadTokens: number;
+  calls: number;
+}
+
+export interface TaskUsageDetail {
+  total: TokenUsage | null;
+  callCount: number;
+  byModel: ModelBreakdown[];
+}
+
+function extractModelName(message: Message): string {
+  const meta = message as Record<string, unknown>;
+  const responseMeta = meta.response_metadata as
+    | { model_name?: string }
+    | undefined;
+  if (responseMeta?.model_name) return responseMeta.model_name;
+  const model = (meta as { model?: string }).model;
+  if (typeof model === "string" && model.length > 0) return model;
+  return "unknown";
+}
+
+/**
+ * Aggregate per-thread usage with model-level breakdown and LLM call count.
+ * Used by the new-task input box summary bar + hover popover.
+ */
+export function accumulateUsageDetail(messages: Message[]): TaskUsageDetail {
+  const cumulative: TokenUsage = {
+    inputTokens: 0,
+    outputTokens: 0,
+    totalTokens: 0,
+  };
+  let hasUsage = false;
+  let cacheReadTotal = 0;
+  let callCount = 0;
+  const byModel = new Map<string, ModelBreakdown>();
+
+  for (const message of messages) {
+    const usage = getUsageMetadata(message);
+    if (!usage) continue;
+    hasUsage = true;
+    callCount += 1;
+    cumulative.inputTokens += usage.inputTokens;
+    cumulative.outputTokens += usage.outputTokens;
+    cumulative.totalTokens += usage.totalTokens;
+    cacheReadTotal += usage.cacheReadTokens ?? 0;
+
+    const name = extractModelName(message);
+    const existing = byModel.get(name) ?? {
+      name,
+      inputTokens: 0,
+      outputTokens: 0,
+      cacheReadTokens: 0,
+      calls: 0,
+    };
+    existing.inputTokens += usage.inputTokens;
+    existing.outputTokens += usage.outputTokens;
+    existing.cacheReadTokens += usage.cacheReadTokens ?? 0;
+    existing.calls += 1;
+    byModel.set(name, existing);
+  }
+
+  if (!hasUsage) {
+    return { total: null, callCount: 0, byModel: [] };
+  }
+  if (cacheReadTotal > 0) {
+    cumulative.cacheReadTokens = cacheReadTotal;
+  }
+  // Sort by total tokens descending so the most-used model appears first.
+  const sortedByModel = Array.from(byModel.values()).sort(
+    (a, b) =>
+      b.inputTokens + b.outputTokens - (a.inputTokens + a.outputTokens),
+  );
+  return { total: cumulative, callCount, byModel: sortedByModel };
 }
 
 /**
