@@ -3,11 +3,12 @@
 import { cn } from "@/lib/utils";
 
 /**
- * FlywheelSpinner — a fast-spinning turbine/flywheel indicator.
+ * FlywheelSpinner — a single-gradient-arc spinner used for streaming and
+ * idle-loading states throughout the chat.
  *
- * Three curved blades radiating from a hub, rotating at 0.6s/rev to
- * convey high-speed processing. Used for streaming and idle-loading
- * states throughout the chat.
+ * One quarter-arc renders on a translucent track ring and rotates at
+ * 1s/rev, with a small inner pulse ring counter-rotating at 2s/rev to
+ * suggest activity without competing visual motion.
  */
 export function FlywheelSpinner({
   className,
@@ -20,43 +21,53 @@ export function FlywheelSpinner({
       height="16"
       viewBox="0 0 24 24"
       fill="none"
-      className={cn(
-        "text-primary inline-block shrink-0",
-        "[animation:flywheel-spin_0.6s_linear_infinite]",
-        className,
-      )}
       aria-hidden="true"
+      className={cn("text-primary inline-block shrink-0", className)}
     >
-      {/* Outer guide ring (static, faint) */}
+      <defs>
+        <linearGradient id="flywheel-arc" x1="0" y1="0" x2="1" y2="1">
+          <stop offset="0%" stopColor="currentColor" stopOpacity="0" />
+          <stop offset="100%" stopColor="currentColor" stopOpacity="1" />
+        </linearGradient>
+      </defs>
+
+      {/* Track ring */}
       <circle
         cx="12"
         cy="12"
-        r="10"
+        r="9"
         stroke="currentColor"
-        strokeOpacity="0.12"
-        strokeWidth="1.5"
+        strokeOpacity="0.15"
+        strokeWidth="2"
       />
-      {/* Rotating blades */}
-      <g fill="currentColor">
-        <path
-          d="M12 12 C12 7.5, 14.5 4, 18.5 3 C17.5 6.5, 15 9.5, 12 12 Z"
-          opacity="1"
-        />
-        <path
-          d="M12 12 C16.5 12, 20 14.5, 21 18.5 C17.5 17.5, 14.5 15, 12 12 Z"
-          opacity="0.7"
-        />
-        <path
-          d="M12 12 C12 16.5, 9.5 20, 5.5 21 C6.5 17.5, 9 15, 12 12 Z"
-          opacity="0.45"
-        />
-        <path
-          d="M12 12 C7.5 12, 4 9.5, 3 5.5 C6.5 6.5, 9.5 9, 12 12 Z"
-          opacity="0.25"
-        />
-      </g>
-      {/* Center hub */}
-      <circle cx="12" cy="12" r="2.2" fill="currentColor" />
+
+      {/* Rotating gradient arc */}
+      <circle
+        cx="12"
+        cy="12"
+        r="9"
+        stroke="url(#flywheel-arc)"
+        strokeWidth="2"
+        strokeLinecap="round"
+        strokeDasharray="14 56"
+        transform="rotate(-90 12 12)"
+        className="origin-center animate-[flywheel-spin_1s_linear_infinite]"
+      />
+
+      {/* Inner counter-rotating pulse */}
+      <circle
+        cx="12"
+        cy="12"
+        r="5"
+        stroke="currentColor"
+        strokeOpacity="0.25"
+        strokeWidth="1.5"
+        strokeDasharray="2 12"
+        className="origin-center animate-[flywheel-spin_2s_linear_infinite_reverse]"
+      />
+
+      {/* Center dot */}
+      <circle cx="12" cy="12" r="1.5" fill="currentColor" />
     </svg>
   );
 }

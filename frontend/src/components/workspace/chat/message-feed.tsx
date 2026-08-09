@@ -31,7 +31,6 @@ import { MarkdownContent } from "../messages/markdown-content";
 import { MessageListSkeleton } from "../messages/skeleton";
 import { SubtaskCard } from "../messages/subtask-card";
 
-import { FlywheelSpinner } from "./segments/flywheel-spinner";
 import { MessageItem } from "./message-item";
 
 export const MESSAGE_FEED_DEFAULT_PADDING_BOTTOM = 160;
@@ -231,11 +230,6 @@ export function MessageFeed({
             return null;
           },
           { isCurrentTurnLoading: thread.isLoading },
-        )}
-        {thread.isLoading && (
-          <div className="my-4 flex items-center gap-2 text-muted-foreground text-sm">
-            <FlywheelSpinner />
-          </div>
         )}
         <div style={{ height: `${paddingBottom}px` }} />
       </ConversationContent>
