@@ -7,12 +7,12 @@ import { Button } from "@/components/ui/button";
 import { MarkdownContent } from "@/components/workspace/messages/markdown-content";
 import { cn } from "@/lib/utils";
 
-import { FlywheelSpinner } from "./flywheel-spinner";
+import { NeuralWaveSpinner } from "./neural-wave-spinner";
 
 /**
 * ProseContent — the assistant's natural-language answer, rendered with
 * the shared markdown pipeline (streamdown + streamdown-tight typography).
-* While streaming, a flywheel spinner trails the text.
+* While streaming, a neural-wave spinner trails the text.
 */
 export const ProseContent = memo(
   function ProseContent({
@@ -65,7 +65,7 @@ function ProseContentInner({
         isLoading={isLoading}
         className="streamdown-tight"
       />
-      {isLoading && <FlywheelSpinner className="ml-1.5 align-[-2px]" />}
+      {isLoading && <NeuralWaveSpinner className="ml-1.5 align-[-2px]" />}
       {!isLoading && (
         <div className="absolute -top-1 right-0 flex items-center opacity-0 transition-opacity group-hover/prose:opacity-100">
           <Button

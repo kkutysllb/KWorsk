@@ -7,7 +7,7 @@ import { tryExtractInlineHumanInputForm } from "@/core/messages/utils";
 import { parseMessageSegments, parseUserPrompt } from "@/core/messages/segments";
 import { cn } from "@/lib/utils";
 
-import { FlywheelSpinner } from "./segments/flywheel-spinner";
+import { NeuralWaveSpinner } from "./segments/neural-wave-spinner";
 import { ProseContent } from "./segments/prose-content";
 import { ReasoningBlock } from "./segments/reasoning-block";
 import { ToolActivity } from "./segments/tool-activity";
@@ -69,7 +69,7 @@ export const MessageItem = memo(
           {/* Empty turn streaming: flywheel placeholder */}
           {!hasSegments && isLoading && (
             <div className="text-muted-foreground flex items-center gap-2 text-sm">
-              <FlywheelSpinner />
+              <NeuralWaveSpinner />
               <span>正在启动…</span>
             </div>
           )}

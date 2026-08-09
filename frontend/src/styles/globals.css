@@ -157,9 +157,10 @@
     }
   }
 
-  @keyframes flywheel-spin {
+  /* Neural wave — one full sine period (8 SVG units) */
+  @keyframes neural-wave {
     to {
-      transform: rotate(360deg);
+      transform: translateX(-8px);
     }
   }
 }
