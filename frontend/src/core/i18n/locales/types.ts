@@ -526,6 +526,7 @@ export interface Translations {
         skill: string;
         config: string;
         dataSources: string;
+        dataPersistence: string;
         skillModels: string;
       };
       summaries: {
@@ -536,6 +537,7 @@ export interface Translations {
         tools: string;
         config: string;
         dataSources: string;
+        dataPersistence: string;
         skillModels: string;
       };
     };

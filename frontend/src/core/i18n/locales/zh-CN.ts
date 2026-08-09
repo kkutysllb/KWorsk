@@ -585,6 +585,7 @@ export const zhCN: Translations = {
         skill: "技能",
         config: "系统配置",
         dataSources: "数据源",
+        dataPersistence: "数据与持久化",
         skillModels: "技能模型",
       },
       summaries: {
@@ -595,6 +596,7 @@ export const zhCN: Translations = {
         tools: "MCP 服务器开关与工具策略。",
         config: "直接编辑 config.yaml：模型、沙箱、数据库、运行事件等。",
         dataSources: "配置外部数据源凭证（如 Tushare Pro）。",
+        dataPersistence: "管理数据落盘策略、查看持久化状态与磁盘占用。",
         skillModels: "桌面端技能模型 API 凭证管理。",
       },
     },

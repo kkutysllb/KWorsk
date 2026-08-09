@@ -602,6 +602,7 @@ export const enUS: Translations = {
         skill: "Skills",
         config: "System Config",
         dataSources: "Data Sources",
+        dataPersistence: "Data & Persistence",
         skillModels: "Skill Models",
       },
       summaries: {
@@ -612,6 +613,7 @@ export const enUS: Translations = {
         tools: "MCP server toggles and tool policies.",
         config: "Edit config.yaml directly: models, sandbox, database, runtime events.",
         dataSources: "Configure external data source credentials (e.g. Tushare Pro).",
+        dataPersistence: "Manage persistence backends, view status and disk usage.",
         skillModels: "Desktop skill model API credential management.",
       },
     },

@@ -28,6 +28,7 @@ export type SettingsSectionId =
   | "tools"
   | "config"
   | "dataSources"
+  | "dataPersistence"
   | "skillModels"
   | "skill";
 

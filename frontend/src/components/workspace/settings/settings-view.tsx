@@ -5,6 +5,7 @@ import {
   BrainIcon,
   CpuIcon,
   DatabaseIcon,
+  HardDriveIcon,
   KeyRoundIcon,
   type LucideIcon,
   SearchIcon,
@@ -24,6 +25,7 @@ import { cn } from "@/lib/utils";
 
 import { BackendControlBar } from "./backend-control-bar";
 import { ConfigSettingsPage } from "./config-settings-page";
+import { DataPersistenceSettingsPage } from "./data-persistence-settings-page";
 import { DatasourcesSettingsPage } from "./datasources-settings-page";
 import { GeneralSettingsPage } from "./general-settings-page";
 import { MemorySettingsPage } from "./memory-settings-page";
@@ -44,6 +46,7 @@ type SectionId =
   | "tools"
   | "config"
   | "dataSources"
+  | "dataPersistence"
   | "skillModels"
   | "skill";
 
@@ -64,6 +67,7 @@ const SECTIONS: SectionDef[] = [
   { id: "dataSources", icon: DatabaseIcon, groupKey: "toolsData" },
   { id: "models", icon: CpuIcon, groupKey: "engine" },
   { id: "config", icon: SlidersHorizontalIcon, groupKey: "engine" },
+  { id: "dataPersistence", icon: HardDriveIcon, groupKey: "engine" },
   {
     id: "skillModels",
     icon: KeyRoundIcon,
@@ -241,6 +245,7 @@ export function SettingsView({
               {active.id === "skill" && <SkillSettingsPage />}
               {active.id === "tools" && <ToolSettingsPage />}
               {active.id === "config" && <ConfigSettingsPage />}
+              {active.id === "dataPersistence" && <DataPersistenceSettingsPage />}
               {active.id === "dataSources" && <DatasourcesSettingsPage />}
               {active.id === "skillModels" && <SkillModelsSettingsPage />}
             </div>
