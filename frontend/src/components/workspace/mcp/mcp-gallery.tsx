@@ -172,12 +172,16 @@ export function McpGallery({ embedded = false }: { embedded?: boolean }) {
 
   /** Derive a unique server name from a preset's package name or URL host. */
   const derivePresetName = (preset: MCPServerConfig): string => {
-    // For stdio servers: derive from the package arg (contains "mcp")
-    const pkg = preset.args?.find((a) => a.includes("mcp")) ?? "";
+    // For stdio servers: derive from the package name arg
+    // Skip flags (--*), version specifiers (contain <>=), and paths (/tmp)
+    const pkg =
+      preset.args
+        ?.filter((a) => !a.startsWith("-") && !/[<>=]/.test(a) && !a.startsWith("/"))
+        .pop() ?? "";
     if (pkg) {
       const base = pkg
         .replace(/^@modelcontextprotocol\/server-/, "")
-        .replace(/^@[\w.-]+\//, "")
+        .replace(/^[\w@.-]+\//, "")
         .replace(/^mcp-server-/, "")
         .replace(/-mcp$/, "");
       return base || "mcp-server";
