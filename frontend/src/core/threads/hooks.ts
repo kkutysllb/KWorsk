@@ -328,7 +328,7 @@ export function useThreadStream({
 
   const queryClient = useQueryClient();
   const updateSubtask = useUpdateSubtask();
-  const { tasks: subtasks } = useSubtaskContext();
+  const { tasks: subtasks, setTasks: setSubtasks } = useSubtaskContext();
 
   const thread = useStream<AgentThreadState>({
     client: getAPIClient(isMock),
@@ -497,13 +497,16 @@ export function useThreadStream({
 
   // Reset thread-local pending UI state when switching between threads so
   // optimistic messages and in-flight guards do not leak across chat views.
+  // Also clear the subtask context (workspace-level provider) to prevent
+  // stale subagent call info from a previous thread leaking into the right panel.
   useEffect(() => {
     startedRef.current = false;
     sendInFlightRef.current = false;
     messagesRef.current = [];
     summarizedRef.current = new Set<string>();
     setOptimisticMessages([]);
-  }, [threadId]);
+    setSubtasks({});
+  }, [threadId, setSubtasks]);
 
   // ── Fallback run reconnection ────────────────────────────────────────────
   //

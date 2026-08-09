@@ -1,10 +1,17 @@
-import { createContext, useCallback, useContext, useState } from "react";
+import {
+  createContext,
+  useCallback,
+  useContext,
+  useState,
+  type Dispatch,
+  type SetStateAction,
+} from "react";
 
 import type { Subtask } from "./types";
 
 export interface SubtaskContextValue {
   tasks: Record<string, Subtask>;
-  setTasks: (tasks: Record<string, Subtask>) => void;
+  setTasks: Dispatch<SetStateAction<Record<string, Subtask>>>;
 }
 
 export const SubtaskContext = createContext<SubtaskContextValue>({
@@ -39,15 +46,18 @@ export function useSubtask(id: string) {
 }
 
 export function useUpdateSubtask() {
-  const { tasks, setTasks } = useSubtaskContext();
+  const { setTasks } = useSubtaskContext();
   const updateSubtask = useCallback(
     (task: Partial<Subtask> & { id: string }) => {
-      tasks[task.id] = { ...tasks[task.id], ...task } as Subtask;
-      if (task.latestMessage) {
-        setTasks({ ...tasks });
-      }
+      // Functional update avoids closure-stale races: if a thread-switch
+      // clear (setTasks({})) lands in the same React batch as a streaming
+      // event, the old closure would otherwise re-introduce stale tasks.
+      setTasks((prev) => ({
+        ...prev,
+        [task.id]: { ...prev[task.id], ...task } as Subtask,
+      }));
     },
-    [tasks, setTasks],
+    [setTasks],
   );
   return updateSubtask;
 }
