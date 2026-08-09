@@ -34,6 +34,9 @@ export async function loadConfig(): Promise<ConfigData> {
 
 /**
  * Load a single top-level section from config.yaml.
+ *
+ * Returns null for 404 (section not found) so callers can fall back to defaults
+ * without surfacing an error.
  */
 export async function loadConfigSection(
   section: string,
@@ -41,6 +44,9 @@ export async function loadConfigSection(
   const res = await fetch(
     `${getBackendBaseURL()}/api/config/${encodeURIComponent(section)}`,
   );
+  if (res.status === 404) {
+    return null;
+  }
   if (!res.ok) {
     throw new Error(`Failed to load config section '${section}' (${res.status})`);
   }
