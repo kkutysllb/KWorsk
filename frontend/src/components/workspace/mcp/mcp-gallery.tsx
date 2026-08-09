@@ -25,7 +25,13 @@ import type { MCPServerConfig } from "@/core/mcp/types";
 import { McpCard } from "./mcp-card";
 import { McpDialog } from "./mcp-dialog";
 
-/** Built-in preset MCP servers (free or with datasource-managed credentials). */
+/**
+ * Built-in preset MCP servers (free, no API key required).
+ *
+ * Note: Python-based servers (fetch/time) use `--with "mcp>=1.9,<1.10"` to pin
+ * a compatible mcp library version. Their PyPI packages still import `McpError`
+ * (the old name), while mcp >= 1.10 renamed it to `MCPError`.
+ */
 const MCP_PRESETS: MCPServerConfig[] = [
   {
     enabled: true,
@@ -38,7 +44,7 @@ const MCP_PRESETS: MCPServerConfig[] = [
     enabled: true,
     type: "stdio",
     command: "uvx",
-    args: ["mcp-server-fetch"],
+    args: ["--with", "mcp>=1.9,<1.10", "mcp-server-fetch"],
     description: "Fetch and summarize web content directly from URLs",
   },
   {
@@ -52,7 +58,7 @@ const MCP_PRESETS: MCPServerConfig[] = [
     enabled: true,
     type: "stdio",
     command: "uvx",
-    args: ["mcp-server-time"],
+    args: ["--with", "mcp>=1.9,<1.10", "mcp-server-time"],
     description: "Time zone conversion and current time across regions",
   },
   {
@@ -68,12 +74,6 @@ const MCP_PRESETS: MCPServerConfig[] = [
     command: "npx",
     args: ["-y", "@modelcontextprotocol/server-filesystem", "/tmp"],
     description: "Secure file system access (edit /tmp in args to your path)",
-  },
-  {
-    enabled: true,
-    type: "http",
-    url: "https://zyhub.finance.sina.cn/mcp",
-    description: "新浪财经 MCP：实时行情、财务数据、资金流向等中国金融市场数据",
   },
 ];
 
