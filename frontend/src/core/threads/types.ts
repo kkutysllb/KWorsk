@@ -2,12 +2,22 @@ import type { Message, Thread } from "@langchain/langgraph-sdk";
 
 import type { Todo } from "../todos";
 
+/** 后端 SkillEntry 的前端镜像（thread_state.SkillEntry）。 */
+export interface SkillContextEntry {
+  name: string;
+  path: string;
+  description: string;
+  loaded_at: number;
+}
+
 export interface AgentThreadState extends Record<string, unknown> {
   title: string;
   messages: Message[];
   artifacts: string[];
   context?: Partial<AgentThreadContext>;
   todos?: Todo[];
+  /** 本会话已加载的技能列表（后端 skill_context 频道）。 */
+  skill_context?: SkillContextEntry[];
 }
 
 export interface AgentThreadContext extends Record<string, unknown> {
