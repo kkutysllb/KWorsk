@@ -286,7 +286,7 @@ export interface Translations {
     guideLinks: string;
   };
 
-  // Crons
+  // Crons / Automation
   crons: {
     title: string;
     description: string;
@@ -299,6 +299,31 @@ export interface Translations {
     updateSuccess: string;
     enabled: string;
     disabled: string;
+    paused: string;
+    running: string;
+    completed: string;
+    failed: string;
+    cancelled: string;
+    statusEnabled: string;
+    statusPaused: string;
+    statusRunning: string;
+    statusCompleted: string;
+    statusFailed: string;
+    statusCancelled: string;
+    pause: string;
+    resume: string;
+    trigger: string;
+    triggerSuccess: string;
+    nextRun: string;
+    lastRun: string;
+    scheduleType: string;
+    scheduleOnce: string;
+    scheduleCron: string;
+    timezone: string;
+    timezonePlaceholder: string;
+    contextMode: string;
+    contextFresh: string;
+    contextReuse: string;
     name: string;
     nameHint: string;
     cron: string;

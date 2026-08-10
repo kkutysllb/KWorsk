@@ -1,91 +1,122 @@
 import { fetch } from "@/core/api/fetcher";
 import { getBackendBaseURL } from "@/core/config";
 
-import type { CronJobConfig, CronJobsListResponse } from "./types";
+import type {
+  CreateScheduledTaskRequest,
+  ScheduledTask,
+  UpdateScheduledTaskRequest,
+} from "./types";
 
-/** List all cron jobs. */
-export async function fetchCronJobs(): Promise<CronJobsListResponse> {
-  const response = await fetch(`${getBackendBaseURL()}/api/crons`);
+const BASE = `${getBackendBaseURL()}/api/scheduled-tasks`;
+
+async function handleResponse(response: Response): Promise<void> {
   if (!response.ok) {
     const detail = await response.json().catch(() => ({}));
     throw new Error(
       (detail as { detail?: string }).detail ??
-        `Failed to fetch cron jobs (${response.status})`,
+        `Request failed (${response.status})`,
     );
   }
-  return response.json() as Promise<CronJobsListResponse>;
 }
 
-/** Create a new cron job. */
-export async function createCronJob(
-  name: string,
-  config: CronJobConfig,
-): Promise<CronJobConfig> {
-  const response = await fetch(`${getBackendBaseURL()}/api/crons/${encodeURIComponent(name)}`, {
+/** List all scheduled tasks for the current user. */
+export async function fetchScheduledTasks(): Promise<ScheduledTask[]> {
+  const response = await fetch(BASE);
+  if (!response.ok) {
+    const detail = await response.json().catch(() => ({}));
+    throw new Error(
+      (detail as { detail?: string }).detail ??
+        `Failed to fetch tasks (${response.status})`,
+    );
+  }
+  return response.json() as Promise<ScheduledTask[]>;
+}
+
+/** Create a new scheduled task. */
+export async function createScheduledTask(
+  body: CreateScheduledTaskRequest,
+): Promise<ScheduledTask> {
+  const response = await fetch(BASE, {
     method: "POST",
     headers: { "Content-Type": "application/json" },
-    body: JSON.stringify(config),
+    body: JSON.stringify(body),
   });
   if (!response.ok) {
     const detail = await response.json().catch(() => ({}));
     throw new Error(
       (detail as { detail?: string }).detail ??
-        `Failed to create cron job (${response.status})`,
+        `Failed to create task (${response.status})`,
     );
   }
-  return response.json() as Promise<CronJobConfig>;
+  return response.json() as Promise<ScheduledTask>;
 }
 
-/** Update an existing cron job. */
-export async function updateCronJob(
-  name: string,
-  config: CronJobConfig,
-): Promise<CronJobConfig> {
-  const response = await fetch(`${getBackendBaseURL()}/api/crons/${encodeURIComponent(name)}`, {
-    method: "PUT",
+/** Update an existing scheduled task. */
+export async function updateScheduledTask(
+  taskId: string,
+  body: UpdateScheduledTaskRequest,
+): Promise<ScheduledTask> {
+  const response = await fetch(`${BASE}/${encodeURIComponent(taskId)}`, {
+    method: "PATCH",
     headers: { "Content-Type": "application/json" },
-    body: JSON.stringify(config),
+    body: JSON.stringify(body),
   });
   if (!response.ok) {
     const detail = await response.json().catch(() => ({}));
     throw new Error(
       (detail as { detail?: string }).detail ??
-        `Failed to update cron job (${response.status})`,
+        `Failed to update task (${response.status})`,
     );
   }
-  return response.json() as Promise<CronJobConfig>;
+  return response.json() as Promise<ScheduledTask>;
 }
 
-/** Delete a cron job. */
-export async function deleteCronJob(name: string): Promise<void> {
-  const response = await fetch(`${getBackendBaseURL()}/api/crons/${encodeURIComponent(name)}`, {
-    method: "DELETE",
-  });
+/** Pause a scheduled task. */
+export async function pauseScheduledTask(taskId: string): Promise<ScheduledTask> {
+  const response = await fetch(
+    `${BASE}/${encodeURIComponent(taskId)}/pause`,
+    { method: "POST" },
+  );
   if (!response.ok) {
     const detail = await response.json().catch(() => ({}));
     throw new Error(
       (detail as { detail?: string }).detail ??
-        `Failed to delete cron job (${response.status})`,
+        `Failed to pause task (${response.status})`,
     );
   }
+  return response.json() as Promise<ScheduledTask>;
 }
 
-/** Toggle a cron job's enabled state. */
-export async function toggleCronJob(
-  name: string,
-  enabled: boolean,
-): Promise<CronJobConfig> {
-  const response = await fetch(`${getBackendBaseURL()}/api/crons/${encodeURIComponent(name)}/toggle`, {
-    method: "PUT",
-    headers: { "Content-Type": "application/json" },
-    body: JSON.stringify({ enabled }),
-  });
+/** Resume a paused scheduled task. */
+export async function resumeScheduledTask(taskId: string): Promise<ScheduledTask> {
+  const response = await fetch(
+    `${BASE}/${encodeURIComponent(taskId)}/resume`,
+    { method: "POST" },
+  );
   if (!response.ok) {
     const detail = await response.json().catch(() => ({}));
     throw new Error(
       (detail as { detail?: string }).detail ??
-        `Failed to toggle cron job (${response.status})`,
+        `Failed to resume task (${response.status})`,
     );
   }
-  return response.json() as Promise<CronJobConfig>;
+  return response.json() as Promise<ScheduledTask>;
+}
+
+/** Manually trigger a scheduled task immediately. */
+export async function triggerScheduledTask(taskId: string): Promise<void> {
+  const response = await fetch(
+    `${BASE}/${encodeURIComponent(taskId)}/trigger`,
+    { method: "POST" },
+  );
+  await handleResponse(response);
+}
+
+/** Delete a scheduled task. */
+export async function deleteScheduledTask(taskId: string): Promise<void> {
+  const response = await fetch(
+    `${BASE}/${encodeURIComponent(taskId)}`,
+    { method: "DELETE" },
+  );
+  await handleResponse(response);
 }

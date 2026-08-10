@@ -31,7 +31,7 @@ export function CronForm() {
   const handleSave = async () => {
     try {
       await save({ enabled });
-      toast.success("定时任务设置已更新");
+      toast.success("自动化设置已更新");
     } catch (e) {
       toast.error(e instanceof Error ? e.message : "保存失败");
     }
@@ -40,9 +40,9 @@ export function CronForm() {
   return (
     <div className="space-y-4">
       <div>
-        <h4 className="text-sm font-semibold">定时任务 (Cron Jobs)</h4>
+        <h4 className="text-sm font-semibold">自动化调度器 (Scheduler)</h4>
         <p className="mt-0.5 text-xs text-muted-foreground">
-          允许通过 IM 渠道或 API 创建定时执行的智能体任务
+          启用后台调度器后，自动化任务将按计划自动触发执行
         </p>
       </div>
 
@@ -55,9 +55,9 @@ export function CronForm() {
         <div className="space-y-3">
           <div className="flex items-center justify-between rounded-lg border bg-muted/20 p-3">
             <div>
-              <p className={labelCls}>启用定时任务</p>
+              <p className={labelCls}>启用自动化调度器</p>
               <p className="mt-0.5 text-xs text-muted-foreground">
-                关闭后所有定时任务将停止执行
+                关闭后所有自动化任务将停止执行
               </p>
             </div>
             <Switch
