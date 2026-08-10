@@ -11,6 +11,45 @@ import type { UpdateInfo } from "./types";
 
 const noop = () => undefined;
 
+/* ── Update-ready store ─────────────────────────────────────────────
+ * Module-level state so ANY component (e.g. the sidebar footer badge)
+ * can react to "download finished" without prop drilling. The main
+ * process pushes `updater:ready` once the background download completes;
+ * `setUpdateReady` fans that out to every subscriber.
+ */
+export interface UpdateReadyInfo {
+  version: string;
+  releaseDate?: string;
+}
+
+let readyInfo: UpdateReadyInfo | null = null;
+const readyListeners = new Set<(info: UpdateReadyInfo | null) => void>();
+
+/** Latest "download finished" payload, or null when nothing is staged. */
+export function getUpdateReady(): UpdateReadyInfo | null {
+  return readyInfo;
+}
+
+/** Set (or clear) the staged-update info and notify all subscribers. */
+export function setUpdateReady(info: UpdateReadyInfo | null): void {
+  readyInfo = info;
+  for (const listener of readyListeners) listener(info);
+}
+
+/**
+ * Subscribe to staged-update changes. Immediately fires with the current
+ * value, then on every `setUpdateReady`. Returns an unsubscribe fn.
+ */
+export function subscribeUpdateReady(
+  listener: (info: UpdateReadyInfo | null) => void,
+): () => void {
+  readyListeners.add(listener);
+  listener(readyInfo);
+  return () => {
+    readyListeners.delete(listener);
+  };
+}
+
 /** Check if an application update is available. */
 export async function checkForUpdates(): Promise<UpdateInfo | null> {
   if (!isDesktop()) return null;

@@ -14,9 +14,9 @@ import {
 import { isDesktop } from "@/core/config";
 import {
   checkForUpdates,
-  installUpdate,
   onUpdateDownloading,
   onUpdateReady,
+  setUpdateReady,
 } from "@/core/desktop/updater";
 
 type UpdateInfo = Awaited<ReturnType<typeof checkForUpdates>>;
@@ -66,8 +66,6 @@ type CheckState =
 export function UpdateChecker() {
   const [state, setState] = useState<CheckState>("idle");
   const [update, setUpdate] = useState<UpdateInfo>(null);
-  const [readyVersion, setReadyVersion] = useState<string | null>(null);
-  const [installing, setInstalling] = useState(false);
 
   /**
    * Run an update check.
@@ -126,62 +124,26 @@ export function UpdateChecker() {
     });
   }, []);
 
-  // Push subscription: download complete → show the restart prompt.
-  // This is the user-facing notification. Works for BOTH automatic and
-  // manual paths — whenever the background download finishes, we surface
-  // the modal.
+  // Push subscription: download complete → stage the update for the
+  // sidebar badge (no modal). This is the user-facing notification —
+  // works for BOTH automatic and manual paths — whenever the background
+  // download finishes. The sidebar footer badge (WorkspaceUserInfo)
+  // subscribes via `subscribeUpdateReady` and offers the one-click
+  // install button.
   useEffect(() => {
     if (!isDesktop()) return;
     return onUpdateReady((info) => {
-      setReadyVersion(info.version);
-      setState("ready");
+      setUpdateReady({ version: info.version, releaseDate: info.releaseDate });
     });
   }, []);
-
-  const handleInstall = async () => {
-    setInstalling(true);
-    const ok = await installUpdate();
-    if (!ok) {
-      setInstalling(false);
-      setState("idle");
-    }
-    // If ok, electron-updater restarts the app automatically.
-  };
 
   const dismiss = () => setState("idle");
 
   // ── Update ready (download complete) ─────────────────────────────
-  // This is the main user-facing modal. By the time we get here, the
-  // installer is fully staged — clicking "restart now" triggers an
-  // immediate relaunch.
-  if (state === "ready") {
-    const version = readyVersion ?? update?.version ?? "";
-    return (
-      <Dialog open={true} onOpenChange={(v) => !v && dismiss()}>
-        <DialogContent>
-          <DialogHeader>
-            <DialogTitle>更新已就绪 v{version}</DialogTitle>
-            <DialogDescription>
-              新版本已下载完成，重启 KWorks 即可完成安装。
-              {update?.body && (
-                <span className="mt-2 block whitespace-pre-wrap text-xs opacity-80">
-                  {update.body}
-                </span>
-              )}
-            </DialogDescription>
-          </DialogHeader>
-          <DialogFooter>
-            <Button variant="ghost" onClick={dismiss} disabled={installing}>
-              下次退出时安装
-            </Button>
-            <Button onClick={handleInstall} disabled={installing}>
-              {installing ? "正在重启…" : "立即重启安装"}
-            </Button>
-          </DialogFooter>
-        </DialogContent>
-      </Dialog>
-    );
-  }
+  // The "restart now to install" prompt is now surfaced via the sidebar
+  // footer badge (one-click install) instead of a blocking modal. The
+  // badge subscribes to `subscribeUpdateReady`, which was set above.
+  // State stays non-modal here — nothing renders in the `ready` state.
 
   // ── Downloading (manual path only) ───────────────────────────────
   // After a manual check that found an update, show a brief status.

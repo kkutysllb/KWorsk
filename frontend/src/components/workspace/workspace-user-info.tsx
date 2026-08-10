@@ -25,6 +25,7 @@ import { useAuth } from "@/core/auth/AuthProvider";
 import { useI18n } from "@/core/i18n/hooks";
 
 import { useWorkspaceLayout } from "./workspace-layout-context";
+import { UpdateInstallBadge } from "./update-install-badge";
 
 function getRoleLabel(
   role: string,
@@ -85,13 +86,49 @@ export function WorkspaceUserInfo() {
 
   if (isCollapsed) {
     return (
-      <div className="px-2 pt-2">
-        <Separator className="mb-2" />
-        <div className="flex justify-center">
+      <div className="flex flex-col items-center gap-2 px-2 pt-2">
+        <Separator className="mb-1" />
+        <UpdateInstallBadge />
+        <DropdownMenu>
+          <DropdownMenuTrigger asChild>
+            <button type="button" className="outline-none">
+              {avatar}
+            </button>
+          </DropdownMenuTrigger>
+          <DropdownMenuContent
+            side="top"
+            align="end"
+            collisionPadding={8}
+            className="min-w-52"
+          >
+            {userInfoLabel}
+            <DropdownMenuSeparator />
+            {settingsMenuItem}
+            <DropdownMenuSeparator />
+            {logoutItem}
+          </DropdownMenuContent>
+        </DropdownMenu>
+      </div>
+    );
+  }
+
+  return (
+    <div className="px-2 pt-2">
+      <Separator className="mb-3" />
+      <div className="flex w-full items-center gap-1.5">
+        <div className="min-w-0 flex-1">
           <DropdownMenu>
             <DropdownMenuTrigger asChild>
-              <button type="button" className="outline-none">
+              <button type="button" className="flex w-full items-center gap-3 rounded-md px-2 py-1.5 text-left outline-none hover:bg-sidebar-accent hover:text-sidebar-accent-foreground">
                 {avatar}
+                <div className="min-w-0 flex-1">
+                  <p className="truncate text-sm font-medium leading-tight">
+                    {user.email}
+                  </p>
+                  <p className="text-muted-foreground truncate text-xs leading-tight">
+                    {getRoleLabel(user.system_role, t)}
+                  </p>
+                </div>
               </button>
             </DropdownMenuTrigger>
             <DropdownMenuContent
@@ -108,40 +145,8 @@ export function WorkspaceUserInfo() {
             </DropdownMenuContent>
           </DropdownMenu>
         </div>
+        <UpdateInstallBadge className="mr-0.5" />
       </div>
-    );
-  }
-
-  return (
-    <div className="px-2 pt-2">
-      <Separator className="mb-3" />
-      <DropdownMenu>
-        <DropdownMenuTrigger asChild>
-          <button type="button" className="flex w-full items-center gap-3 rounded-md px-2 py-1.5 outline-none hover:bg-sidebar-accent hover:text-sidebar-accent-foreground">
-            {avatar}
-            <div className="min-w-0 flex-1 text-left">
-              <p className="truncate text-sm font-medium leading-tight">
-                {user.email}
-              </p>
-              <p className="text-muted-foreground truncate text-xs leading-tight">
-                {getRoleLabel(user.system_role, t)}
-              </p>
-            </div>
-          </button>
-        </DropdownMenuTrigger>
-        <DropdownMenuContent
-          side="top"
-          align="end"
-          collisionPadding={8}
-          className="min-w-52"
-        >
-          {userInfoLabel}
-          <DropdownMenuSeparator />
-          {settingsMenuItem}
-          <DropdownMenuSeparator />
-          {logoutItem}
-        </DropdownMenuContent>
-      </DropdownMenu>
     </div>
   );
 }
