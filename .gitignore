@@ -197,3 +197,4 @@ frontend/playwright-report/*.worktrees/
 # Local agent tooling caches (not for version control)
 # ═══════════════════════════════════════
 .workbuddy/
+.release-logs/
