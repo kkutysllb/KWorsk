@@ -1,0 +1,107 @@
+name: Release
+
+env:
+  PYTHONUTF8: "1"
+  PYTHONIOENCODING: "utf-8"
+
+on:
+  push:
+    tags:
+      - "v*"
+
+# 创建 GitHub Release 需要 contents: write（GITHUB_TOKEN 默认只读）
+permissions:
+  contents: write
+
+jobs:
+  build:
+    name: 构建 ${{ matrix.os }}
+    strategy:
+      fail-fast: false
+      matrix:
+        os: [ubuntu-22.04, macos-latest, windows-latest]
+    runs-on: ${{ matrix.os }}
+    defaults:
+      run:
+        shell: bash
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          # qilin 是 QiLin 引擎 submodule，必须递归检出
+          submodules: recursive
+      - uses: pnpm/action-setup@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 22
+      - uses: actions/setup-python@v5
+        with:
+          python-version: "3.12"
+      - uses: astral-sh/setup-uv@v5
+        with:
+          enable-cache: true
+      - name: 安装前端依赖
+        run: |
+          pnpm --dir frontend install --frozen-lockfile
+          pnpm --dir desktop install --frozen-lockfile
+      - name: 同步引擎依赖（含 gateway extras）
+        run: cd qilin && uv sync --extra gateway
+      - name: 编译桌面主进程（tsc）
+        run: pnpm --dir desktop run build
+      - name: 打包 gateway（PyInstaller onedir）
+        timeout-minutes: 60
+        env:
+          # macOS 预签：electron-builder 不递归签 extraResources 内的
+          # Mach-O，由 spec 用 APPLE_SIGNING_IDENTITY 预签 gateway 内嵌
+          # 二进制，否则公证会 HARDFAIL。
+          APPLE_SIGNING_IDENTITY: ${{ secrets.APPLE_SIGNING_IDENTITY }}
+        run: pnpm --dir desktop run build:gateway
+      - name: 导出前端静态资源
+        run: pnpm --dir desktop run build:frontend
+      - name: 校验打包资源
+        run: pnpm --dir desktop run verify:package-resources
+      - name: 构建安装包（electron-builder）
+        timeout-minutes: 60
+        env:
+          # .app 外壳签名（electron-builder 原生读取）：
+          CSC_LINK: ${{ secrets.MAC_CERTIFICATE }}
+          CSC_KEY_PASSWORD: ${{ secrets.MAC_CERTIFICATE_PWD }}
+          # notarization（electron-builder v25 三者齐全时自动公证）：
+          APPLE_ID: ${{ secrets.APPLE_ID }}
+          APPLE_APP_SPECIFIC_PASSWORD: ${{ secrets.APPLE_APP_SPECIFIC_PASSWORD }}
+          APPLE_TEAM_ID: ${{ secrets.APPLE_TEAM_ID }}
+        run: pnpm --dir desktop exec electron-builder --publish never
+      - name: 收集安装包
+        run: |
+          mkdir -p dist-release
+          # electron-builder 产物在 desktop/release/
+          # 按扩展名收集所有安装包 + updater 元数据，不依赖文件名前缀。
+          # blockmap 是 electron-updater 增量更新的元数据，必须随包分发。
+          find desktop/release -maxdepth 1 -type f \
+            \( -name '*.dmg' -o -name '*.zip' -o -name '*.exe' \
+               -o -name '*.deb' -o -name '*.rpm' \
+               -o -name '*.blockmap' -o -name 'latest*.yml' \) \
+            -exec cp {} dist-release/ \;
+          ls -lh dist-release
+      - uses: actions/upload-artifact@v4
+        with:
+          name: kworks-${{ matrix.os }}
+          path: dist-release/**
+          if-no-files-found: error
+
+  publish:
+    name: 发布 GitHub Release
+    needs: build
+    runs-on: ubuntu-latest
+    permissions:
+      contents: write
+    steps:
+      - uses: actions/download-artifact@v4
+        with:
+          path: dist-release
+          merge-multiple: true
+      - name: 列出安装包
+        run: ls -lh dist-release
+      - uses: softprops/action-gh-release@v2
+        with:
+          files: dist-release/**
+          generate_release_notes: true

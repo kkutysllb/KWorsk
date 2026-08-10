@@ -82,9 +82,9 @@ function runSourceChecks() {
   requirePath(join(BACKEND_DIR, "app", "gateway", "app.py"), "source backend gateway app.py");
 
   // Spec must still wire the critical datas; catches accidental edits that
-  // would silently drop skills / config / harness from the frozen bundle.
+  // would silently drop skills / config / qilin from the frozen bundle.
   requireFileContains(SPEC_FILE, "spec datas wiring", [
-    "skills/builtin",
+    "skills/public",
     "config.embedded.yaml",
     "qilin",
   ]);
@@ -95,11 +95,10 @@ function runSourceChecks() {
     "source config.embedded.yaml",
   );
 
-  // skills/builtin source tree (core/task are the categories the desktop
-  // skill-management UI and work-mode loading depend on).
-  requirePath(join(SKILLS_DIR, "builtin"), "source skills/builtin");
-  requirePath(join(SKILLS_DIR, "builtin", "core"), "source skills/builtin/core");
-  requirePath(join(SKILLS_DIR, "builtin", "task"), "source skills/builtin/task");
+  // skills/public source tree — the repo's built-in skill catalog. The
+  // desktop seeds ~/.kworks/skills from this tree on first run (the
+  // PyInstaller bundle ships it under _internal/skills/public).
+  requirePath(join(SKILLS_DIR, "public"), "source skills/public");
 
   // local_skill_storage.py source — the SkillStorage implementation the
   // desktop gateway uses for builtin/custom skill discovery.
@@ -139,16 +138,8 @@ function runProductChecks() {
     "resources/gateway config.embedded.yaml",
   );
   requirePath(
-    join(GATEWAY_DIR, "_internal", "skills", "builtin"),
-    "resources/gateway skills/builtin",
-  );
-  requirePath(
-    join(GATEWAY_DIR, "_internal", "skills", "builtin", "core"),
-    "resources/gateway skills/builtin/core",
-  );
-  requirePath(
-    join(GATEWAY_DIR, "_internal", "skills", "builtin", "task"),
-    "resources/gateway skills/builtin/task",
+    join(GATEWAY_DIR, "_internal", "skills", "public"),
+    "resources/gateway skills/public",
   );
   requireFileContains(
     join(GATEWAY_DIR, "_internal", "qilin", "skills", "storage", "local_skill_storage.py"),

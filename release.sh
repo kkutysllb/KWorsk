@@ -31,15 +31,12 @@ RESUME=false
 
 ROOT_FILES=(
   "frontend/package.json"
-  "desktop-electron/package.json"
-  "backend/pyproject.toml"
-  "backend/packages/harness/pyproject.toml"
+  "desktop/package.json"
 )
 
 LOCK_FILES=(
   "frontend/pnpm-lock.yaml"
-  "desktop-electron/pnpm-lock.yaml"
-  "backend/uv.lock"
+  "desktop/pnpm-lock.yaml"
 )
 
 usage() {
@@ -347,13 +344,13 @@ version = sys.argv[1]
 
 json_files = [
     Path("frontend/package.json"),
-    Path("desktop-electron/package.json"),
+    Path("desktop/package.json"),
 ]
 
-toml_files = [
-    Path("backend/pyproject.toml"),
-    Path("backend/packages/harness/pyproject.toml"),
-]
+# NOTE: the qilin/ engine submodule has its own versioning (pyproject.toml,
+# currently 2.0.0) and is maintained upstream — the KWorks release version
+# is deliberately NOT written into the submodule.
+toml_files = []
 
 for path in json_files:
     data = json.loads(path.read_text(encoding="utf-8"))
@@ -393,13 +390,9 @@ refresh_lockfiles() {
     need_cmd pnpm
     run_shell "frontend lockfile" "pnpm --dir frontend install --lockfile-only --ignore-scripts"
   fi
-  if [[ -f desktop-electron/pnpm-lock.yaml ]]; then
+  if [[ -f desktop/pnpm-lock.yaml ]]; then
     need_cmd pnpm
-    run_shell "desktop lockfile" "pnpm --dir desktop-electron install --lockfile-only --ignore-scripts"
-  fi
-  if [[ -f backend/uv.lock ]]; then
-    need_cmd uv
-    run_shell "backend lockfile" "cd backend && uv lock"
+    run_shell "desktop lockfile" "pnpm --dir desktop install --lockfile-only --ignore-scripts"
   fi
 }
 
@@ -460,19 +453,21 @@ run_checks() {
   need_cmd uv
 
   if [[ "$FULL_TESTS" == true ]]; then
-    run_shell "backend full tests" "cd backend && PYTHONPATH=.:packages/harness uv run python -m pytest -q"
+    run_shell "qilin full tests" "cd qilin && uv run python -m pytest -q"
   else
-    run_shell "backend release smoke tests" "cd backend && PYTHONPATH=.:packages/harness uv run python -m pytest -q tests/test_mcp_sync_wrapper.py tests/test_security_scanner.py tests/test_skill_manage_tool.py tests/test_skill_frontmatter_work_modes.py tests/test_skills_parser.py tests/test_mcp_config_preservation.py tests/test_work_mode_api.py tests/test_client.py::TestMcpConfig tests/test_client.py::TestSkillsManagement"
+    # Release smoke: engine imports + gateway app imports (FastAPI routes,
+    # builtin tools, skill storage all resolve at import time).
+    run_shell "qilin import smoke" "cd qilin && uv run python -c 'import qilin; import app.gateway.app'"
   fi
   run_shell "frontend tests" "cd frontend && pnpm test"
   run_shell "frontend typecheck" "cd frontend && pnpm run typecheck"
-  run_shell "desktop lint" "cd desktop-electron && pnpm run lint"
-  run_shell "desktop package tests" "cd desktop-electron && node --test tests/package-build.test.mjs tests/release-lifecycle-script.test.mjs"
+  run_shell "desktop lint" "cd desktop && pnpm run lint"
+  run_shell "desktop package tests" "cd desktop && node --test tests/package-build.test.mjs tests/release-lifecycle-script.test.mjs"
   # Source-only mode: validate the spec/frontend source contract without
   # paying the multi-minute PyInstaller cost. Full artifact verification
   # still happens in CI (release-desktop.yml) and in the desktop build:app
   # flow (which builds the gateway before verifying).
-  run_shell "desktop package resources (source-only)" "cd desktop-electron && pnpm run verify:package-resources:source"
+  run_shell "desktop package resources (source-only)" "cd desktop && pnpm run verify:package-resources:source"
 }
 
 stage_paths() {

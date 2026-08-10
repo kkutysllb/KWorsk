@@ -104,8 +104,10 @@ linux:
 
 # ── Auto-update ───────────────────────────────────────────────────────────
 # electron-updater checks these providers for release artifacts.
+# NOTE: the GitHub repo is `kkutysllb/KWorsk` (remote URL spelling) — the
+# product name is "KWorks" but the repository itself is "KWorsk".
 publish:
   provider: github
   owner: kkutysllb
-  repo: KWorks
+  repo: KWorsk
   releaseType: release

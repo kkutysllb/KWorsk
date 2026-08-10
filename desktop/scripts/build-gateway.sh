@@ -3,8 +3,9 @@
 # build-gateway.sh — Bundle the Python gateway backend via PyInstaller.
 #
 # This script MUST be run before `electron-builder`. It:
-#   1. Runs PyInstaller from backend/ using kworks-gateway.spec
-#   2. Copies the output directory to desktop-electron/resources/gateway/
+#   1. Runs PyInstaller from qilin/ (the QiLin engine submodule) using
+#      kworks-gateway.spec
+#   2. Copies the output directory to desktop/resources/gateway/
 #
 # electron-builder then bundles everything in resources/gateway/ into the
 # final .app/.dmg/.exe/.deb as `process.resourcesPath/gateway`.
@@ -14,7 +15,7 @@ set -euo pipefail
 SCRIPT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
 DESKTOP_DIR="$(cd "$SCRIPT_DIR/.." && pwd)"
 REPO_ROOT="$(cd "$DESKTOP_DIR/.." && pwd)"
-BACKEND_DIR="$REPO_ROOT/backend"
+BACKEND_DIR="$REPO_ROOT/qilin"
 SPEC_FILE="$DESKTOP_DIR/backend-build/kworks-gateway.spec"
 RESOURCES_DIR="$DESKTOP_DIR/resources/gateway"
 
