@@ -85,7 +85,15 @@ jobs:
           echo "[signing-diag] APPLE_ID set=$([[ -n "$APPLE_ID" ]] && echo yes || echo no)"
           echo "[signing-diag] APPLE_APP_SPECIFIC_PASSWORD set=$([[ -n "$APPLE_APP_SPECIFIC_PASSWORD" ]] && echo yes || echo no)"
           echo "[signing-diag] APPLE_TEAM_ID set=$([[ -n "$APPLE_TEAM_ID" ]] && echo yes || echo no)"
-          pnpm --dir desktop exec electron-builder --publish never
+          set -o pipefail
+          BUILD_OUTPUT="$(pnpm --dir desktop exec electron-builder --publish never 2>&1)" || {
+            echo "$BUILD_OUTPUT" >&2
+            exit 1
+          }
+          # 显式打印 electron-builder 的签名/跳过/证书相关日志（最关键的
+          # 诊断）：产物为 adhoc 时，这里会显示 skipped 的原因。
+          echo "=== electron-builder signing/identity 相关输出 ==="
+          echo "$BUILD_OUTPUT" | grep -iE "sign|skip|certificate|identity|mac" || echo "(无 sign/skip 相关输出)"
       - name: 校验 macOS 签名与公证（防静默发布损坏包）
         if: runner.os == 'macOS'
         shell: bash
