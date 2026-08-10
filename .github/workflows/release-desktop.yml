@@ -30,6 +30,10 @@ jobs:
           # qilin 是 QiLin 引擎 submodule，必须递归检出
           submodules: recursive
       - uses: pnpm/action-setup@v4
+        with:
+          # The repo root has no package.json (frontend/ and desktop/ each
+          # declare their own), so pin the version explicitly.
+          version: 10.26.2
       - uses: actions/setup-node@v4
         with:
           node-version: 22
