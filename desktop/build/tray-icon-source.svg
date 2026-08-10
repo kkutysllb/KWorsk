@@ -1,0 +1,38 @@
+<svg xmlns="http://www.w3.org/2000/svg" width="512" height="512" viewBox="0 0 512 512">
+  <!--
+    tray-icon-source.svg — System tray icon for KWorks.
+
+    Transparent background + the gold K-Book glyph only (no dark rounded
+    square), thickened for legibility at 16-32px.
+
+    - macOS: loaded as a Template Image (setTemplateImage(true)) — the OS
+      reads only the alpha channel and renders the glyph in the menu-bar
+      foreground colour, adapting to light/dark menu bars automatically.
+    - Windows/Linux: shown as-is (gold strokes on transparency).
+  -->
+  <defs>
+    <linearGradient id="trayGold" x1="132" y1="150" x2="420" y2="400" gradientUnits="userSpaceOnUse">
+      <stop offset="0%" stop-color="#FDE68A"/>
+      <stop offset="22%" stop-color="#FCD34D"/>
+      <stop offset="48%" stop-color="#FBBF24"/>
+      <stop offset="74%" stop-color="#F59E0B"/>
+      <stop offset="100%" stop-color="#D97706"/>
+    </linearGradient>
+  </defs>
+
+  <!-- K-Book: plump rounded strokes (thickened for small sizes, shrunk to
+       ~60% of the canvas with comfortable breathing room around the glyph) -->
+  <g
+    stroke="url(#trayGold)"
+    stroke-linecap="round"
+    fill="none"
+    transform="translate(256 256) scale(0.62) translate(-290.5 -276.5)"
+  >
+    <!-- Spine (book spine = vertical bar of K) -->
+    <line x1="168" y1="136" x2="168" y2="380" stroke-width="110"/>
+    <!-- Upper arm (upper page curving up-right) -->
+    <path d="M 232 296 Q 330 232, 424 150" stroke-width="88"/>
+    <!-- Lower arm (lower page curving down-right) -->
+    <path d="M 232 288 Q 330 356, 424 428" stroke-width="88"/>
+  </g>
+</svg>

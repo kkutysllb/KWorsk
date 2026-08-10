@@ -66,6 +66,10 @@ jobs:
       - name: 构建安装包（electron-builder）
         timeout-minutes: 60
         env:
+          # 无签名 secrets 时绝不自动发现本机签名身份（mac runner 自带
+          # 证书会触发意外签名并因缺失 Entitlements 失败）；CSC_LINK
+          # 显式提供时仍正常走 p12 签名。
+          CSC_IDENTITY_AUTO_DISCOVERY: "false"
           # .app 外壳签名（electron-builder 原生读取）：
           CSC_LINK: ${{ secrets.MAC_CERTIFICATE }}
           CSC_KEY_PASSWORD: ${{ secrets.MAC_CERTIFICATE_PWD }}
