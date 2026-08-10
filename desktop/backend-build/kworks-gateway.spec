@@ -104,10 +104,27 @@ a = Analysis(
         "tkinter",
         "test",
         "tests",
+        # speech_recognition 仅作为 markitdown 的 all-extra 可选依赖被收集
+        # （引擎不直接使用语音识别）。其预编译 flac 二进制（flac-mac 等）
+        # 用 <10.9 SDK 构建且为 x86_64 —— 公证（notarization）对应用内
+        # 所有 Mach-O 检查 SDK 版本，直接 Hardfail（"binary uses an SDK
+        # older than the 10.9 SDK"）。项目不发布 x86 macOS，该功能也未
+        # 启用，整体排除模块及其数据/二进制。
+        "speech_recognition",
     ],
     noarchive=False,
     optimize=0,
 )
+
+# 兜底：即便某个 hook 仍收集了 speech_recognition 的数据/二进制
+# （flac-mac / flac-linux-* / flac-win32 / pocketsphinx-data），也从最终
+# 打包清单中剔除，确保公证不会因旧 SDK 的 x86_64 二进制失败。
+a.binaries = [
+    item for item in a.binaries if not str(item[0]).startswith("speech_recognition")
+]
+a.datas = [
+    item for item in a.datas if not str(item[0]).startswith("speech_recognition")
+]
 
 pyz = PYZ(a.pure)
 
