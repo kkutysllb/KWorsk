@@ -2,9 +2,12 @@
 
 import { existsSync, readFileSync, statSync } from "node:fs";
 import { join, resolve } from "node:path";
+import { fileURLToPath } from "node:url";
 import process from "node:process";
 
-const SCRIPT_DIR = new URL(".", import.meta.url).pathname;
+// fileURLToPath (not URL.pathname) — on Windows, `.pathname` yields
+// "/D:/a/..." which double-prefixes the drive letter on resolve().
+const SCRIPT_DIR = fileURLToPath(new URL(".", import.meta.url));
 const DESKTOP_DIR = resolve(SCRIPT_DIR, "..");
 const REPO_ROOT = resolve(DESKTOP_DIR, "..");
 

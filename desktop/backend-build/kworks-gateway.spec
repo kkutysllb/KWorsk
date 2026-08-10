@@ -55,7 +55,13 @@ datas = [
     *collect_data_files(
         "qilin",
         include_py_files=True,
-        includes=["persistence/migrations/**"],
+        includes=[
+            "persistence/migrations/**",
+            # skill storage 实现以文件形式打包（verify-package-resources
+            # 断言其存在；引擎运行时也可从文件系统访问）。includes 路径
+            # 相对包根（qilin/），故为 skills/... 而非 qilin/skills/...。
+            "skills/storage/**",
+        ],
     ),
     *collect_data_files("app"),
     (str(qilin_root / "extensions_config.example.json"), "."),
