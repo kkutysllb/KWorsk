@@ -39,12 +39,12 @@ export function WorkspaceHeader({ className }: { className?: string }) {
           {env.NEXT_PUBLIC_STATIC_WEBSITE_ONLY === "true" ? (
             <Link
               href="/"
-              className="bg-linear-to-r from-zinc-200 via-zinc-100 to-zinc-400 bg-clip-text text-base font-bold text-transparent"
+              className="text-base font-bold text-foreground hover:text-foreground/80 transition-colors"
             >
               KWorks
             </Link>
           ) : (
-            <span className="bg-linear-to-r from-zinc-200 via-zinc-100 to-zinc-400 bg-clip-text text-base font-bold text-transparent">
+            <span className="text-base font-bold text-foreground">
               KWorks
             </span>
           )}

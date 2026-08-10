@@ -573,16 +573,19 @@ export function InputBox({
               <Tooltip
                 content={`${t.inputBox.reasoningEffort}: ${t.inputBox[getEffortLabelKey(currentEffort)]} - ${t.inputBox[getEffortDescriptionKey(currentEffort)]}`}
               >
-                <PromptInputActionMenuTrigger className="gap-1! px-2!">
+                <PromptInputActionMenuTrigger className="gap-1.5! px-2!">
                   <EffortIcon effort={currentEffort} className="size-3" />
-                  <div
+                  <span className="text-muted-foreground text-xs">
+                    {t.inputBox.reasoningEffort}
+                  </span>
+                  <span
                     className={cn(
-                      "text-xs font-normal",
-                      currentEffort === "high" ? "golden-text" : "",
+                      "text-xs font-medium",
+                      currentEffort === "high" ? "golden-text" : "text-foreground",
                     )}
                   >
                     {t.inputBox[getEffortLabelKey(currentEffort)]}
-                  </div>
+                  </span>
                 </PromptInputActionMenuTrigger>
               </Tooltip>
               <PromptInputActionMenuContent className="w-70">

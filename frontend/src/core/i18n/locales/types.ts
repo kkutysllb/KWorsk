@@ -62,6 +62,7 @@ export interface Translations {
 
   // Welcome
   welcome: {
+    tagline: string;
     greeting: string;
     description: string;
     createYourOwnSkill: string;

@@ -10,7 +10,6 @@ import {
   useSpecificChatMode,
   useThreadChat,
 } from "@/components/workspace/chats";
-import { SuggestionList } from "@/components/workspace/chats/suggestion-list";
 import { TaskTokenSummary } from "@/components/workspace/token-usage/task-token-summary";
 import { InputBox } from "@/components/workspace/input-box";
 import {
@@ -187,9 +186,8 @@ export default function ChatPage() {
             {/* Main content area: existing conversation OR new-thread welcome */}
             {isNewThread ? (
               <div className="flex min-h-0 flex-1 items-center justify-center overflow-y-auto px-4">
-                <div className="mx-auto w-full max-w-(--container-width-sm) space-y-6 py-8">
+                <div className="mx-auto w-full py-8">
                   <Welcome effort={settings.context.reasoning_effort} />
-                  <SuggestionList />
                 </div>
               </div>
             ) : (
