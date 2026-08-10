@@ -276,8 +276,8 @@ Before finalizing the review, verify:
 
 ## Output Format
 
-- Output the complete review in **Markdown** format
-- Save the review to `/mnt/user-data/outputs/review-{paper-topic}.md` when working in sandbox
+- Output the complete review as a **self-contained HTML file** following the `html-report` skill (`/mnt/skills/public/html-report/SKILL.md`): read `assets/report_template.html`, fill cover/TOC/chapters/sources, keep all CSS inline (no relative-path assets)
+- Save the review to `/mnt/user-data/outputs/review-{paper-topic}.html` when working in sandbox
 - Present the review to the user using the `present_files` tool
 
 ## Notes

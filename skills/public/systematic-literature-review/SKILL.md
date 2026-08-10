@@ -1,6 +1,6 @@
 ---
 name: systematic-literature-review
-description: Use this skill when the user wants a systematic literature review, survey, or synthesis across multiple academic papers on a topic. Also covers annotated bibliographies and cross-paper comparisons. Searches arXiv and outputs reports in APA, IEEE, or BibTeX format. Not for single-paper tasks — use academic-paper-review for reviewing one paper.
+description: Use this skill when the user wants a systematic literature review, survey, or synthesis across multiple academic papers on a topic. Also covers annotated bibliographies and cross-paper comparisons. Searches arXiv and delivers a self-contained HTML report with citations in APA, IEEE, or BibTeX format. Not for single-paper tasks — use academic-paper-review for reviewing one paper.
 ---
 
 # Systematic Literature Review Skill
@@ -179,17 +179,17 @@ If the paper set is too small or too heterogeneous to support thematic synthesis
 - [templates/ieee.md](templates/ieee.md) — IEEE numeric citations. Use when the user targets an IEEE conference or journal, or explicitly asks for IEEE.
 - [templates/bibtex.md](templates/bibtex.md) — BibTeX entries. Use when the user mentions BibTeX, LaTeX, or wants machine-readable references. **Important**: arXiv papers are cited as `@misc`, not `@article` — the BibTeX template covers this explicitly.
 
-Each template contains both the citation rules and a full report structure (executive summary, themes, per-paper annotations, references, methodology section). Follow the template's structure verbatim for the report body, then fill in content from your Phase 3 metadata.
+Each template contains both the citation rules and a full report structure (executive summary, themes, per-paper annotations, references, methodology section). Follow the template's **citation rules verbatim**; the final report is assembled as a **self-contained HTML file** via the `html-report` skill (`/mnt/skills/public/html-report/SKILL.md` — read `assets/report_template.html`, fill cover/TOC/chapters/sources, keep all CSS inline), with the template's report structure mapped onto its chapter sections.
 
 ### Phase 5: Save and present
 
-Save the full report to `/mnt/user-data/outputs/slr-<topic-slug>-<YYYYMMDD>.md` where `<topic-slug>` is a lowercased hyphenated version of the topic (e.g. `transformer-attention`). Then call the `present_files` tool with that path so the user can download it.
+Save the full report to `/mnt/user-data/outputs/slr-<topic-slug>-<YYYYMMDD>.html` where `<topic-slug>` is a lowercased hyphenated version of the topic (e.g. `transformer-attention`). Then call the `present_files` tool with that path so the user can see it in the artifact preview.
 
 **In the chat message**, show a short preview so the user immediately sees value without opening the file:
 
 1. **Executive summary** — the 3–5 sentence paragraph from the top of the report, verbatim.
 2. **Themes list** — bullet list of the themes you identified in Phase 4 synthesis (just the theme names + one-line gloss, not the full theme sections).
-3. **Paper count + a pointer to the file** — e.g. "Full report with 20 papers, per-paper annotations, and formatted references saved to `slr-transformer-attention-20260409.md`."
+3. **Paper count + a pointer to the file** — e.g. "Full report with 20 papers, per-paper annotations, and formatted references saved to `slr-transformer-attention-20260409.html`."
 
 Do **not** dump the full 2000+ word report inline — per-paper annotations, references, and methodology belong in the file. The preview is there to let the user judge the report at a glance and decide whether to open it.
 

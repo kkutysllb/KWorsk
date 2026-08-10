@@ -27,6 +27,7 @@ import {
 } from "@/core/messages/utils";
 import { useUpdateSubtask } from "@/core/tasks/context";
 import type { AgentThreadState } from "@/core/threads";
+import { checkCodeFile } from "@/core/utils/files";
 import { cn } from "@/lib/utils";
 
 import { ArtifactFileList } from "../artifacts/artifact-file-list";
@@ -40,6 +41,7 @@ import { SubtaskCard } from "../messages/subtask-card";
 
 import { MessageItem } from "./message-item";
 import { NeuralWaveSpinner } from "./segments/neural-wave-spinner";
+import { ReportCard } from "./segments/report-card";
 
 export const MESSAGE_FEED_DEFAULT_PADDING_BOTTOM = 160;
 export const MESSAGE_FEED_FOLLOWUPS_EXTRA_PADDING_BOTTOM = 80;
@@ -225,6 +227,14 @@ export function MessageFeed({
                   files.push(...extractPresentFilesFromMessage(message));
                 }
               }
+              // HTML 报告在对话流内联预览（图文并茂、可全屏），
+              // 其余交付文件仍以文件卡片列表展示。
+              const htmlReports = files.filter(
+                (file) => checkCodeFile(file).language === "html",
+              );
+              const otherFiles = files.filter(
+                (file) => checkCodeFile(file).language !== "html",
+              );
               return (
                 <div className="w-full" key={group.id}>
                   {group.messages[0] && hasContent(group.messages[0]) && (
@@ -234,7 +244,20 @@ export function MessageFeed({
                       className="mb-4"
                     />
                   )}
-                  <ArtifactFileList files={files} threadId={threadId} />
+                  {htmlReports.length > 0 && (
+                    <div className="mb-4 flex flex-col gap-3">
+                      {htmlReports.map((file) => (
+                        <ReportCard
+                          key={file}
+                          filepath={file}
+                          threadId={threadId}
+                        />
+                      ))}
+                    </div>
+                  )}
+                  {otherFiles.length > 0 && (
+                    <ArtifactFileList files={otherFiles} threadId={threadId} />
+                  )}
                 </div>
               );
             }

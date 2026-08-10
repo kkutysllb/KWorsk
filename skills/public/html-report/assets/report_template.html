@@ -1,0 +1,298 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+<meta charset="UTF-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1.0" />
+<title>{TITLE}</title>
+<!--
+  KWorks HTML Report Template
+  ===========================
+  Fill in every {PLACEHOLDER}, keep all <style> and <script> blocks intact.
+  Self-contained rules (see references/resource-handling.md):
+    - No external stylesheets / webfonts
+    - Every <img src> must be a data URL, absolute API URL, or online URL
+    - Only allowed external script: ECharts CDN (optional, interactive charts)
+-->
+<style>
+  :root {
+    --bg: #ffffff;
+    --fg: #1f2328;
+    --muted: #6b7280;
+    --accent: #2563eb;
+    --accent-soft: #eff6ff;
+    --border: #e5e7eb;
+    --code-bg: #f8fafc;
+    --font-sans: -apple-system, "PingFang SC", "Hiragino Sans GB", "Microsoft YaHei",
+      "Segoe UI", Roboto, sans-serif;
+    --font-mono: "SF Mono", "JetBrains Mono", Consolas, "Courier New", monospace;
+  }
+  * { box-sizing: border-box; }
+  html { scroll-behavior: smooth; }
+  body {
+    margin: 0 auto;
+    max-width: 880px;
+    padding: 48px 32px 96px;
+    background: var(--bg);
+    color: var(--fg);
+    font-family: var(--font-sans);
+    font-size: 15px;
+    line-height: 1.75;
+  }
+  /* ── Cover ─────────────────────────────────────────────── */
+  .cover {
+    text-align: center;
+    padding: 64px 0 48px;
+    border-bottom: 3px solid var(--accent);
+    margin-bottom: 40px;
+  }
+  .cover .kicker {
+    text-transform: uppercase;
+    letter-spacing: 0.12em;
+    font-size: 12px;
+    color: var(--accent);
+    font-weight: 600;
+  }
+  .cover h1 { font-size: 34px; line-height: 1.3; margin: 12px 0 8px; }
+  .cover .subtitle { font-size: 17px; color: var(--muted); margin-bottom: 20px; }
+  .cover .meta { font-size: 13px; color: var(--muted); }
+  .cover .meta span { margin: 0 10px; }
+  .abstract {
+    margin: 24px auto 0;
+    max-width: 640px;
+    background: var(--accent-soft);
+    border-left: 4px solid var(--accent);
+    padding: 14px 18px;
+    text-align: left;
+    font-size: 14px;
+  }
+  /* ── TOC ───────────────────────────────────────────────── */
+  nav#toc {
+    background: var(--code-bg);
+    border: 1px solid var(--border);
+    border-radius: 10px;
+    padding: 18px 22px;
+    margin-bottom: 36px;
+  }
+  nav#toc h2 { margin-top: 0; font-size: 15px; color: var(--muted); }
+  nav#toc ol { margin: 0; padding-left: 22px; }
+  nav#toc a { color: var(--accent); text-decoration: none; }
+  nav#toc a:hover { text-decoration: underline; }
+  /* ── Chapters ──────────────────────────────────────────── */
+  section.chapter { margin-bottom: 44px; }
+  section.chapter h2 {
+    font-size: 22px;
+    border-bottom: 2px solid var(--border);
+    padding-bottom: 8px;
+  }
+  section.chapter h3 { font-size: 17px; margin-top: 28px; }
+  section.chapter h4 { font-size: 15px; margin-top: 22px; }
+  p { margin: 12px 0; }
+  strong { font-weight: 600; }
+  blockquote {
+    margin: 16px 0;
+    padding: 8px 16px;
+    border-left: 4px solid var(--accent);
+    background: var(--accent-soft);
+    color: #374151;
+  }
+  /* ── Figures / Charts ──────────────────────────────────── */
+  figure {
+    margin: 24px 0;
+    text-align: center;
+  }
+  figure img {
+    max-width: 100%;
+    border: 1px solid var(--border);
+    border-radius: 10px;
+    box-shadow: 0 1px 4px rgba(0,0,0,.06);
+  }
+  figure figcaption {
+    margin-top: 8px;
+    font-size: 13px;
+    color: var(--muted);
+  }
+  .chart {
+    width: 100%;
+    height: 380px;
+    border: 1px solid var(--border);
+    border-radius: 10px;
+    background: #fff;
+  }
+  /* ── Tables ────────────────────────────────────────────── */
+  table.data-table {
+    width: 100%;
+    border-collapse: collapse;
+    margin: 18px 0;
+    font-size: 14px;
+  }
+  table.data-table caption {
+    caption-side: top;
+    text-align: left;
+    font-size: 13px;
+    color: var(--muted);
+    margin-bottom: 6px;
+  }
+  table.data-table th, table.data-table td {
+    border: 1px solid var(--border);
+    padding: 8px 12px;
+    text-align: left;
+  }
+  table.data-table thead th {
+    background: var(--accent-soft);
+    font-weight: 600;
+    color: #1e3a8a;
+  }
+  table.data-table tbody tr:nth-child(even) { background: #fafbfc; }
+  /* ── Code ──────────────────────────────────────────────── */
+  pre {
+    background: var(--code-bg);
+    border: 1px solid var(--border);
+    border-radius: 8px;
+    padding: 14px 16px;
+    overflow-x: auto;
+    font-family: var(--font-mono);
+    font-size: 13px;
+  }
+  code { font-family: var(--font-mono); font-size: 13px; background: var(--code-bg); padding: 1px 5px; border-radius: 4px; }
+  /* ── References ────────────────────────────────────────── */
+  #sources { font-size: 13px; color: #374151; }
+  #sources li { margin: 6px 0; }
+  #sources a { color: var(--accent); text-decoration: none; word-break: break-all; }
+  #sources a:hover { text-decoration: underline; }
+  /* ── Footer ────────────────────────────────────────────── */
+  footer {
+    margin-top: 48px;
+    padding-top: 16px;
+    border-top: 1px solid var(--border);
+    font-size: 12px;
+    color: var(--muted);
+    text-align: center;
+  }
+  /* ── Print ─────────────────────────────────────────────── */
+  @media print {
+    body { padding: 0; max-width: none; font-size: 12px; }
+    nav#toc { page-break-after: always; }
+    section.chapter { page-break-inside: avoid; }
+    .chart, figure { page-break-inside: avoid; }
+  }
+</style>
+</head>
+<body>
+
+<!-- ══════════════ COVER ══════════════ -->
+<header class="cover">
+  <div class="kicker">{REPORT_TYPE}</div>
+  <h1>{TITLE}</h1>
+  <div class="subtitle">{SUBTITLE}</div>
+  <div class="meta">
+    <span>📅 {DATE}</span>
+    <span>🤖 {AUTHOR}</span>
+    <span>🎯 {CONFIDENCE_LEVEL}</span>
+  </div>
+  <div class="abstract">
+    <strong>摘要：</strong>{ABSTRACT}
+  </div>
+</header>
+
+<!-- ══════════════ TOC (auto-generated) ══════════════ -->
+<nav id="toc">
+  <h2>目录</h2>
+  <ol id="toc-list"></ol>
+</nav>
+
+<main>
+  <!-- ══════════════ CHAPTER 1 ══════════════ -->
+  <section class="chapter" id="chapter-1">
+    <h2>1. {CHAPTER_TITLE}</h2>
+    <p>{PARAGRAPH_TEXT}</p>
+
+    <!-- 图表模式 A：在线图表图片（chart-visualization 技能生成 URL） -->
+    <figure>
+      <img src="{CHART_IMAGE_URL}" alt="{CHART_ALT_TEXT}" />
+      <figcaption>图 1-1 {CHART_CAPTION}</figcaption>
+    </figure>
+
+    <!-- 图表模式 B：内嵌 ECharts（交互式，按需启用） -->
+    <!--
+    <div class="chart" id="chart-1-1"></div>
+    <p style="text-align:center;font-size:13px;color:#6b7280;">图 1-1 {CHART_CAPTION}</p>
+    -->
+  </section>
+
+  <!-- ══════════════ CHAPTER 2 ══════════════ -->
+  <section class="chapter" id="chapter-2">
+    <h2>2. {CHAPTER_TITLE}</h2>
+    <p>{PARAGRAPH_TEXT}</p>
+
+    <table class="data-table">
+      <caption>表 2-1 {TABLE_CAPTION}</caption>
+      <thead>
+        <tr><th>{COL_1}</th><th>{COL_2}</th><th>{COL_3}</th></tr>
+      </thead>
+      <tbody>
+        <tr><td>{VALUE}</td><td>{VALUE}</td><td>{VALUE}</td></tr>
+        <tr><td>{VALUE}</td><td>{VALUE}</td><td>{VALUE}</td></tr>
+      </tbody>
+    </table>
+
+    <blockquote>{KEY_INSIGHT_QUOTE}</blockquote>
+  </section>
+
+  <!-- ══════════════ CONCLUSION ══════════════ -->
+  <section class="chapter" id="conclusion">
+    <h2>{CONCLUSION_TITLE}</h2>
+    <p>{CONCLUSION_TEXT}</p>
+  </section>
+</main>
+
+<!-- ══════════════ REFERENCES ══════════════ -->
+<section class="chapter" id="references">
+  <h2>参考来源</h2>
+  <ol id="sources">
+    <li><a href="{SOURCE_URL}">{SOURCE_TITLE}</a> — {SOURCE_DESC}</li>
+    <li><a href="{SOURCE_URL}">{SOURCE_TITLE}</a> — {SOURCE_DESC}</li>
+  </ol>
+</section>
+
+<footer>
+  {TITLE} · 由 {AUTHOR} 生成于 {DATE} · 数据截止 {DATA_AS_OF}
+</footer>
+
+<!-- ECharts CDN（仅当使用图表模式 B 时保留本行与下方脚本；否则删除） -->
+<!-- <script src="https://cdn.jsdelivr.net/npm/echarts@5/dist/echarts.min.js"></script> -->
+
+<script>
+  // ── 自动生成目录（保留本块） ──────────────────────────────
+  (function buildToc() {
+    const list = document.getElementById("toc-list");
+    const chapters = document.querySelectorAll("section.chapter > h2");
+    chapters.forEach(function (h2, i) {
+      const li = document.createElement("li");
+      const a = document.createElement("a");
+      const target = h2.closest("section.chapter");
+      a.textContent = h2.textContent;
+      a.href = "#" + target.id;
+      li.appendChild(a);
+      list.appendChild(li);
+    });
+  })();
+
+  // ── ECharts 模式 B 示例（按需复制到各图表容器） ─────────────
+  // 用法：给每个 <div class="chart" id="chart-xx"> 复制一份 init 代码。
+  //
+  //   if (typeof echarts !== "undefined") {
+  //     const chart = echarts.init(document.getElementById("chart-1-1"));
+  //     chart.setOption({
+  //       title: { text: "{CHART_TITLE}" },
+  //       tooltip: { trigger: "axis" },
+  //       legend: { data: ["{SERIES_NAME}"] },
+  //       xAxis: { type: "category", data: ["{LABEL}", "{LABEL}"] },
+  //       yAxis: { type: "value" },
+  //       series: [{ name: "{SERIES_NAME}", type: "line", data: [{VALUE}, {VALUE}] }],
+  //     });
+  //     window.addEventListener("resize", function () { chart.resize(); });
+  //   }
+</script>
+
+</body>
+</html>

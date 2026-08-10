@@ -10,7 +10,6 @@ import {
 } from "lucide-react";
 import { useCallback, useEffect, useMemo, useState } from "react";
 import { toast } from "sonner";
-import { Streamdown } from "streamdown";
 
 import {
   Artifact,
@@ -38,16 +37,14 @@ import { useArtifactContent } from "@/core/artifacts/hooks";
 import { urlOfArtifact } from "@/core/artifacts/utils";
 import { useI18n } from "@/core/i18n/hooks";
 import { useInstallSkill } from "@/core/skills/hooks";
-import { streamdownPlugins } from "@/core/streamdown";
-import { toStreamdownComponents } from "@/core/streamdown/components";
 import { checkCodeFile, getFileName } from "@/core/utils/files";
 import { env } from "@/env";
 import { cn } from "@/lib/utils";
 
-import { ArtifactLink } from "../citations/artifact-link";
 import { useOptionalThread } from "../messages/context";
 import { Tooltip } from "../tooltip";
 
+import { ArtifactFilePreview } from "./artifact-file-preview";
 import { useArtifacts } from "./context";
 
 export function ArtifactFileDetail({
@@ -286,54 +283,4 @@ export function ArtifactFileDetail({
       </ArtifactContent>
     </Artifact>
   );
-}
-
-export function ArtifactFilePreview({
-  content,
-  language,
-}: {
-  content: string;
-  language: string;
-}) {
-  const [htmlPreviewUrl, setHtmlPreviewUrl] = useState<string>();
-
-  useEffect(() => {
-    if (language !== "html") {
-      setHtmlPreviewUrl(undefined);
-      return;
-    }
-
-    const blob = new Blob([content ?? ""], { type: "text/html" });
-    const url = URL.createObjectURL(blob);
-    setHtmlPreviewUrl(url);
-
-    return () => {
-      URL.revokeObjectURL(url);
-    };
-  }, [content, language]);
-
-  if (language === "markdown") {
-    return (
-      <div className="size-full px-4">
-        <Streamdown
-          className="size-full"
-          {...streamdownPlugins}
-          components={toStreamdownComponents({ a: ArtifactLink })}
-        >
-          {content ?? ""}
-        </Streamdown>
-      </div>
-    );
-  }
-  if (language === "html") {
-    return (
-      <iframe
-        className="size-full"
-        title="Artifact preview"
-        sandbox="allow-scripts allow-forms"
-        src={htmlPreviewUrl}
-      />
-    );
-  }
-  return null;
 }

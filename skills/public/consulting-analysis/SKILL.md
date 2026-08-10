@@ -7,7 +7,7 @@ description: Use this skill when the user requests to generate, create, or write
 
 ## Overview
 
-This skill produces professional, consulting-grade research reports in Markdown format, covering domains such as **market analysis, consumer insights, brand strategy, financial analysis, industry research, competitive intelligence, investment research, and macroeconomic analysis**. It operates across two distinct phases:
+This skill produces professional, consulting-grade research reports as **self-contained HTML files** (via the `html-report` skill: cover page, auto-generated TOC, chapter sections, embedded charts, styled tables, citations, print-ready), covering domains such as **market analysis, consumer insights, brand strategy, financial analysis, industry research, competitive intelligence, investment research, and macroeconomic analysis**. It operates across two distinct phases:
 
 1. **Phase 1 — Analysis Framework Generation**: Given a research subject, produce a rigorous analysis framework including chapter skeleton, per-chapter data requirements, analysis logic, and visualization plan.
 2. **Phase 2 — Report Generation**: After data has been collected by other skills, synthesize all inputs into a final polished report.
@@ -307,15 +307,15 @@ After the analysis framework is generated, it is handed off to **other data coll
 
 1. Execute the **Search Keywords** from each chapter's data requirements
 2. Collect quantitative data, qualitative insights, and source URLs
-3. Generate charts based on the **Visualization & Content Plan**
+3. Generate charts based on the **Visualization & Content Plan** (via the `chart-visualization` skill — see below)
 4. Return a **Data Package** containing:
    - **Data Summary**: Raw numbers, metrics, and qualitative findings per chapter
-   - **Chart Files**: Generated chart images with local file paths
+   - **Chart Files / URLs**: Generated chart image URLs (or chart-ready data for ECharts embedding)
    - **External Search Findings**: Source URLs and summaries for citations
 
 > **This skill does NOT perform data collection.** It only produces the framework (Phase 1) and the final report (Phase 2).
 >
-> **Chart Generation**: If a visualization/charting skill is available (e.g., data-analysis, image-generation), chart generation can be deferred to the beginning of Phase 2 — see Step 2.3.
+> **Chart Generation**: Use the `chart-visualization` skill (`/mnt/skills/public/chart-visualization/SKILL.md`) to generate online chart image URLs; defer chart generation to the beginning of Phase 2 — see Step 2.3.
 
 ---
 
@@ -331,7 +331,7 @@ Receive the completed **Analysis Framework** and **Data Package** from upstream,
 |-------|-------------|----------|
 | **Analysis Framework** | The framework document produced in Phase 1 | Yes |
 | **Data Summary** | Collected data organized per chapter from the data collection phase | Yes |
-| **Chart Files** | Local file paths for generated chart images. If not provided, will be generated in Step 2.3 using available visualization skills | Optional |
+| **Chart Files / URLs** | Online chart image URLs or chart-ready data. If not provided, will be generated in Step 2.3 using the `chart-visualization` skill | Optional |
 | **External Search Findings** | URLs and summaries for inline citations | Optional |
 
 ## Phase 2 Workflow
@@ -342,7 +342,7 @@ Verify that all required inputs are present:
 
 1. **Analysis Framework** — Confirm it contains chapter skeleton, data requirements, and visualization plans
 2. **Data Summary** — Confirm it contains data organized per chapter, cross-reference against P0 requirements
-3. **Chart Files** — Confirm file paths are valid local paths
+3. **Chart Files / URLs** — Confirm chart image URLs (or ECharts data) are valid and resolvable
 
 If any P0 data is missing, note it in the report and flag for the user.
 
@@ -362,9 +362,9 @@ Before writing the report, generate all planned charts from the Analysis Framewo
 
 #### When to Execute This Step
 
-- **Chart Files already provided**: Skip this step — proceed directly to Step 2.4.
-- **Chart Files NOT provided but a visualization skill is available**: Execute this step to generate all charts first.
-- **No Chart Files and no visualization skill available**: Skip this step — use comparison tables as the primary visual anchor in Step 2.4, and note the absence of charts.
+- **Chart Files / URLs already provided**: Skip this step — proceed directly to Step 2.4.
+- **Chart Files / URLs NOT provided but a visualization skill is available**: Execute this step to generate all charts first.
+- **No Chart Files / URLs and no visualization skill available**: Skip this step — use comparison tables as the primary visual anchor in Step 2.4, and note the absence of charts.
 
 #### Chart Generation Workflow
 
@@ -379,20 +379,20 @@ Before writing the report, generate all planned charts from the Analysis Framewo
 2. **Prepare Chart Data**: For each chart task, extract the corresponding data points from the **Data Summary**.
    > **CRITICAL**: Use ONLY the numbers provided in the Data Summary. Do NOT invent or "smooth" data to make charts look better. If data points are missing, the chart must reflect that reality (e.g., broken line or missing bar), or the chart type must be adjusted.
 
-3. **Delegate to Visualization Skill**: Invoke the available visualization/charting skill (e.g., `data-analysis`) for each chart task with:
+3. **Delegate to Visualization Skill**: Invoke the `chart-visualization` skill (`/mnt/skills/public/chart-visualization/SKILL.md`) for each chart task with:
    - Chart type and title
    - Structured data
    - Axis labels and formatting preferences
-   - Output file path convention: `charts/chapter_{N}_{chart_index}.png`
+   - Collect the returned **chart image URL** for each chart (online chart URL, Mode A). For interactive charts (hover/drill-down), embed ECharts instead (Mode B — see `html-report` skill, `references/chart-embedding.md`).
 
-4. **Collect Chart File Paths**: Record all generated chart file paths for embedding in Step 2.4:
+4. **Collect Chart URLs**: Record all generated chart URLs for embedding in Step 2.4:
 
 ```markdown
 ## Generated Charts
-| # | Chapter | Chart Title | File Path |
+| # | Chapter | Chart Title | Chart URL |
 |---|---------|-------------|-----------|
-| 1 | 2.1 | Market Size Trend 2020-2025 | charts/chapter_2_1.png |
-| 2 | 3.1 | Consumer Age Distribution | charts/chapter_3_1.png |
+| 1 | 2.1 | Market Size Trend 2020-2025 | https://.../chart_2_1.png |
+| 2 | 3.1 | Consumer Age Distribution | https://.../chart_3_1.png |
 ```
 
 5. **Validate**: Confirm all P0-priority charts have been generated. If any chart generation fails, note it and fall back to comparison tables for that sub-chapter.
@@ -401,10 +401,18 @@ Before writing the report, generate all planned charts from the Analysis Framewo
 
 ### Step 2.4: Write the Report
 
+Produce the final report as a **self-contained HTML file** following the `html-report` skill (`/mnt/skills/public/html-report/SKILL.md`): read `assets/report_template.html`, fill the cover/TOC/chapters/sources, and keep all CSS/scripts inline.
+
 For each sub-chapter, follow the **"Visual Anchor → Data Contrast → Integrated Analysis"** flow:
 
-1. **Visual Evidence Block**: Embed charts using `![Image Description](Actual_File_Path)` — use the file paths collected in Step 2.3
-2. **Data Contrast Table**: Create a Markdown comparison table for key metrics
+1. **Visual Evidence Block**: Embed charts as HTML `<figure>` blocks using the chart URLs collected in Step 2.3:
+   ```html
+   <figure>
+     <img src="{CHART_IMAGE_URL}" alt="{DESCRIPTION}" />
+     <figcaption>图 2-1 {CAPTION}</figcaption>
+   </figure>
+   ```
+2. **Data Contrast Table**: Create a comparison table (HTML `<table class="data-table">`) for key metrics
    > **Source Rule**: Every number in the table must come from the Data Summary. No hallucinations.
 3. **Integrated Narrative Analysis**: Write analytical text following "What → Why → So What"
    > **Narrative Rule**: Narrative must explain the *provided* data. Do not make claims unsupported by the inputs.
@@ -424,7 +432,7 @@ Abstract → 1. Introduction → 2...N. Body Chapters → N+1. Conclusion → N+
 
 Additionally verify:
 - All charts generated in Step 2.3 are embedded in the correct sub-chapters
-- Chart file paths in `![](path)` references are valid
+- Chart URLs in `<img src>` references are valid (no relative paths — see `html-report` skill, `references/resource-handling.md`)
 - Sub-chapters without charts have comparison tables as visual anchors
 
 The report **MUST NOT** stop after the Conclusion — it **MUST** include References as the final section.
@@ -596,7 +604,7 @@ After data collection, user provides: Analysis Framework + Data Summary with bra
 - [ ] Every sub-chapter ends with a min. 200-word analytical paragraph
 - [ ] All insights follow the "Data → User Psychology → Strategy Implication" chain
 - [ ] All headings use proper numbering (no "Chapter/Part/Section" prefixes)
-- [ ] Charts are embedded with `![Description](path)` syntax
+- [ ] Charts are embedded with `<figure><img src="{URL}">` syntax (no relative paths)
 - [ ] Numbers use English commas for thousands separators
 - [ ] Inline references use markdown links where applicable
 - [ ] References section follows GB/T 7714-2015
@@ -607,8 +615,8 @@ After data collection, user provides: Analysis Framework + Data Summary with bra
 
 ## Output Format
 
-- **Phase 1**: Output the complete Analysis Framework in **Markdown** format
-- **Phase 2**: Output the complete Report in **Markdown** format
+- **Phase 1**: Output the complete Analysis Framework in **Markdown** format (intermediate artifact for the data-collection handoff)
+- **Phase 2**: Output the complete Report as a **self-contained HTML file** following the `html-report` skill: save to `/mnt/user-data/outputs/report_{topic_slug}_{YYYYMMDD}.html` and present it with the `present_files` tool
 
 ## Settings
 

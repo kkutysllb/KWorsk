@@ -74,7 +74,7 @@ export const zhCN: Translations = {
 
   // Welcome
   welcome: {
-    tagline: "给我一个需求，还你一份诚挚",
+    tagline: "给我一个需求，还你一份惊喜",
     greeting: "你好，欢迎回来！",
     description:
       "欢迎使用 KWorks，一个完全开源的超级智能体。通过内置和自定义的 Skills，\nKWorks 可以帮你搜索网络、分析数据，还能为你生成幻灯片、\n图片、视频、播客及网页等，几乎可以做任何事情。",

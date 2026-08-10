@@ -84,6 +84,7 @@ Supported output formats (auto-detected from extension):
 - `.csv` — Comma-separated values
 - `.json` — JSON array of records
 - `.md` — Markdown table
+- `.html` — Self-contained HTML table (for report embedding; assemble full HTML reports with the `html-report` skill)
 
 ### Parameters
 

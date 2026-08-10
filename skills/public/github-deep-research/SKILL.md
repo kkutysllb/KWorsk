@@ -1,11 +1,11 @@
 ---
 name: github-deep-research
-description: Conduct multi-round deep research on any GitHub Repo. Use when users request comprehensive analysis, timeline reconstruction, competitive analysis, or in-depth investigation of GitHub. Produces structured markdown reports with executive summaries, chronological timelines, metrics analysis, and Mermaid diagrams. Triggers on Github repository URL or open source projects.
+description: Conduct multi-round deep research on any GitHub Repo. Use when users request comprehensive analysis, timeline reconstruction, competitive analysis, or in-depth investigation of GitHub. Produces a structured self-contained HTML report with executive summaries, chronological timelines, metrics analysis, and Mermaid diagrams. Triggers on Github repository URL or open source projects.
 ---
 
 # GitHub Deep Research Skill
 
-Multi-round research combining GitHub API, web_search, web_fetch to produce comprehensive markdown reports.
+Multi-round research combining GitHub API, web_search, web_fetch to produce a comprehensive **self-contained HTML report** (delivered via the `html-report` skill).
 
 ## Research Workflow
 
@@ -74,7 +74,7 @@ python /path/to/skill/scripts/github_api.py <owner> <repo> tree
 
 ## Report Structure
 
-Follow template in `assets/report_template.md`:
+Assemble the final report with the `html-report` skill (`/mnt/skills/public/html-report/SKILL.md`): read its `assets/report_template.html` and fill the sections below (cover → TOC → chapters → sources):
 
 1. **Metadata Block** - Date, confidence level, subject
 2. **Executive Summary** - 2-3 sentence overview with key metrics
@@ -88,7 +88,22 @@ Follow template in `assets/report_template.md`:
 
 ### Mermaid Diagrams
 
-Include diagrams where helpful:
+Include diagrams where helpful. Keep the Mermaid definition below and render it in the HTML report via the mermaid CDN:
+
+```html
+<!-- include once in <head> -->
+<script src="https://cdn.jsdelivr.net/npm/mermaid@11/dist/mermaid.min.js"></script>
+<!-- each diagram becomes: -->
+<pre class="mermaid">
+gantt
+    title Project Timeline
+    dateFormat YYYY-MM-DD
+    section Phase 1
+    Development    :2025-01-01, 2025-03-01
+    section Phase 2
+    Launch         :2025-03-01, 2025-04-01
+</pre>
+```
 
 **Timeline (Gantt)**:
 ```mermaid
@@ -110,7 +125,7 @@ flowchart TD
     D --> E[Reporter]
 ```
 
-**Comparison (Pie/Bar)**:
+**Comparison (Pie/Bar)**: for data-driven comparisons prefer the `chart-visualization` skill (online chart image, see `html-report` skill `references/chart-embedding.md`); the Mermaid pie variant below also works when embedded via CDN.
 ```mermaid
 pie title Market Share
     "Project A" : 45
@@ -130,15 +145,15 @@ Assign confidence based on source quality:
 
 ## Output
 
-Save report as: `research_{topic}_{YYYYMMDD}.md`
+Save the report as a self-contained HTML file: `research_{topic}_{YYYYMMDD}.html` under `/mnt/user-data/outputs`, then present it with the `present_files` tool. Follow the `html-report` skill's self-containment rules (no relative-path assets; images as data URLs, absolute API URLs, or online chart URLs).
 
 ### Formatting Rules
 
 - Chinese content: Use full-width punctuation（，。：；！？）
 - Technical terms: Provide Wiki/doc URL on first mention
-- Tables: Use for metrics, comparisons
+- Tables: Use for metrics, comparisons (HTML `<table class="data-table">`)
 - Code blocks: For technical examples
-- Mermaid: For architecture, timelines, flows
+- Mermaid: For architecture, timelines, flows (rendered via mermaid CDN)
 
 ## Best Practices
 
@@ -147,20 +162,22 @@ Save report as: `research_{topic}_{YYYYMMDD}.md`
 3. **Triangulate claims** - 2+ independent sources
 4. **Note conflicting info** - Don't hide contradictions
 5. **Distinguish fact vs opinion** - Label speculation clearly
-6. **CRITICAL: Always include inline citations** - Use `[citation:Title](URL)` format immediately after each claim from external sources
+6. **CRITICAL: Always include inline citations** - Use HTML links `<a href="URL">Title</a>` immediately after each claim from external sources, plus a clickable Sources section at the end
 7. **Extract URLs from search results** - web_search returns {title, url, snippet} - always use the URL field
 8. **Update as you go** - Don't wait until end to synthesize
 
 ### Citation Examples
 
 **Good - With inline citations:**
-```markdown
-The project gained 10,000 stars within 3 months of launch [citation:GitHub Stats](https://github.com/owner/repo).
-The architecture uses LangGraph for workflow orchestration [citation:LangGraph Docs](https://langchain.com/langgraph).
+```html
+The project gained 10,000 stars within 3 months of launch
+<a href="https://github.com/owner/repo">GitHub Stats</a>.
+The architecture uses LangGraph for workflow orchestration
+<a href="https://langchain.com/langgraph">LangGraph Docs</a>.
 ```
 
 **Bad - Without citations:**
-```markdown
+```html
 The project gained 10,000 stars within 3 months of launch.
 The architecture uses LangGraph for workflow orchestration.
 ```
