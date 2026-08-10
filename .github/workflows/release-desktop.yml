@@ -73,6 +73,12 @@ jobs:
           # .app 外壳签名（electron-builder 原生读取）：
           CSC_LINK: ${{ secrets.MAC_CERTIFICATE }}
           CSC_KEY_PASSWORD: ${{ secrets.MAC_CERTIFICATE_PWD }}
+          # 关键：electron-builder 25 中 CSC_IDENTITY_AUTO_DISCOVERY=false
+          # 且未指定 CSC_NAME 时，findIdentity 直接返回 null 跳过签名
+          # （CSC_LINK 导入的证书不会被查找）—— 必须显式给身份名
+          # （不含 "Developer ID Application:" 前缀，electron-builder
+          # 会按类型自动匹配）。值与钥匙串证书名一致。
+          CSC_NAME: "Bing Li (DHV5D72JNF)"
           # notarization（electron-builder v25 三者齐全时自动公证）：
           APPLE_ID: ${{ secrets.APPLE_ID }}
           APPLE_APP_SPECIFIC_PASSWORD: ${{ secrets.APPLE_APP_SPECIFIC_PASSWORD }}
