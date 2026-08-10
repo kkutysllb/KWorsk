@@ -78,6 +78,37 @@ jobs:
           APPLE_APP_SPECIFIC_PASSWORD: ${{ secrets.APPLE_APP_SPECIFIC_PASSWORD }}
           APPLE_TEAM_ID: ${{ secrets.APPLE_TEAM_ID }}
         run: pnpm --dir desktop exec electron-builder --publish never
+      - name: 校验 macOS 签名与公证（防静默发布损坏包）
+        if: runner.os == 'macOS'
+        shell: bash
+        run: |
+          set -euo pipefail
+          APP_BUNDLE="$(find desktop/release -maxdepth 3 -name 'KWorks.app' -type d | head -1)"
+          if [ -z "$APP_BUNDLE" ]; then
+            echo "::error::未找到 KWorks.app，无法校验签名"
+            exit 1
+          fi
+          echo "=== 签名身份 ==="
+          codesign -dv --verbose=4 "$APP_BUNDLE" 2>&1 | grep -E "Signature|TeamIdentifier|Authority" || true
+          # 1) 必须是 Developer ID 签名（拒绝 adhoc / 无 TeamIdentifier 的坏包）
+          if codesign -dv --verbose=4 "$APP_BUNDLE" 2>&1 | grep -q "Signature=adhoc"; then
+            echo "::error::产物是 adhoc 签名 —— CSC_LINK/MAC_CERTIFICATE secrets 未生效，请检查 GitHub Secrets"
+            exit 1
+          fi
+          if codesign -dv --verbose=4 "$APP_BUNDLE" 2>&1 | grep -q "TeamIdentifier=not set"; then
+            echo "::error::产物无 TeamIdentifier —— 证书未生效，请检查 MAC_CERTIFICATE 是否为 Developer ID Application 类型"
+            exit 1
+          fi
+          # 2) 必须通过 Gatekeeper 评估
+          echo "=== Gatekeeper 评估 ==="
+          spctl -a -vv "$APP_BUNDLE" 2>&1 | tail -3
+          # 3) 必须带公证票据（notarization ticket stapled）
+          echo "=== 公证票据 ==="
+          xcrun stapler validate "$APP_BUNDLE" 2>&1 || {
+            echo "::error::产物未公证（无 stapled ticket）—— APPLE_ID/APPLE_APP_SPECIFIC_PASSWORD/APPLE_TEAM_ID secrets 未生效"
+            exit 1
+          }
+          echo "✅ macOS 产物签名与公证校验通过"
       - name: 收集安装包
         run: |
           mkdir -p dist-release
