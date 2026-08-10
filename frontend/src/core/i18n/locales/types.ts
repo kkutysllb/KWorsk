@@ -86,15 +86,6 @@ export interface Translations {
     skillModeBanner: string;
     skillModeBannerHint: string;
     addAttachments: string;
-    mode: string;
-    flashMode: string;
-    flashModeDescription: string;
-    reasoningMode: string;
-    reasoningModeDescription: string;
-    proMode: string;
-    proModeDescription: string;
-    ultraMode: string;
-    ultraModeDescription: string;
     reasoningEffort: string;
     reasoningEffortMinimal: string;
     reasoningEffortMinimalDescription: string;

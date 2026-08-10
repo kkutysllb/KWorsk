@@ -105,18 +105,6 @@ export const enUS: Translations = {
     createCronPrompt:
       "Let's create a scheduled cron job together. Tell me: when should it run and what should it do? For example, generate a daily summary every morning at 9 AM.",
     addAttachments: "Add attachments",
-    mode: "Mode",
-    flashMode: "Flash",
-    flashModeDescription: "Fast and efficient, but may not be accurate",
-    reasoningMode: "Reasoning",
-    reasoningModeDescription:
-      "Reasoning before action, balance between time and accuracy",
-    proMode: "Pro",
-    proModeDescription:
-      "Reasoning, planning and executing, get more accurate results, may take more time",
-    ultraMode: "Ultra",
-    ultraModeDescription:
-      "Pro mode with subagents to divide work; best for complex multi-step tasks",
     reasoningEffort: "Reasoning Effort",
     reasoningEffortMinimal: "Minimal",
     reasoningEffortMinimalDescription: "Retrieval + Direct Output",
@@ -127,7 +115,7 @@ export const enUS: Translations = {
       "Multi-layer Logic Analysis + Basic Verification",
     reasoningEffortHigh: "High",
     reasoningEffortHighDescription:
-      "Full-dimensional Logic Deduction + Multi-path Verification + Backward Check",
+      "Full-dimensional Logic Deduction + Multi-path Verification + Backward Check, with subagents to divide work; strongest capability",
     searchModels: "Search models...",
     surpriseMe: "Surprise",
     surpriseMePrompt: "Surprise me",

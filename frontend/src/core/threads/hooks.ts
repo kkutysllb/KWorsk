@@ -841,6 +841,9 @@ export function useThreadStream({
         // alive (onDisconnect:"continue"); without this retry the user is
         // stuck and must restart the backend to clear the orphan.
         const doSubmit = async (strategy?: "interrupt") => {
+          // 推理深度档位：未显式选择时按最低档（闪速语义）保守处理，
+          // 避免 thinking/plan/subagent 意外开启。
+          const effort = context.reasoning_effort ?? "minimal";
           await thread.submit(
             {
               messages: [
@@ -885,18 +888,12 @@ export function useThreadStream({
               context: {
                 ...extraContext,
                 ...context,
-                thinking_enabled: context.mode !== "flash",
-                is_plan_mode: context.mode === "pro" || context.mode === "ultra",
-                subagent_enabled: context.mode === "ultra",
-                reasoning_effort:
-                  context.reasoning_effort ??
-                  (context.mode === "ultra"
-                    ? "high"
-                    : context.mode === "pro"
-                      ? "medium"
-                      : context.mode === "thinking"
-                        ? "low"
-                        : undefined),
+                // 推理深度档位即原模式档位：minimal→闪速 / low→思考 /
+                // medium→Pro / high→Ultra，三个行为开关由档位派生。
+                thinking_enabled: effort !== "minimal",
+                is_plan_mode: effort === "medium" || effort === "high",
+                subagent_enabled: effort === "high",
+                reasoning_effort: effort,
                 thread_id: threadId,
                 // Forward the per-thread user-selected workspace path so
                 // the backend sandbox grants bash/read/write access to

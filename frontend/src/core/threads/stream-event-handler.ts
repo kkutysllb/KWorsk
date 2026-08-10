@@ -12,6 +12,7 @@ import type { AIMessage } from "@langchain/langgraph-sdk";
 import { toast } from "sonner";
 
 import type { SubagentStepEvent } from "./run-events-api";
+import { textOfMessage } from "./utils";
 
 /** Callback used to feed `task_*` events into the subtask UI. */
 export type UpdateSubtaskFn = (update: {
@@ -88,12 +89,31 @@ export function handleStreamEvent(
     updateSubtask({ id: e.task_id, latestMessage: e.message });
 
     // Also append as a step for the timeline (if message_index is present).
+    // Build the step from the actual message payload so the timeline has
+    // meaningful content (kind / text / tool_calls / tool_name) instead of
+    // empty rows that render as generic "thinking" placeholders.
     if (e.message_index != null) {
+      const text = textOfMessage(e.message);
+      // The runtime message may actually be a ToolMessage even though the
+      // declared type is AIMessage — check the real type defensively.
+      const messageType = (e.message as { type?: string }).type;
+      const toolCalls = e.message.tool_calls?.length
+        ? e.message.tool_calls.map((tc) => ({
+            name: tc.name,
+            args: tc.args as unknown,
+          }))
+        : undefined;
       const step: SubagentStepEvent = {
         event_type: "subagent.step",
         content: {
           task_id: e.task_id,
           message_index: e.message_index,
+          kind: messageType === "tool" ? "tool" : "ai",
+          ...(text ? { text } : {}),
+          ...(messageType === "tool" && e.message.name
+            ? { tool_name: e.message.name }
+            : {}),
+          ...(toolCalls ? { tool_calls: toolCalls } : {}),
         },
         metadata: { task_id: e.task_id, message_index: e.message_index },
       };

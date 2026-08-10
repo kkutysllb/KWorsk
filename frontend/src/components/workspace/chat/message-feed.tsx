@@ -39,6 +39,7 @@ import { MessageListSkeleton } from "../messages/skeleton";
 import { SubtaskCard } from "../messages/subtask-card";
 
 import { MessageItem } from "./message-item";
+import { NeuralWaveSpinner } from "./segments/neural-wave-spinner";
 
 export const MESSAGE_FEED_DEFAULT_PADDING_BOTTOM = 160;
 export const MESSAGE_FEED_FOLLOWUPS_EXTRA_PADDING_BOTTOM = 80;
@@ -270,6 +271,16 @@ export function MessageFeed({
             return null;
           },
           { isCurrentTurnLoading: thread.isLoading },
+        )}
+        {/* Persistent loading indicator: stays visible for the entire
+            duration of a turn, regardless of which segment type is
+            currently being rendered, so the user always sees motion
+            until the turn completes. */}
+        {thread.isLoading && (
+          <div className="flex items-center gap-2 px-1 text-muted-foreground text-sm">
+            <NeuralWaveSpinner />
+            <span>处理中…</span>
+          </div>
         )}
         <div style={{ height: `${paddingBottom}px` }} />
       </ConversationContent>

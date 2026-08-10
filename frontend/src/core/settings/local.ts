@@ -6,7 +6,6 @@ export const DEFAULT_LOCAL_SETTINGS: LocalSettings = {
   },
   context: {
     model_name: undefined,
-    mode: undefined,
     reasoning_effort: undefined,
   },
 };
@@ -35,7 +34,6 @@ export interface LocalSettings {
     | "reasoning_effort"
   > & {
     model_name?: string | undefined;
-    mode: "flash" | "thinking" | "pro" | "ultra" | undefined;
     reasoning_effort?: "minimal" | "low" | "medium" | "high";
   };
 }
@@ -263,7 +261,28 @@ export function getLocalSettings(): LocalSettings {
   const json = localStorage.getItem(LOCAL_SETTINGS_KEY);
   try {
     if (json) {
-      const settings = JSON.parse(json) as Partial<LocalSettings>;
+      const settings = JSON.parse(json) as Partial<LocalSettings> & {
+        context?: Partial<LocalSettings["context"]> & { mode?: string };
+      };
+      // 一次性迁移：旧版「模式」字段（flash/thinking/pro/ultra）映射为
+      // 推理深度档位（minimal/low/medium/high）后删除，随后写回清理。
+      const rawMode = settings.context?.mode;
+      if (rawMode && settings.context) {
+        const ctx = settings.context;
+        const migrated = (
+          {
+            ultra: "high",
+            pro: "medium",
+            thinking: "low",
+            flash: "minimal",
+          } as Record<string, "minimal" | "low" | "medium" | "high">
+        )[rawMode];
+        if (migrated && !ctx.reasoning_effort) {
+          ctx.reasoning_effort = migrated;
+        }
+        delete ctx.mode;
+        saveLocalSettings(mergeLocalSettings(settings));
+      }
       return mergeLocalSettings(settings);
     }
   } catch {}

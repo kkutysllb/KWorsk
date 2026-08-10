@@ -49,6 +49,16 @@ export function SubagentTimeline({ task }: { task: Subtask }) {
 
 /* ── Timeline Step ────────────────────────────────────── */
 
+function formatArgs(args: unknown): string {
+  if (typeof args === "string") return args.slice(0, 60);
+  if (args == null) return "";
+  try {
+    return JSON.stringify(args).slice(0, 60);
+  } catch {
+    return String(args).slice(0, 60);
+  }
+}
+
 function TimelineStep({
   step,
   isLast,
@@ -89,23 +99,28 @@ function TimelineStep({
             hasDetails && "cursor-pointer hover:bg-muted/30",
           )}
         >
-          {/* Step header */}
+          {/* Step header — prefers the most specific signal: tool name(s),
+              then any inline text, and finally a "thinking" placeholder
+              so the row is always meaningful instead of "AI". */}
           <span className="flex shrink-0 items-center gap-0.5 font-medium">
             {isTool ? (
-              <>
-                <WrenchIcon className="text-blue-500 size-2.5" />
-                {content.tool_name ?? "tool"}
-              </>
+              <WrenchIcon className="text-blue-500 size-2.5" />
             ) : (
-              <>
-                <CpuIcon className="text-emerald-500 size-2.5" />
-                AI
-                {toolCalls.length > 0 && (
-                  <span className="text-muted-foreground">
-                    ({toolCalls.length})
-                  </span>
-                )}
-              </>
+              <CpuIcon className="text-emerald-500 size-2.5" />
+            )}
+            {isTool
+              ? (content.tool_name ??
+                  toolCalls[0]?.name ??
+                  "工具调用")
+              : content.text && content.text.length > 0
+                ? "思考中"
+                : toolCalls.length > 0
+                  ? `调用 ${toolCalls[0]?.name ?? "工具"}`
+                  : "思考中…"}
+            {!isTool && toolCalls.length > 0 && (
+              <span className="text-muted-foreground">
+                ({toolCalls.length})
+              </span>
             )}
           </span>
           {hasDetails && (
@@ -120,7 +135,10 @@ function TimelineStep({
             {content.text && content.text.length > 0
               ? content.text.slice(0, 80)
               : toolCalls.length > 0
-                ? toolCalls.map((tc) => tc.name).join(", ")
+                ? toolCalls
+                    .map((tc) => `${tc.name}(${formatArgs(tc.args)})`)
+                    .join(", ")
+                    .slice(0, 80)
                 : ""}
           </span>
         </button>

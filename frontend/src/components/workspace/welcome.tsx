@@ -41,14 +41,14 @@ const FEATURE_BADGES = [
 
 export function Welcome({
   className,
-  mode,
+  effort,
 }: {
   className?: string;
-  mode?: "ultra" | "pro" | "thinking" | "flash";
+  effort?: "minimal" | "low" | "medium" | "high";
 }) {
   const { t } = useI18n();
   const searchParams = useSearchParams();
-  const isUltra = useMemo(() => mode === "ultra", [mode]);
+  const isUltra = useMemo(() => effort === "high", [effort]);
   useEffect(() => {
     waved = true;
   }, []);

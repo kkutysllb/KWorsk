@@ -188,7 +188,7 @@ export default function ChatPage() {
             {isNewThread ? (
               <div className="flex min-h-0 flex-1 items-center justify-center overflow-y-auto px-4">
                 <div className="mx-auto w-full max-w-(--container-width-sm) space-y-6 py-8">
-                  <Welcome mode={settings.context.mode} />
+                  <Welcome effort={settings.context.reasoning_effort} />
                   <SuggestionList />
                 </div>
               </div>

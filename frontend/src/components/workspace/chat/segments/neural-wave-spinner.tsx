@@ -3,18 +3,22 @@
 import { cn } from "@/lib/utils";
 
 /**
- * NeuralWaveSpinner — a flowing sine-wave indicator used for streaming and
- * idle-loading states throughout the chat.
+ * NeuralWaveSpinner — a fast-rotating 8-ray indicator used for streaming
+ * and idle-loading states.
  *
- * Two sine-wave paths at different phases and speeds flow rightward inside
- * a clipped viewBox, creating a clean "signal/brain-wave" animation that
- * reads well even at 16 px.
+ * All eight rays share the same opacity so the group reads as a uniform
+ * sunburst at any single frame. Rotation uses SVG-native SMIL
+ * (<animateTransform>), which is immune to the CSS keyframes /
+ * transform-origin pitfalls that apply to SVG-internal elements — the
+ * spinner spins even if the Tailwind/CSS animation pipeline changes.
  */
 export function NeuralWaveSpinner({
   className,
 }: {
   className?: string;
 }) {
+  // 8 rays at 45° increments, uniform brightness.
+  const rays = Array.from({ length: 8 }, (_, index) => index);
   return (
     <svg
       width="16"
@@ -22,29 +26,36 @@ export function NeuralWaveSpinner({
       viewBox="0 0 24 24"
       fill="none"
       aria-hidden="true"
-      className={cn("text-primary inline-block shrink-0 overflow-hidden", className)}
+      className={cn("text-primary inline-block shrink-0", className)}
     >
-      {/* Echo wave — faded, slower, phase-inverted */}
-      <path
-        d="M-12 12 Q-10 16 -8 12 T-4 12 T0 12 T4 12 T8 12 T12 12 T16 12 T20 12 T24 12 T28 12 T32 12 T36 12"
-        stroke="currentColor"
-        strokeOpacity="0.22"
-        strokeWidth="1.5"
-        fill="none"
-        strokeLinecap="round"
-        className="animate-[neural-wave_1.4s_linear_infinite]"
-      />
-
-      {/* Main wave — prominent, faster */}
-      <path
-        d="M-12 12 Q-10 8 -8 12 T-4 12 T0 12 T4 12 T8 12 T12 12 T16 12 T20 12 T24 12 T28 12 T32 12 T36 12"
-        stroke="currentColor"
-        strokeOpacity="0.85"
-        strokeWidth="2.2"
-        fill="none"
-        strokeLinecap="round"
-        className="animate-[neural-wave_0.9s_linear_infinite]"
-      />
+      <g>
+        {/* SVG-native rotation around the centre (12,12) — no CSS needed. */}
+        <animateTransform
+          attributeName="transform"
+          type="rotate"
+          from="0 12 12"
+          to="360 12 12"
+          dur="0.7s"
+          repeatCount="indefinite"
+        />
+        {rays.map((index) => {
+          const angle = index * 45;
+          return (
+            <rect
+              key={angle}
+              x="11.25"
+              y="3"
+              width="1.5"
+              height="4.5"
+              rx="0.75"
+              fill="currentColor"
+              transform={`rotate(${angle} 12 12)`}
+            />
+          );
+        })}
+      </g>
+      {/* Centre dot, sits on top of the rotating group and doesn't spin. */}
+      <circle cx="12" cy="12" r="1.5" fill="currentColor" />
     </svg>
   );
 }

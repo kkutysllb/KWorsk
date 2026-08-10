@@ -157,11 +157,22 @@
     }
   }
 
-  /* Neural wave — one full sine period (8 SVG units) */
-  @keyframes neural-wave {
-    to {
-      transform: translateX(-8px);
-    }
+  --animate-flywheel: flywheel-spin 0.8s linear infinite;
+  --animate-neural-wave: neural-wave 0.9s linear infinite;
+}
+
+/* NOTE: Tailwind v4 only allows CSS variables inside @theme — @keyframes
+   must live at the top level or the animation is silently dropped. */
+@keyframes flywheel-spin {
+  to {
+    transform: rotate(360deg);
+  }
+}
+
+/* Neural wave — one full sine period (8 SVG units) */
+@keyframes neural-wave {
+  to {
+    transform: translateX(-8px);
   }
 }
 

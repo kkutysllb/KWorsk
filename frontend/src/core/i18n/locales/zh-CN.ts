@@ -104,16 +104,6 @@ export const zhCN: Translations = {
     createCronPrompt:
       "我们一起创建一个定时任务吧。请告诉我：你想在什么时间、执行什么任务？例如每天早上9点生成工作总结。",
     addAttachments: "添加附件",
-    mode: "模式",
-    flashMode: "闪速",
-    flashModeDescription: "快速且高效的完成任务，但可能不够精准",
-    reasoningMode: "思考",
-    reasoningModeDescription: "思考后再行动，在时间与准确性之间取得平衡",
-    proMode: "Pro",
-    proModeDescription: "思考、计划再执行，获得更精准的结果，可能需要更多时间",
-    ultraMode: "Ultra",
-    ultraModeDescription:
-      "继承自 Pro 模式，可调用子代理分工协作，适合复杂多步骤任务，能力最强",
     reasoningEffort: "推理深度",
     reasoningEffortMinimal: "最低",
     reasoningEffortMinimalDescription: "检索 + 直接输出",
@@ -122,7 +112,8 @@ export const zhCN: Translations = {
     reasoningEffortMedium: "中",
     reasoningEffortMediumDescription: "多层逻辑分析 + 基础验证",
     reasoningEffortHigh: "高",
-    reasoningEffortHighDescription: "全维度逻辑推演 + 多路径验证 + 反推校验",
+    reasoningEffortHighDescription:
+      "全维度逻辑推演 + 多路径验证 + 反推校验，可调用子代理分工协作，能力最强",
     searchModels: "搜索模型...",
     surpriseMe: "小惊喜",
     surpriseMePrompt: "给我一个小惊喜吧",

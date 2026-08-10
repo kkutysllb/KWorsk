@@ -7,7 +7,6 @@ import { tryExtractInlineHumanInputForm } from "@/core/messages/utils";
 import { parseMessageSegments, parseUserPrompt } from "@/core/messages/segments";
 import { cn } from "@/lib/utils";
 
-import { NeuralWaveSpinner } from "./segments/neural-wave-spinner";
 import { ProseContent } from "./segments/prose-content";
 import { ReasoningBlock } from "./segments/reasoning-block";
 import { ToolActivity } from "./segments/tool-activity";
@@ -68,18 +67,10 @@ export const MessageItem = memo(
       () => parseMessageSegments(message, contextMessages),
       [message, contextMessages],
     );
-    const hasSegments = segments.length > 0;
 
     return (
       <div className={cn("group/conversation-message flex w-full", className)}>
         <div className="flex w-full flex-col gap-3.5">
-          {/* Empty turn streaming: flywheel placeholder */}
-          {!hasSegments && isLoading && (
-            <div className="text-muted-foreground flex items-center gap-2 text-sm">
-              <NeuralWaveSpinner />
-              <span>正在启动…</span>
-            </div>
-          )}
           {segments.map((segment, index) => {
             switch (segment.kind) {
               case "reasoning":

@@ -168,7 +168,7 @@ function makeRun(runId: string, status: Run["status"]): Run {
 function Harness({ threadId }: { threadId: string }) {
   const { thread } = useThreadStream({
     threadId,
-    context: { mode: undefined },
+    context: { reasoning_effort: undefined },
     isMock: true,
   });
   return React.createElement(
@@ -181,7 +181,7 @@ function Harness({ threadId }: { threadId: string }) {
 function SubmitHarness({ threadId }: { threadId: string }) {
   const { sendMessage } = useThreadStream({
     threadId,
-    context: { mode: undefined },
+    context: { reasoning_effort: undefined },
     isMock: false,
   });
   return React.createElement(
@@ -199,7 +199,7 @@ function SubmitHarness({ threadId }: { threadId: string }) {
 function StopHarness({ threadId }: { threadId: string }) {
   const { thread } = useThreadStream({
     threadId,
-    context: { mode: undefined },
+    context: { reasoning_effort: undefined },
     isMock: false,
   });
   return React.createElement(

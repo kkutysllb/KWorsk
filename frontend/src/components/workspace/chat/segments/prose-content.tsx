@@ -7,8 +7,6 @@ import { Button } from "@/components/ui/button";
 import { MarkdownContent } from "@/components/workspace/messages/markdown-content";
 import { cn } from "@/lib/utils";
 
-import { NeuralWaveSpinner } from "./neural-wave-spinner";
-
 /**
 * ProseContent — the assistant's natural-language answer, rendered with
 * the shared markdown pipeline (streamdown + streamdown-tight typography).
@@ -65,7 +63,9 @@ function ProseContentInner({
         isLoading={isLoading}
         className="streamdown-tight"
       />
-      {isLoading && <NeuralWaveSpinner className="ml-1.5 align-[-2px]" />}
+      {/* Streaming animation lives at the bottom of the message feed so
+          there is exactly one spinner visible per turn, regardless of
+          which segment type happens to be active. */}
       {!isLoading && (
         <div className="absolute -top-1 right-0 flex items-center opacity-0 transition-opacity group-hover/prose:opacity-100">
           <Button
