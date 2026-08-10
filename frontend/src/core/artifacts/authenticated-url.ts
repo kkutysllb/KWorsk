@@ -3,11 +3,6 @@
 import { useEffect, useMemo, useState } from "react";
 
 import { fetch } from "@/core/api/fetcher";
-import { isDesktopBackendManagedMode } from "@/core/config";
-
-function isDesktopProduction(): boolean {
-  return isDesktopBackendManagedMode();
-}
 
 function parseUrl(url: string): URL | null {
   try {
@@ -47,8 +42,15 @@ function isAttachmentResponse(response: Response): boolean {
   );
 }
 
+/**
+ * Every artifact API URL requires the authenticated fetch path — the
+ * backend rejects bare navigation (window.open / <a href>) with
+ * `not_authenticated` in dev, packaged and web deployments alike. The
+ * desktop-managed check was too narrow: dev-mode backends are not
+ * "managed" but still require auth.
+ */
 export function requiresAuthenticatedArtifactFetch(url: string): boolean {
-  return isDesktopProduction() && isArtifactApiUrl(url);
+  return isArtifactApiUrl(url);
 }
 
 async function fetchAuthenticatedArtifactBlob(url: string): Promise<{
