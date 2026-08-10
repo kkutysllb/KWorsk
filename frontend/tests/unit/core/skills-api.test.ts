@@ -1,4 +1,4 @@
-import { readFileSync } from "node:fs";
+import { existsSync, readFileSync } from "node:fs";
 import { resolve } from "node:path";
 
 import { describe, expect, test } from "vitest";
@@ -8,6 +8,13 @@ const repoRoot = resolve(__dirname, "../../..");
 function read(path: string): string {
   return readFileSync(resolve(repoRoot, path), "utf8");
 }
+
+const REMOVED_WIZARD_COMPONENTS = [
+  // The standalone skill-creation wizard was removed in the
+  // "dual-mode skill install" refactor — skill creation now lives in the
+  // agent wizard (agent-wizard-dialog.tsx) and the skills settings page.
+  "src/components/workspace/skills/create-skill-wizard.tsx",
+] as const;
 
 describe("skills api", () => {
   test("skills api exports createSkill for the wizard", () => {
@@ -46,15 +53,14 @@ describe("skills api", () => {
     expect(source).toMatch(/export function buildCopyTemplate/);
   });
 
-  test("wizard component imports useCreateSkill and renders a mode picker", () => {
-    const source = read(
-      "src/components/workspace/skills/create-skill-wizard.tsx",
-    );
-    expect(source).toMatch(/useCreateSkill/);
-    // Multi-mode wizard (home picker with three modes).
-    expect(source).toMatch(/StepHome/);
-    // Must surface backend errors verbatim.
-    expect(source).toMatch(/toast\.(error|warning)/);
+  test("standalone skill-creation wizard component was removed", () => {
+    for (const componentPath of REMOVED_WIZARD_COMPONENTS) {
+      expect(existsSync(resolve(repoRoot, componentPath))).toBe(false);
+    }
+    // The creation API surface survives (agent wizard / settings UI
+    // consume useCreateSkill instead of a dedicated wizard page).
+    const hooks = read("src/core/skills/hooks.ts");
+    expect(hooks).toMatch(/export function useCreateSkill/);
   });
 
   test("skills index re-exports createSkill and templates", () => {
@@ -87,22 +93,5 @@ describe("skills api", () => {
     expect(source).toMatch(/type CreateMode\b/);
     expect(source).toMatch(/type SupportSubdir\b/);
     expect(source).toMatch(/SUPPORT_SUBDIRS/);
-  });
-
-  test("wizard component renders a home mode picker with three modes", () => {
-    const source = read(
-      "src/components/workspace/skills/create-skill-wizard.tsx",
-    );
-    // Home picker accepts the three creation modes.
-    expect(source).toMatch(/mode: "template"/);
-    expect(source).toMatch(/mode: "upload"/);
-    expect(source).toMatch(/mode: "scripts"/);
-    // Home screen component exists.
-    expect(source).toMatch(/StepHome/);
-    // Both new step components exist.
-    expect(source).toMatch(/StepUploadSkill/);
-    expect(source).toMatch(/StepUploadScripts/);
-    // Uses the file picker (desktop + web fallback).
-    expect(source).toMatch(/openFilePicker/);
   });
 });

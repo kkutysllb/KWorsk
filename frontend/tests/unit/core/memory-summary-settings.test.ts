@@ -79,7 +79,7 @@ describe("old memory page fully removed", () => {
   test("memory-settings-page.tsx is not imported anywhere", () => {
     const files = [
       "src/components/workspace/settings/settings-view.tsx",
-      "src/components/workspace/settings/config-settings-page.tsx",
+      "src/components/workspace/settings/index.ts",
     ];
 
     for (const f of files) {
@@ -102,15 +102,14 @@ describe("old memory page fully removed", () => {
     expect(source).not.toMatch(/\bmemory:\s*\{/);
   });
 
-  test("config-settings-page no longer has title or memory NavItems", () => {
+  test("settings-view no longer has title or memory NavItems", () => {
+    // The old config-settings-page.tsx was removed in the settings
+    // refactor — its former "title"/"memory" sub-pages must not resurface
+    // as NavItems (memorySummary is the new replacement and is allowed).
     const source = read(
-      "src/components/workspace/settings/config-settings-page.tsx",
+      "src/components/workspace/settings/settings-view.tsx",
     );
 
-    // Should not import the old forms
-    expect(source).not.toContain("TitleForm");
-    expect(source).not.toContain("MemoryForm");
-    // No "title" or "memory" sub-page
     expect(source).not.toMatch(/id:\s*["']title["']/);
     expect(source).not.toMatch(/id:\s*["']memory["']/);
   });

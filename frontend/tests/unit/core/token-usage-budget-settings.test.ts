@@ -47,15 +47,17 @@ describe("token-usage-budget settings page", () => {
   });
 });
 
-describe("config-settings-page removes token_usage", () => {
+describe("settings-view removes legacy token_usage", () => {
   test("no longer has token_usage NavItem or TokenUsageForm import", () => {
+    // The old config-settings-page.tsx was removed in the settings
+    // refactor — the legacy token_usage NavItem must not resurface
+    // (tokenUsageBudget is the new replacement and is allowed).
     const source = read(
-      "src/components/workspace/settings/config-settings-page.tsx",
+      "src/components/workspace/settings/settings-view.tsx",
     );
 
-    expect(source).not.toContain("TokenUsageForm");
     expect(source).not.toMatch(/id:\s*["']token_usage["']/);
-    expect(source).not.toContain("ZapIcon");
+    expect(source).toMatch(/id:\s*["']tokenUsageBudget["']/);
   });
 });
 

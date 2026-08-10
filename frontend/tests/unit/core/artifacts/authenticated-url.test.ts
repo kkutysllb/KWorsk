@@ -64,7 +64,7 @@ describe("desktop authenticated artifact URLs", () => {
     vi.restoreAllMocks();
   });
 
-  test("requires authenticated fetch only for desktop production artifact API URLs", () => {
+  test("requires authenticated fetch for every artifact API URL (desktop + web dev)", () => {
     expect(
       requiresAuthenticatedArtifactFetch(
         "http://127.0.0.1:19987/api/threads/t1/artifacts/home/user/.kworks/threads/t1/user-data/outputs/report.txt",
@@ -77,12 +77,15 @@ describe("desktop authenticated artifact URLs", () => {
       ),
     ).toBe(false);
 
+    // Web dev port: still requires auth — the backend rejects bare
+    // navigation with not_authenticated in dev, packaged and web
+    // deployments alike (see requiresAuthenticatedArtifactFetch impl).
     stubLocationPort("18569");
     expect(
       requiresAuthenticatedArtifactFetch(
         "http://127.0.0.1:19987/api/threads/t1/artifacts/home/user/.kworks/threads/t1/user-data/outputs/report.txt",
       ),
-    ).toBe(false);
+    ).toBe(true);
   });
 
   test("fetches artifact blobs with the desktop bearer token", async () => {

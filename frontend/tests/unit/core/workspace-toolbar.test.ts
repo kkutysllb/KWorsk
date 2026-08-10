@@ -36,9 +36,15 @@ describe("workspace chat toolbar", () => {
   });
 
   test.each(chatPages)("%s keeps unboxed utility actions", (_name, source) => {
-    expect(source).toMatch(/\bTokenUsageIndicator\b/);
-    expect(source).toMatch(/\bTodoTrigger\b/);
+    // ArtifactTrigger survives on both pages.
     expect(source).toMatch(/\bArtifactTrigger\b/);
+    // TodoTrigger was removed with the old todo sidebar refactor —
+    // todos now live in the right-context-panel (todos-section.tsx).
+    expect(source).not.toMatch(/\bTodoTrigger\b/);
+  });
+
+  test("workspace chat keeps the task token summary", () => {
+    expect(CHAT_PAGE).toMatch(/\bTaskTokenSummary\b/);
   });
 
   test("desktop providers do not add a custom title bar below the system title bar", () => {

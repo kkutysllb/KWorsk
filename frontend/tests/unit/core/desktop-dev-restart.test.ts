@@ -12,13 +12,15 @@ function read(path: string): string {
 describe("desktop dev restart flow", () => {
   test("config settings use Electron IPC only when the desktop backend is Electron-managed", () => {
     // Restart logic was extracted into the shared useApplyAndRestart hook
-    // (see use-apply-and-restart.ts). Both the hook and the config page that
-    // consumes it must keep using isDesktopBackendManagedMode, not isDesktop().
+    // (see use-apply-and-restart.ts). The hook and the settings pages that
+    // consume it must keep using isDesktopBackendManagedMode, not isDesktop().
+    // (The old config-settings-page.tsx was removed in the settings refactor;
+    // memory-summary-settings-page.tsx is a representative consumer.)
     const hookSource = read(
       "src/components/workspace/settings/use-apply-and-restart.ts",
     );
     const pageSource = read(
-      "src/components/workspace/settings/config-settings-page.tsx",
+      "src/components/workspace/settings/memory-summary-settings-page.tsx",
     );
 
     expect(hookSource).toContain("isDesktopBackendManagedMode");

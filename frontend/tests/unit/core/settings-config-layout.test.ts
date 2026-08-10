@@ -18,59 +18,39 @@ describe("settings config layout", () => {
     expect(source).toContain("[&>div]:!w-full");
   });
 
-  test("keeps the settings dialog content column shrinkable", () => {
+  test("keeps the settings content column shrinkable", () => {
     const source = read(
-      "src/components/workspace/settings/settings-dialog.tsx",
+      "src/components/workspace/settings/settings-view.tsx",
     );
 
-    expect(source).toContain(
-      'className="h-full min-h-0 min-w-0 rounded-lg border"',
-    );
-    expect(source).toContain('className="min-w-0 space-y-8 p-6"');
+    // Main content column must not expand the dialog horizontally.
+    expect(source).toContain('className="flex min-w-0 flex-1 flex-col"');
+    // Title container is truncatable.
+    expect(source).toContain('className="min-w-0"');
+    // Scroll area stays inside the flex column.
+    expect(source).toContain('className="min-h-0 flex-1"');
   });
 
-  test("keeps config panels shrinkable inside the settings dialog", () => {
+  test("wraps settings header actions before they can push content sideways", () => {
     const source = read(
-      "src/components/workspace/settings/config-settings-page.tsx",
+      "src/components/workspace/settings/settings-view.tsx",
     );
 
-    expect(source).toContain("flex min-h-[500px] min-w-0 flex-col gap-4");
-    expect(source).toContain("flex min-w-0 gap-4");
-    expect(source).toContain(
-      'className="h-[calc(75vh-10rem)] min-h-[400px] min-w-0 flex-1 rounded-lg border"',
-    );
-  });
-
-  test("wraps config header actions before they can push content sideways", () => {
-    const source = read(
-      "src/components/workspace/settings/config-settings-page.tsx",
-    );
-
-    expect(source).toContain(
-      "flex flex-col gap-3 border-b pb-3 sm:flex-row sm:items-center sm:justify-between",
-    );
-    expect(source).toContain("min-w-0 items-center gap-2");
-    expect(source).toContain(
-      'className="w-fit gap-1.5 self-start sm:self-auto"',
-    );
+    // Header is a flex row; the title block is min-w-0 so long titles
+    // truncate instead of pushing the content column sideways.
+    expect(source).toContain('className="flex items-center gap-3 border-b px-8 py-5"');
+    expect(source).toContain('className="min-w-0"');
+    expect(source).toMatch(/<h1 className="text-xl font-semibold">/);
   });
 
   test("wraps model config actions and truncates long model rows", () => {
     const source = read(
-      "src/components/workspace/settings/config/model-config-section.tsx",
+      "src/components/workspace/settings/models/models-settings-page.tsx",
     );
 
-    expect(source).toContain(
-      "flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between",
-    );
-    expect(source).toContain('className="min-w-0"');
-    expect(source).toContain(
-      "w-fit bg-gradient-to-r from-cyan-500 to-blue-500 text-white hover:from-cyan-600 hover:to-blue-600 sm:self-auto",
-    );
-    expect(source).toMatch(
-      /className="[^"]*group[^"]*flex[^"]*min-w-0[^"]*items-center[^"]*gap-3[^"]*"/,
-    );
-    expect(source).toContain("flex min-w-0 items-center gap-2");
-    expect(source).toContain("min-w-0 truncate text-sm font-medium");
+    // Long model names truncate inside a min-w-0 flex row.
+    expect(source).toContain('className="min-w-0 flex-1"');
+    expect(source).toContain('className="flex min-w-0 items-center gap-2"');
+    expect(source).toContain('className="min-w-0 truncate text-sm font-medium"');
   });
 });
