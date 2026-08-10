@@ -28,6 +28,7 @@ NO_TAG=false
 ALLOW_DIRTY=false
 NO_FETCH=false
 RESUME=false
+DELETE_TAG=false
 
 ROOT_FILES=(
   "frontend/package.json"
@@ -50,11 +51,15 @@ Examples:
   ./release.sh v0.2.1 --full-build --push --yes
   ./release.sh v0.2.1 --resume --yes
   ./release.sh v0.2.1 --skip-checks --no-commit
+  ./release.sh v0.2.1 --delete-tag --yes
 
 Options:
   --push              Atomic-push the current branch and new tag to GitHub.
   --no-watch          Push the tag but do not wait for GitHub Actions.
   --resume            Do not update/commit/tag/push; watch an existing remote tag run.
+  --delete-tag        Delete an existing tag (local + remote) so the same
+                      version can be released again (e.g. after fixing CI
+                      signing). Use with --yes to skip confirmation.
   --yes               Auto-confirm prompts. Use with care.
   --dry-run           Print the planned release and exit before changing files.
   --skip-checks       Skip test/typecheck/package-resource verification.
@@ -147,6 +152,9 @@ parse_args() {
       --resume)
         RESUME=true
         ;;
+      --delete-tag)
+        DELETE_TAG=true
+        ;;
       --yes)
         YES=true
         ;;
@@ -211,6 +219,16 @@ parse_args() {
 
   if [[ "$RESUME" == true ]]; then
     PUSH=false
+  fi
+  if [[ "$DELETE_TAG" == true ]]; then
+    # --delete-tag only cares about the version/tag; release-prep flags
+    # are not applicable.
+    PUSH=false
+    WATCH=false
+    NO_COMMIT=true
+    NO_TAG=true
+    SKIP_CHECKS=true
+    SKIP_LOCK=true
   fi
 }
 
@@ -285,12 +303,12 @@ ensure_repo_state() {
   fi
 
   if git rev-parse -q --verify "refs/tags/$TAG" >/dev/null; then
-    if [[ "$RESUME" != true ]]; then
+    if [[ "$RESUME" != true && "$DELETE_TAG" != true ]]; then
       die "Local tag already exists: $TAG"
     fi
   fi
   if remote_tag_exists; then
-    if [[ "$RESUME" != true ]]; then
+    if [[ "$RESUME" != true && "$DELETE_TAG" != true ]]; then
       die "Remote tag already exists on $REMOTE: $TAG"
     fi
   elif [[ "$RESUME" == true ]]; then
@@ -554,6 +572,37 @@ EOF
   run git push --atomic "$REMOTE" "$branch" "$TAG"
 }
 
+delete_tag() {
+  # Delete an existing tag locally and on the remote so the same version
+  # can be re-released (e.g. after fixing CI signing/notarization). Does
+  # NOT delete the GitHub Release draft — use `gh release delete $TAG`
+  # separately if the assets also need to go away.
+  if git rev-parse -q --verify "refs/tags/$TAG" >/dev/null; then
+    if confirm "Delete LOCAL tag $TAG?"; then
+      run git tag -d "$TAG"
+    else
+      die "Local tag deletion aborted"
+    fi
+  else
+    log "No local tag $TAG to delete"
+  fi
+
+  if remote_tag_exists; then
+    if confirm "Delete REMOTE tag $TAG on $REMOTE (and its Release if any)?"; then
+      run git push "$REMOTE" ":refs/tags/$TAG"
+    else
+      die "Remote tag deletion aborted"
+    fi
+  else
+    log "No remote tag $TAG on $REMOTE to delete"
+  fi
+
+  log "Tag $TAG deleted (local + remote)."
+  if command -v gh >/dev/null 2>&1; then
+    log "Note: the GitHub Release itself is not removed. Run 'gh release delete $TAG --yes --cleanup-tag' if needed."
+  fi
+}
+
 save_failure_logs() {
   local run_id="$1"
   mkdir -p "$RELEASE_LOG_DIR"
@@ -696,6 +745,12 @@ main() {
 
   if [[ "$DRY_RUN" == true ]]; then
     log "Dry run only; no files changed"
+    exit 0
+  fi
+
+  if [[ "$DELETE_TAG" == true ]]; then
+    delete_tag
+    log "Delete complete for $TAG"
     exit 0
   fi
 
