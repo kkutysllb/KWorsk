@@ -237,10 +237,10 @@ export function GeneralSettingsPage() {
         {/* 退出登录 */}
         <div className="px-4 py-3">
           <Button
-            variant="destructive"
+            variant="outline"
             size="sm"
             onClick={logout}
-            className="gap-2"
+            className="gap-2 text-muted-foreground hover:text-foreground"
           >
             <LogOutIcon className="size-4" />
             {t.settings.account.logout}

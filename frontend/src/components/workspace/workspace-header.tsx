@@ -39,12 +39,12 @@ export function WorkspaceHeader({ className }: { className?: string }) {
           {env.NEXT_PUBLIC_STATIC_WEBSITE_ONLY === "true" ? (
             <Link
               href="/"
-              className="bg-linear-to-r from-cyan-400 via-purple-500 to-pink-500 bg-clip-text text-base font-bold text-transparent"
+              className="bg-linear-to-r from-zinc-200 via-zinc-100 to-zinc-400 bg-clip-text text-base font-bold text-transparent"
             >
               KWorks
             </Link>
           ) : (
-            <span className="bg-linear-to-r from-cyan-400 via-purple-500 to-pink-500 bg-clip-text text-base font-bold text-transparent">
+            <span className="bg-linear-to-r from-zinc-200 via-zinc-100 to-zinc-400 bg-clip-text text-base font-bold text-transparent">
               KWorks
             </span>
           )}

@@ -168,7 +168,7 @@ function ToolCard({
           {hasResult && (
             <DetailDisclosure
               label="执行结果"
-              meta={`${stringify(step.result).length} 字符`}
+              meta={`${approxStringLength(step.result)} 字符`}
               value={stringify(step.result)}
               isResult
             />
@@ -221,16 +221,30 @@ function DetailDisclosure({
   );
 }
 
+const MAX_TOOL_VALUE_CHARS = 8000;
+
 function formatValue(value: unknown): string {
-  if (typeof value === "string") return truncate(value, 4000);
+  if (typeof value === "string") return truncate(value, MAX_TOOL_VALUE_CHARS);
   if (value == null) return String(value);
-  return truncate(JSON.stringify(value, null, 2), 4000);
+  return truncate(JSON.stringify(value, null, 2), MAX_TOOL_VALUE_CHARS);
 }
 
 function stringify(value: unknown): string {
-  if (typeof value === "string") return value;
+  if (typeof value === "string") return truncate(value, MAX_TOOL_VALUE_CHARS);
   if (value == null) return String(value);
-  return JSON.stringify(value, null, 2);
+  return truncate(JSON.stringify(value, null, 2), MAX_TOOL_VALUE_CHARS);
+}
+
+/** Lightweight length-only check to avoid full stringify on every render. */
+function approxStringLength(value: unknown): number {
+  if (typeof value === "string") return value.length;
+  if (value == null) return String(value).length;
+  // Avoid a full second stringify — estimate from JSON length.
+  try {
+    return JSON.stringify(value).length;
+  } catch {
+    return 0;
+  }
 }
 
 function truncate(text: string, max: number): string {

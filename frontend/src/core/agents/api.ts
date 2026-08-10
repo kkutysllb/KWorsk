@@ -1,7 +1,14 @@
 import { fetch } from "@/core/api/fetcher";
 import { getBackendBaseURL } from "@/core/config";
 
-import type { Agent, CreateAgentRequest, UpdateAgentRequest } from "./types";
+import type {
+  Agent,
+  AgentSuggestionRequest,
+  AgentSuggestionResponse,
+  CreateAgentRequest,
+  UpdateAgentRequest,
+  WorkerSpec,
+} from "./types";
 
 const BACKEND_UNAVAILABLE_STATUSES = new Set([502, 503, 504]);
 
@@ -71,6 +78,21 @@ export async function deleteAgent(name: string): Promise<void> {
   if (!res.ok) throw new Error(`Failed to delete agent: ${res.statusText}`);
 }
 
+/** Fetch custom agents projected as orchestration workers. */
+export async function listAgentsAsWorkers(): Promise<WorkerSpec[]> {
+  const res = await fetch(`${getBackendBaseURL()}/api/agents/as-workers`);
+  if (res.status === 403) {
+    const err = (await res.json().catch(() => ({}))) as { detail?: string };
+    if (err.detail?.includes("agents_api.enabled=true")) {
+      return [];
+    }
+    throw new Error(err.detail ?? `Failed to load workers: ${res.statusText}`);
+  }
+  if (!res.ok) throw new Error(`Failed to load workers: ${res.statusText}`);
+  const data = (await res.json()) as { workers: WorkerSpec[] };
+  return data.workers;
+}
+
 export async function checkAgentName(
   name: string,
 ): Promise<{ available: boolean; name: string }> {
@@ -100,4 +122,23 @@ export async function checkAgentName(
     );
   }
   return res.json() as Promise<{ available: boolean; name: string }>;
+}
+
+export async function suggestAgentConfig(
+  request: AgentSuggestionRequest,
+): Promise<AgentSuggestionResponse> {
+  const res = await fetch(`${getBackendBaseURL()}/api/agents/suggest`, {
+    method: "POST",
+    headers: { "Content-Type": "application/json" },
+    body: JSON.stringify(request),
+  });
+  if (res.status === 403) {
+    const err = (await res.json().catch(() => ({}))) as { detail?: string };
+    throw new Error(err.detail ?? "代理 API 未启用");
+  }
+  if (!res.ok) {
+    const err = (await res.json().catch(() => ({}))) as { detail?: string };
+    throw new Error(err.detail ?? "AI 生成失败，请稍后重试");
+  }
+  return res.json() as Promise<AgentSuggestionResponse>;
 }

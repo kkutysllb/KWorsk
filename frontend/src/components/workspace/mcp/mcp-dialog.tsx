@@ -34,17 +34,17 @@ import type { MCPServerConfig, McpOAuthConfig } from "@/core/mcp/types";
 import { McpHelp } from "./mcp-help";
 
 const TYPE_GRADIENTS: Record<string, string> = {
-  stdio: "from-emerald-400 to-teal-400",
-  sse: "from-blue-400 to-cyan-400",
-  http: "from-purple-400 to-fuchsia-400",
-  "streamable-http": "from-purple-400 to-fuchsia-400",
+  stdio: "from-zinc-400 to-zinc-500",
+  sse: "from-zinc-400 to-zinc-500",
+  http: "from-zinc-400 to-zinc-500",
+  "streamable-http": "from-zinc-400 to-zinc-500",
 };
 
 const TYPE_ICONS: Record<string, string> = {
-  stdio: "bg-emerald-500/10 text-emerald-500",
-  sse: "bg-blue-500/10 text-blue-500",
-  http: "bg-purple-500/10 text-purple-500",
-  "streamable-http": "bg-purple-500/10 text-purple-500",
+  stdio: "bg-muted text-foreground",
+  sse: "bg-muted text-foreground",
+  http: "bg-muted text-foreground",
+  "streamable-http": "bg-muted text-foreground",
 };
 
 const labelCls =
@@ -236,9 +236,9 @@ export function McpDialog({
     errFields.has(field) ? "border-destructive" : "";
 
   const gradient =
-    TYPE_GRADIENTS[transportType] ?? "from-amber-400 to-orange-400";
+    TYPE_GRADIENTS[transportType] ?? "from-zinc-400 to-zinc-500";
   const iconColor =
-    TYPE_ICONS[transportType] ?? "bg-amber-500/10 text-amber-500";
+    TYPE_ICONS[transportType] ?? "bg-muted text-foreground";
 
   if (showHelp) {
     return <McpHelp onBack={() => setShowHelp(false)} />;

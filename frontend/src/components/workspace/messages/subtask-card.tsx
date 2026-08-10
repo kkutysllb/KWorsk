@@ -61,8 +61,13 @@ export function SubtaskCard({
 }) {
   const { t } = useI18n();
   const [expanded, setExpanded] = useState(false);
-  const task = useSubtask(taskId)!;
-  const status = task.status;
+  const task = useSubtask(taskId);
+
+  // The subtask is registered into context via a useEffect in MessageFeed,
+  // so on the very first render cycle the task may not exist yet.  Compute
+  // all derived values before any conditional return so hooks order stays
+  // stable, then branch in JSX.
+  const status = task?.status ?? "in_progress";
   const meta = statusMeta(status, t);
 
   const icon = useMemo(() => {
@@ -70,6 +75,23 @@ export function SubtaskCard({
     if (status === "failed") return <AlertCircleIcon className="size-3.5" />;
     return <Loader2Icon className="size-3.5 animate-spin" />;
   }, [status]);
+
+  // Lightweight loading placeholder for the gap between first render and
+  // the useEffect in MessageFeed registering the subtask.
+  if (!task) {
+    return (
+      <div
+        className={cn(
+          "border-border/70 bg-background/40 flex items-center gap-2 overflow-hidden rounded-lg border px-2.5 py-2 text-sm",
+          className,
+        )}
+      >
+        <ClipboardListIcon className="text-muted-foreground size-4 shrink-0" />
+        <Loader2Icon className="text-muted-foreground size-3.5 animate-spin" />
+        <span className="text-muted-foreground">{t.subtasks.subtask}</span>
+      </div>
+    );
+  }
 
   const active = status === "in_progress";
 

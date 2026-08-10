@@ -11,10 +11,25 @@
 import type { AIMessage } from "@langchain/langgraph-sdk";
 import { toast } from "sonner";
 
-/** Callback used to feed `task_running` events into the subtask UI. */
+import type { SubagentStepEvent } from "./run-events-api";
+
+/** Callback used to feed `task_*` events into the subtask UI. */
 export type UpdateSubtaskFn = (update: {
   id: string;
-  latestMessage: AIMessage;
+  latestMessage?: AIMessage;
+  steps?: SubagentStepEvent[];
+  status?: "in_progress" | "completed" | "failed";
+  started_at?: string;
+  completed_at?: string;
+  model_name?: string;
+  token_usage?: {
+    prompt_tokens?: number;
+    completion_tokens?: number;
+    total_tokens?: number;
+  };
+  result?: string;
+  error?: string;
+  duration_ms?: number;
 }) => void;
 
 /** All external collaborators the event handler needs. */
@@ -27,10 +42,12 @@ export interface StreamEventDependencies {
  * Dispatch a single SSE custom event to the appropriate UI feedback.
  *
  * Supported event types:
- *  - `task_running`                → forward latest AI message to subtask UI
- *  - `subagent_limit_truncated`     → toast warning (tasks silently dropped)
+ *  - `task_started`           → mark subtask as in_progress, record start time
+ *  - `task_running`           → forward latest AI message + step to subtask UI
+ *  - `task_completed`         → mark completed, record model/usage/duration
+ *  - `subagent_limit_truncated` → toast warning (tasks silently dropped)
  *  - `task_failed` / `task_timed_out` / `task_cancelled` → toast error
- *  - `llm_retry`                    → generic toast with retry message
+ *  - `llm_retry`              → generic toast with retry message
  *
  * Unknown events are ignored (forwards-compatible with future backend types).
  */
@@ -47,13 +64,64 @@ export function handleStreamEvent(
   // eslint-disable-next-line @typescript-eslint/no-explicit-any
   const type = (event as any).type;
 
+  if (type === "task_started") {
+    const e = event as {
+      type: "task_started";
+      task_id: string;
+      description?: string;
+    };
+    updateSubtask({
+      id: e.task_id,
+      status: "in_progress",
+      started_at: new Date().toISOString(),
+    });
+    return;
+  }
+
   if (type === "task_running") {
     const e = event as {
       type: "task_running";
       task_id: string;
       message: AIMessage;
+      message_index?: number;
     };
     updateSubtask({ id: e.task_id, latestMessage: e.message });
+
+    // Also append as a step for the timeline (if message_index is present).
+    if (e.message_index != null) {
+      const step: SubagentStepEvent = {
+        event_type: "subagent.step",
+        content: {
+          task_id: e.task_id,
+          message_index: e.message_index,
+        },
+        metadata: { task_id: e.task_id, message_index: e.message_index },
+      };
+      updateSubtask({ id: e.task_id, steps: [step] });
+    }
+    return;
+  }
+
+  if (type === "task_completed") {
+    const e = event as {
+      type: "task_completed";
+      task_id: string;
+      result?: string;
+      model_name?: string;
+      usage?: {
+        prompt_tokens?: number;
+        completion_tokens?: number;
+        total_tokens?: number;
+      };
+    };
+    updateSubtask({
+      id: e.task_id,
+      status: "completed",
+      completed_at: new Date().toISOString(),
+      result: e.result,
+      model_name: e.model_name,
+      token_usage: e.usage,
+    });
     return;
   }
 
@@ -74,6 +142,12 @@ export function handleStreamEvent(
       type: "task_failed" | "task_timed_out" | "task_cancelled";
       task_id: string;
       error?: string;
+      model_name?: string;
+      usage?: {
+        prompt_tokens?: number;
+        completion_tokens?: number;
+        total_tokens?: number;
+      };
     };
     const labels: Record<string, string> = {
       task_failed: "子任务执行失败",
@@ -83,6 +157,14 @@ export function handleStreamEvent(
     const label = labels[type] ?? "子任务异常";
     const errorDetail = e.error ? `：${e.error}` : "";
     toast.error(`${label}${errorDetail}`);
+    updateSubtask({
+      id: e.task_id,
+      status: "failed",
+      completed_at: new Date().toISOString(),
+      error: e.error,
+      model_name: e.model_name,
+      token_usage: e.usage,
+    });
     return;
   }
 

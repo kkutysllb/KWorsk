@@ -86,7 +86,7 @@ export function SkillSettingsPage() {
     <SettingsSection
       title={t.settings.skills.title}
       description={t.settings.skills.description}
-      icon={<SparklesIcon className="h-5 w-5 text-violet-500" />}
+      icon={<SparklesIcon className="h-5 w-5" />}
     >
       <div className="flex w-full flex-col gap-4">
         {/* Agent recognition pipeline explanation */}

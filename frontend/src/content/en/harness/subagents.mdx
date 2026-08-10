@@ -24,7 +24,7 @@ Subagents solve two key problems in long-horizon workflows:
 
 ## Built-in subagents
 
-KWorks ships with two built-in subagents:
+KWorks ships with three built-in subagents:
 
 ### general-purpose
 
@@ -40,6 +40,15 @@ A subagent specialized for command-line task execution inside the sandbox. Suita
 - **Default timeout**: 900 seconds (15 minutes)
 - **Default max turns**: 80
 - **Availability**: only exposed when the sandbox's `bash` tool is available (either `allow_host_bash: true` or a container sandbox is configured)
+
+### reviewer
+
+A read-only quality-assurance agent that validates the correctness, completeness, and risk profile of other agents' output. Use it as a final verification step before synthesizing multi-agent results.
+
+- **Default timeout**: 900 seconds (15 minutes)
+- **Default max turns**: 50
+- **Tools**: read-only (`read_file`, `ls`, `glob`, `grep`, `bash`, `web_search`, `web_fetch`) — cannot modify files
+- **Role in multi-agent flow**: completes the execute → review → synthesize loop
 
 ## Delegation flow
 

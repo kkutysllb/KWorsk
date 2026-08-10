@@ -23,7 +23,7 @@ import { Callout, Cards } from "nextra/components";
 
 ## 内置子 Agent
 
-KWorks 内置两个子 Agent：
+KWorks 内置三个子 Agent：
 
 ### general-purpose
 
@@ -39,6 +39,15 @@ KWorks 内置两个子 Agent：
 - **默认超时**：900 秒（15 分钟）
 - **默认最大轮次**：80
 - **可用性**：仅当沙箱的 `bash` 工具可用时才暴露（`allow_host_bash: true` 或配置了容器沙箱）
+
+### reviewer
+
+只读质量审查 Agent，校验其他 Agent 产出的正确性、完整性和风险。在多 Agent 工作流中作为最终验证环节，完成「执行 → 审查 → 综合」闭环。
+
+- **默认超时**：900 秒（15 分钟）
+- **默认最大轮次**：50
+- **工具**：只读权限（`read_file`、`ls`、`glob`、`grep`、`bash`、`web_search`、`web_fetch`）——不可修改文件
+- **多 Agent 流中的角色**：补全执行 → 审查 → 综合的闭环
 
 ## 委派流程
 

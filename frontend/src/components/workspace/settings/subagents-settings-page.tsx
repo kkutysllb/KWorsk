@@ -1,9 +1,16 @@
 "use client";
 
-import { Loader2Icon, UsersIcon } from "lucide-react";
+import {
+  ArrowRightIcon,
+  BotIcon,
+  CheckCircle2Icon,
+  Loader2Icon,
+  UsersIcon,
+} from "lucide-react";
 import { useEffect, useState } from "react";
 import { toast } from "sonner";
 
+import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import {
@@ -14,7 +21,9 @@ import {
   SelectValue,
 } from "@/components/ui/select";
 import { Switch } from "@/components/ui/switch";
-import { Textarea } from "@/components/ui/textarea";
+import { listAgentsAsWorkers } from "@/core/agents/api";
+import type { WorkerSpec } from "@/core/agents/types";
+import { cn } from "@/lib/utils";
 
 import { useConfigSection } from "./config/use-config-section";
 import { SettingsSection } from "./settings-section";
@@ -31,37 +40,13 @@ interface TokenBudget {
   per_agent?: Record<string, unknown>;
 }
 
-interface CustomAgentEntry {
-  description: string;
-  system_prompt: string;
-  tools?: string[] | null;
-  disallowed_tools?: string[] | null;
-  skills?: string[] | null;
-  model?: string;
-  max_turns?: number;
-  timeout_seconds?: number;
-}
-
 interface SubagentsConfig {
   timeout_seconds: number;
   max_turns: number | null;
   max_total_per_run: number;
   token_budget?: TokenBudget;
   agents?: Record<string, unknown>;
-  custom_agents?: Record<string, CustomAgentEntry>;
-}
-
-interface WorkerSpec {
-  name: string;
-  description: string;
-  system_prompt?: string | null;
-  tools?: string[] | null;
-  disallowed_tools?: string[] | null;
-  skills?: string[] | null;
-  model?: string;
-  max_turns?: number;
-  timeout_seconds?: number;
-  role?: string;
+  custom_agents?: Record<string, unknown>;
 }
 
 interface OrchestrationConfig {
@@ -93,7 +78,7 @@ export function SubagentsSettingsPage() {
   return (
     <SettingsSection
       title="子代理与编排"
-      description="配置子代理全局参数与多 Agent 编排模式。"
+      description="配置子代理全局参数与多 Agent 编排模式。自定义代理请前往「代理」设置页统一管理。"
       icon={<UsersIcon className="h-5 w-5 text-primary" />}
     >
       <div className="space-y-6">
@@ -121,8 +106,6 @@ function SubagentsForm() {
   const [tbEnabled, setTbEnabled] = useState(false);
   const [tbMaxTokens, setTbMaxTokens] = useState("");
   const [tbWarnThreshold, setTbWarnThreshold] = useState("");
-  const [customAgentsJson, setCustomAgentsJson] = useState("");
-  const [customAgentsDirty, setCustomAgentsDirty] = useState(false);
 
   useEffect(() => {
     setTimeoutSeconds(String(data.timeout_seconds ?? 1800));
@@ -131,10 +114,6 @@ function SubagentsForm() {
     setTbEnabled(data.token_budget?.enabled ?? false);
     setTbMaxTokens(String(data.token_budget?.max_tokens ?? 2000000));
     setTbWarnThreshold(String(data.token_budget?.warn_threshold ?? 0.7));
-    setCustomAgentsJson(
-      JSON.stringify(data.custom_agents ?? {}, null, 2),
-    );
-    setCustomAgentsDirty(false);
   }, [data]);
 
   const dirty =
@@ -144,31 +123,9 @@ function SubagentsForm() {
     tbEnabled !== (data.token_budget?.enabled ?? false) ||
     Number(tbMaxTokens) !== (data.token_budget?.max_tokens ?? 2000000) ||
     Number(tbWarnThreshold) !==
-      (data.token_budget?.warn_threshold ?? 0.7) ||
-    customAgentsDirty;
+      (data.token_budget?.warn_threshold ?? 0.7);
 
   const handleSave = async () => {
-    let parsedCustomAgents: Record<string, CustomAgentEntry> | undefined;
-    if (customAgentsDirty) {
-      try {
-        const trimmed = customAgentsJson.trim();
-        if (!trimmed || trimmed === "{}") {
-          parsedCustomAgents = {};
-        } else {
-          const parsed = JSON.parse(trimmed);
-          if (typeof parsed !== "object" || parsed === null || Array.isArray(parsed)) {
-            throw new Error("custom_agents 必须是 JSON 对象");
-          }
-          parsedCustomAgents = parsed as Record<string, CustomAgentEntry>;
-        }
-      } catch (e) {
-        toast.error(
-          `custom_agents JSON 解析失败：${e instanceof Error ? e.message : String(e)}`,
-        );
-        return;
-      }
-    }
-
     try {
       const prevTb = data.token_budget ??
         ({} as NonNullable<SubagentsConfig["token_budget"]>);
@@ -193,7 +150,7 @@ function SubagentsForm() {
         max_total_per_run: pickNum(maxTotalPerRun, 6, { min: 1, max: 50 }),
         token_budget,
         ...(data.agents ? { agents: data.agents } : {}),
-        custom_agents: parsedCustomAgents ?? data.custom_agents ?? {},
+        custom_agents: data.custom_agents ?? {},
       };
       await save(payload);
       toast.success("子代理参数已更新");
@@ -209,8 +166,6 @@ function SubagentsForm() {
     setTbEnabled(data.token_budget?.enabled ?? false);
     setTbMaxTokens(String(data.token_budget?.max_tokens ?? 2000000));
     setTbWarnThreshold(String(data.token_budget?.warn_threshold ?? 0.7));
-    setCustomAgentsJson(JSON.stringify(data.custom_agents ?? {}, null, 2));
-    setCustomAgentsDirty(false);
   };
 
   return (
@@ -277,25 +232,15 @@ function SubagentsForm() {
               onChange={setTbWarnThreshold}
               placeholder="0.7"
             />
-            {/* custom_agents JSON 编辑器 */}
-            <div className="px-4 py-3">
-              <p className={labelCls}>自定义子代理类型 (custom_agents)</p>
-              <p className={descCls}>
-                声明可被 task_tool 委派的自定义子代理。每个类型需包含
-                description、system_prompt，可选 tools / skills / model /
-                max_turns / timeout_seconds
-              </p>
-              <Textarea
-                value={customAgentsJson}
-                onChange={(e) => {
-                  setCustomAgentsJson(e.target.value);
-                  setCustomAgentsDirty(true);
-                }}
-                disabled={saving}
-                className="mt-2 min-h-32 font-mono text-xs"
-                spellCheck={false}
-                placeholder={'例如：\n{\n  "researcher": {\n    "description": "深度研究子代理",\n    "system_prompt": "你是一个研究助手…",\n    "model": "inherit",\n    "max_turns": 50\n  }\n}'}
-              />
+            {/* Custom agents 迁移提示 */}
+            <div className="flex items-center justify-between gap-3 px-4 py-3">
+              <div className="min-w-0">
+                <p className={labelCls}>自定义子代理</p>
+                <p className={descCls}>
+                  已迁移到「代理」设置页统一管理，在此创建的代理可直接加入编排
+                </p>
+              </div>
+              <ArrowRightIcon className="text-muted-foreground size-4 shrink-0" />
             </div>
             <div className="flex gap-2 px-4 py-3">
               <Button
@@ -332,48 +277,109 @@ function OrchestrationForm() {
   );
   const [mode, setMode] = useState<"single" | "multi">("single");
   const [maxConcurrency, setMaxConcurrency] = useState("");
-  const [workersJson, setWorkersJson] = useState("");
+  // Worker selection state: name -> { selected, role }
+  const [workerSelections, setWorkerSelections] = useState<
+    Record<string, { selected: boolean; role: string }>
+  >({});
+  const [availableWorkers, setAvailableWorkers] = useState<WorkerSpec[]>([]);
   const [workersDirty, setWorkersDirty] = useState(false);
+  const [loadingWorkers, setLoadingWorkers] = useState(false);
 
+  // Load workers from existing config + fetch available agents
   useEffect(() => {
     setMode(data.mode ?? "single");
     setMaxConcurrency(String(data.max_concurrency ?? 3));
-    setWorkersJson(JSON.stringify(data.workers ?? [], null, 2));
+    const configWorkers = data.workers ?? [];
+    const initial: Record<string, { selected: boolean; role: string }> = {};
+    for (const w of configWorkers) {
+      initial[w.name] = {
+        selected: true,
+        role: w.role ?? "worker",
+      };
+    }
+    setWorkerSelections(initial);
     setWorkersDirty(false);
   }, [data]);
+
+  // Fetch available agents as potential workers
+  useEffect(() => {
+    if (!loading && mode === "multi") {
+      setLoadingWorkers(true);
+      listAgentsAsWorkers()
+        .then((specs) => {
+          setAvailableWorkers(specs);
+          // Merge any config workers not in the agents list (e.g. hand-written)
+          setWorkerSelections((prev) => {
+            const merged = { ...prev };
+            for (const s of specs) {
+              merged[s.name] ??= { selected: false, role: s.role ?? "worker" };
+            }
+            return merged;
+          });
+        })
+        .catch(() => {
+          // Silently fail — the user can still use the saved config
+        })
+        .finally(() => setLoadingWorkers(false));
+    }
+  }, [loading, mode]);
 
   const dirty =
     mode !== (data.mode ?? "single") ||
     Number(maxConcurrency) !== (data.max_concurrency ?? 3) ||
     workersDirty;
 
-  const handleSave = async () => {
-    let parsedWorkers: WorkerSpec[] | undefined;
-    if (workersDirty) {
-      try {
-        const trimmed = workersJson.trim();
-        if (!trimmed || trimmed === "[]") {
-          parsedWorkers = [];
-        } else {
-          const parsed = JSON.parse(trimmed);
-          if (!Array.isArray(parsed)) {
-            throw new Error("workers 必须是 JSON 数组");
-          }
-          parsedWorkers = parsed as WorkerSpec[];
-        }
-      } catch (e) {
-        toast.error(
-          `workers JSON 解析失败：${e instanceof Error ? e.message : String(e)}`,
-        );
-        return;
-      }
-    }
+  const toggleWorker = (name: string) => {
+    setWorkerSelections((prev) => ({
+      ...prev,
+      [name]: {
+        selected: !prev[name]?.selected,
+        role: prev[name]?.role ?? "worker",
+      },
+    }));
+    setWorkersDirty(true);
+  };
 
+  const setWorkerRole = (name: string, role: string) => {
+    setWorkerSelections((prev) => ({
+      ...prev,
+      [name]: {
+        selected: prev[name]?.selected ?? false,
+        role,
+      },
+    }));
+    setWorkersDirty(true);
+  };
+
+  const handleSave = async () => {
     try {
+      // Build workers array from selections
+      const workers: WorkerSpec[] = [];
+      for (const [name, sel] of Object.entries(workerSelections)) {
+        if (sel.selected) {
+          // Find spec from available or from existing config
+          const spec =
+            availableWorkers.find((w) => w.name === name) ??
+            (data.workers ?? []).find((w) => w.name === name);
+          workers.push({
+            name,
+            description: spec?.description ?? "",
+            system_prompt: spec?.system_prompt ?? null,
+            tools: spec?.tools ?? null,
+            disallowed_tools: spec?.disallowed_tools ?? null,
+            skills: spec?.skills ?? null,
+            model: spec?.model ?? "inherit",
+            max_turns: spec?.max_turns ?? null,
+            timeout_seconds: spec?.timeout_seconds ?? null,
+            role: sel.role,
+          });
+        }
+      }
+
       const payload: OrchestrationConfig = {
         mode,
         max_concurrency: pickNum(maxConcurrency, 3, { min: 1 }),
-        workers: parsedWorkers ?? data.workers ?? [],
+        workers,
       };
       await save(payload);
       toast.success("编排配置已更新");
@@ -385,9 +391,16 @@ function OrchestrationForm() {
   const resetAll = () => {
     setMode(data.mode ?? "single");
     setMaxConcurrency(String(data.max_concurrency ?? 3));
-    setWorkersJson(JSON.stringify(data.workers ?? [], null, 2));
+    const configWorkers = data.workers ?? [];
+    const initial: Record<string, { selected: boolean; role: string }> = {};
+    for (const w of configWorkers) {
+      initial[w.name] = { selected: true, role: w.role ?? "worker" };
+    }
+    setWorkerSelections(initial);
     setWorkersDirty(false);
   };
+
+  const selectedCount = Object.values(workerSelections).filter((s) => s.selected).length;
 
   return (
     <section className="space-y-2">
@@ -433,26 +446,97 @@ function OrchestrationForm() {
               onChange={setMaxConcurrency}
               placeholder="3"
             />
-            {/* workers JSON 编辑器 */}
+
+            {/* Worker selection */}
             <div className="px-4 py-3">
-              <p className={labelCls}>编排 Workers</p>
-              <p className={descCls}>
-                multi 模式下的参与者列表。每个 worker 需包含 name、description，
-                可选 system_prompt / tools / skills / model / max_turns /
-                timeout_seconds / role
-              </p>
-              <Textarea
-                value={workersJson}
-                onChange={(e) => {
-                  setWorkersJson(e.target.value);
-                  setWorkersDirty(true);
-                }}
-                disabled={saving}
-                className="mt-2 min-h-32 font-mono text-xs"
-                spellCheck={false}
-                placeholder={'例如：\n[\n  {\n    "name": "researcher",\n    "description": "研究员",\n    "model": "inherit",\n    "role": "worker"\n  }\n]'}
-              />
+              <div className="mb-2 flex items-center justify-between">
+                <div>
+                  <p className={labelCls}>编排 Workers</p>
+                  <p className={descCls}>
+                    从已创建的代理中选择参与者。切换到 multi 模式后至少需要一个 worker
+                  </p>
+                </div>
+                {selectedCount > 0 && (
+                  <Badge variant="secondary">
+                    {selectedCount} / {Object.keys(workerSelections).length} 已选
+                  </Badge>
+                )}
+              </div>
+
+              {mode === "single" ? (
+                <div className="text-muted-foreground rounded-lg bg-muted/30 px-3 py-4 text-center text-xs">
+                  single 模式不需要 workers，子代理通过 task_tool 动态委派
+                </div>
+              ) : loadingWorkers ? (
+                <div className="flex items-center gap-2 py-3 text-xs text-muted-foreground">
+                  <Loader2Icon className="size-3 animate-spin" />
+                  加载可用代理…
+                </div>
+              ) : Object.keys(workerSelections).length === 0 ? (
+                <div className="text-muted-foreground rounded-lg bg-muted/30 px-3 py-4 text-center text-xs">
+                  暂无可用代理。请先在「代理」设置页创建自定义代理
+                </div>
+              ) : (
+                <div className="space-y-1.5">
+                  {Object.entries(workerSelections)
+                    .sort(([, a], [, b]) => Number(b.selected) - Number(a.selected))
+                    .map(([name, sel]) => {
+                      const spec = availableWorkers.find((w) => w.name === name);
+                      return (
+                        <div
+                          key={name}
+                          className={cn(
+                            "flex items-center gap-3 rounded-lg border px-3 py-2 transition-colors",
+                            sel.selected && "border-primary/30 bg-primary/5",
+                          )}
+                        >
+                          <Switch
+                            checked={sel.selected}
+                            onCheckedChange={() => toggleWorker(name)}
+                          />
+                          <div className="min-w-0 flex-1">
+                            <div className="flex items-center gap-1.5">
+                              <BotIcon className="text-muted-foreground size-3.5 shrink-0" />
+                              <span className="text-sm font-medium">{name}</span>
+                            </div>
+                            {spec?.description && (
+                              <p className="text-muted-foreground truncate text-xs">
+                                {spec.description}
+                              </p>
+                            )}
+                          </div>
+                          {sel.selected && (
+                            <Select
+                              value={sel.role}
+                              onValueChange={(v) => setWorkerRole(name, v)}
+                            >
+                              <SelectTrigger className="h-7 w-[110px] text-xs">
+                                <SelectValue />
+                              </SelectTrigger>
+                              <SelectContent>
+                                <SelectItem value="worker">worker</SelectItem>
+                                <SelectItem value="orchestrator">orchestrator</SelectItem>
+                                <SelectItem value="reviewer">reviewer</SelectItem>
+                              </SelectContent>
+                            </Select>
+                          )}
+                        </div>
+                      );
+                    })}
+                </div>
+              )}
+
+              {/* Show config-only workers (not in agents list) */}
+              {(data.workers ?? []).filter(
+                (w) => !availableWorkers.some((a) => a.name === w.name),
+              ).length > 0 && (
+                <div className="mt-2 text-xs text-muted-foreground">
+                  <CheckCircle2Icon className="mr-1 inline size-3" />
+                  另有 {(data.workers ?? []).filter((w) => !availableWorkers.some((a) => a.name === w.name)).length} 个手写配置的 worker（未对应已创建的代理）
+                </div>
+              )}
             </div>
+
             <div className="flex gap-2 px-4 py-3">
               <Button
                 size="sm"

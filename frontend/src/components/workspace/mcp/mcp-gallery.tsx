@@ -306,9 +306,9 @@ export function McpGallery({ embedded = false }: { embedded?: boolean }) {
         ) : serverEntries.length === 0 ? (
           <div className="flex h-64 flex-col items-center justify-center gap-3 text-center">
             <div className="relative">
-              <div className="absolute inset-0 rounded-full bg-amber-500/10 blur-xl" />
-              <div className="relative bg-amber-500/10 flex h-16 w-16 items-center justify-center rounded-2xl ring-1 ring-amber-500/20">
-                <TerminalIcon className="text-amber-500 h-8 w-8" />
+              <div className="absolute inset-0 rounded-full bg-muted blur-xl" />
+              <div className="relative bg-muted flex h-16 w-16 items-center justify-center rounded-2xl ring-1 ring-border">
+                <TerminalIcon className="h-8 w-8" />
               </div>
             </div>
             <div>

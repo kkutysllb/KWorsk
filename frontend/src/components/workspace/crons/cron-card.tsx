@@ -89,7 +89,7 @@ export function CronCard({ task, onRefresh, onDelete }: CronCardProps) {
   return (
     <div className="group flex items-center gap-4 rounded-lg border bg-card px-4 py-3 transition-all duration-200 hover:bg-accent/50 hover:shadow-sm">
       {/* Icon */}
-      <div className="flex size-9 shrink-0 items-center justify-center rounded-lg bg-orange-500/10 text-orange-500">
+      <div className="bg-muted text-foreground flex size-9 shrink-0 items-center justify-center rounded-lg">
         <ClockIcon className="size-4.5" />
       </div>
 

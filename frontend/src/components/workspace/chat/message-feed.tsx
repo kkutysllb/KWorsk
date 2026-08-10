@@ -2,17 +2,21 @@
 
 import type { BaseStream } from "@langchain/langgraph-sdk";
 import { ChevronDownIcon, ChevronUpIcon, Loader2Icon } from "lucide-react";
-import { useCallback, useEffect, useRef } from "react";
+import { useCallback, useEffect, useMemo, useRef } from "react";
+import {
+  useStickToBottomContext,
+} from "use-stick-to-bottom";
 
 import {
   Conversation,
   ConversationContent,
 } from "@/components/ai-elements/conversation";
-import {
-  useStickToBottomContext,
-} from "use-stick-to-bottom";
 import { Button } from "@/components/ui/button";
 import { useI18n } from "@/core/i18n/hooks";
+import {
+  extractHumanInputRequest,
+  type HumanInputResponse,
+} from "@/core/messages/human-input";
 import {
   extractContentFromMessage,
   extractPresentFilesFromMessage,
@@ -21,12 +25,15 @@ import {
   hasPresentFiles,
   isHiddenFromUIMessage,
 } from "@/core/messages/utils";
-import type { Subtask } from "@/core/tasks";
 import { useUpdateSubtask } from "@/core/tasks/context";
 import type { AgentThreadState } from "@/core/threads";
 import { cn } from "@/lib/utils";
 
 import { ArtifactFileList } from "../artifacts/artifact-file-list";
+import {
+  HumanInputCard,
+  type HumanInputSubmitResult,
+} from "../messages/human-input-card";
 import { MarkdownContent } from "../messages/markdown-content";
 import { MessageListSkeleton } from "../messages/skeleton";
 import { SubtaskCard } from "../messages/subtask-card";
@@ -56,6 +63,7 @@ export function MessageFeed({
   loadMoreHistory,
   isHistoryLoading,
   onEditMessage,
+  onHumanInputSubmit,
 }: {
   className?: string;
   threadId: string;
@@ -66,17 +74,49 @@ export function MessageFeed({
   isHistoryLoading?: boolean;
   /** Called when the user edits a human message and saves it. */
   onEditMessage?: (messageId: string, replacementText: string) => void;
+  /** Called when the user submits a clarification card response. */
+  onHumanInputSubmit?: (
+    response: HumanInputResponse,
+  ) => HumanInputSubmitResult | Promise<HumanInputSubmitResult>;
 }) {
   const { t } = useI18n();
   const updateSubtask = useUpdateSubtask();
 
-  const messages = thread.messages.filter((msg) => !isHiddenFromUIMessage(msg));
+  // Memoize the filtered message list so it has a stable reference across
+  // re-renders (as long as thread.messages hasn't changed).  Without this,
+  // every consumer that depends on `messages` (useEffect deps, child
+  // useMemo via contextMessages prop) re-runs on each render.
+  const messages = useMemo(
+    () => thread.messages.filter((msg) => !isHiddenFromUIMessage(msg)),
+    [thread.messages],
+  );
 
   // Only the last visible message is actively streaming — every earlier
   // message is history and must render in its final (done) state.
   const streamingMessageId = thread.isLoading
     ? messages[messages.length - 1]?.id
     : undefined;
+
+  // Populate subtask context from AI messages that contain `task` tool
+  // calls.  This MUST be in useEffect — calling updateSubtask (which calls
+  // setTasks on the SubtasksProvider) during render causes an infinite
+  // re-render loop:  render → setTasks → context change → re-render → …
+  useEffect(() => {
+    for (const msg of messages) {
+      if (msg.type !== "ai") continue;
+      for (const toolCall of msg.tool_calls ?? []) {
+        if (toolCall.name === "task") {
+          updateSubtask({
+            id: toolCall.id!,
+            subagent_type: toolCall.args.subagent_type,
+            description: toolCall.args.description,
+            prompt: toolCall.args.prompt,
+            status: "in_progress",
+          });
+        }
+      }
+    }
+  }, [messages, updateSubtask]);
 
   if (thread.isThreadLoading && messages.length === 0) {
     return <MessageListSkeleton />;
@@ -99,7 +139,7 @@ export function MessageFeed({
                   key={`${group.id}/${msg.id}`}
                   threadId={threadId}
                   message={msg}
-                  contextMessages={group.messages}
+                  contextMessages={messages}
                   isLoading={
                     msg.id != null && msg.id === streamingMessageId
                   }
@@ -119,7 +159,7 @@ export function MessageFeed({
                     key={`${group.id}/${msg.id}`}
                     threadId={threadId}
                     message={msg}
-                    contextMessages={group.messages}
+                    contextMessages={messages}
                     isLoading={
                       msg.id != null && msg.id === streamingMessageId
                     }
@@ -140,7 +180,7 @@ export function MessageFeed({
                     key={`${group.id}/${msg.id}`}
                     threadId={threadId}
                     message={msg}
-                    contextMessages={group.messages}
+                    contextMessages={messages}
                     isLoading={
                       msg.id != null && msg.id === streamingMessageId
                     }
@@ -150,7 +190,22 @@ export function MessageFeed({
             }
             if (group.type === "assistant:clarification") {
               const message = group.messages[0];
-              if (message && hasContent(message)) {
+              if (!message) return null;
+              // Extract the structured HumanInputRequest from the tool
+              // message artifact. If found, render an interactive card;
+              // otherwise fall back to plain markdown text.
+              const request = extractHumanInputRequest(message);
+              if (request) {
+                return (
+                  <div key={group.id} className="w-full">
+                    <HumanInputCard
+                      request={request}
+                      onSubmit={onHumanInputSubmit}
+                    />
+                  </div>
+                );
+              }
+              if (hasContent(message)) {
                 return (
                   <div key={group.id} className="w-full">
                     <MarkdownContent
@@ -183,24 +238,9 @@ export function MessageFeed({
               );
             }
             if (group.type === "assistant:subagent") {
-              const tasks = new Set<Subtask>();
-              for (const message of group.messages) {
-                if (message.type === "ai") {
-                  for (const toolCall of message.tool_calls ?? []) {
-                    if (toolCall.name === "task") {
-                      const task: Subtask = {
-                        id: toolCall.id!,
-                        subagent_type: toolCall.args.subagent_type,
-                        description: toolCall.args.description,
-                        prompt: toolCall.args.prompt,
-                        status: "in_progress",
-                      };
-                      updateSubtask(task);
-                      tasks.add(task);
-                    }
-                  }
-                }
-              }
+              // Subtask definitions are registered into context via the
+              // useEffect above — NOT during render (which would cause an
+              // infinite loop via setTasks).
               const results: React.ReactNode[] = [];
               for (const message of group.messages) {
                 if (message.type === "ai") {

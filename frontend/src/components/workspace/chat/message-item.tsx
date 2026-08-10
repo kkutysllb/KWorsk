@@ -1,7 +1,7 @@
 "use client";
 
 import type { Message } from "@langchain/langgraph-sdk";
-import { memo } from "react";
+import { memo, useMemo } from "react";
 
 import { tryExtractInlineHumanInputForm } from "@/core/messages/utils";
 import { parseMessageSegments, parseUserPrompt } from "@/core/messages/segments";
@@ -60,7 +60,14 @@ export const MessageItem = memo(
       );
     }
 
-    const segments = parseMessageSegments(message, contextMessages);
+    // Memoize segment parsing — during SSE streaming, the parent re-renders
+    // on every token. Without this, parseMessageSegments re-parses every
+    // message in the list each tick (O(n²) with contextMessages scanning
+    // for tool results), which freezes the UI on long conversations.
+    const segments = useMemo(
+      () => parseMessageSegments(message, contextMessages),
+      [message, contextMessages],
+    );
     const hasSegments = segments.length > 0;
 
     return (

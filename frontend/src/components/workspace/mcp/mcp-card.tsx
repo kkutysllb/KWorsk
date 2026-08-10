@@ -14,10 +14,10 @@ import { useI18n } from "@/core/i18n/hooks";
 import type { MCPServerConfig } from "@/core/mcp/types";
 
 const TYPE_ICONS: Record<string, string> = {
-  stdio: "bg-emerald-500/10 text-emerald-500",
-  sse: "bg-blue-500/10 text-blue-500",
-  http: "bg-purple-500/10 text-purple-500",
-  "streamable-http": "bg-purple-500/10 text-purple-500",
+  stdio: "bg-muted text-foreground",
+  sse: "bg-muted text-foreground",
+  http: "bg-muted text-foreground",
+  "streamable-http": "bg-muted text-foreground",
 };
 
 const TYPE_LABELS: Record<string, string> = {
@@ -38,7 +38,7 @@ export function McpCard({ name, config, onEdit, onDelete }: McpCardProps) {
   const { t } = useI18n();
 
   const transportType = config.type || "stdio";
-  const iconColor = TYPE_ICONS[transportType] ?? "bg-amber-500/10 text-amber-500";
+  const iconColor = TYPE_ICONS[transportType] ?? "bg-muted text-foreground";
   const typeLabel = TYPE_LABELS[transportType] ?? transportType.toUpperCase();
 
   return (
@@ -56,7 +56,7 @@ export function McpCard({ name, config, onEdit, onDelete }: McpCardProps) {
             variant={config.enabled ? "default" : "secondary"}
             className={
               config.enabled
-                ? "bg-emerald-500/10 text-emerald-600 border-emerald-500/20 text-[10px] px-1.5 py-0"
+                ? "bg-muted text-foreground border-border text-[10px] px-1.5 py-0"
                 : "bg-muted text-muted-foreground text-[10px] px-1.5 py-0"
             }
           >
@@ -100,7 +100,7 @@ export function McpCard({ name, config, onEdit, onDelete }: McpCardProps) {
               <Button
                 variant="ghost"
                 size="icon"
-                className="size-8 hover:bg-amber-500/10 hover:text-amber-500"
+                className="size-8"
                 onClick={() => onEdit(name)}
               >
                 <Edit2Icon className="size-3.5" />

@@ -119,13 +119,29 @@ export function parseMessageSegments(
 }
 
 /**
+ * Trailing machine-readable payload that the form-submission helper
+ * appends to the user message so the model can reconstruct the field
+ * mapping unambiguously (see
+ * {@link buildHumanInputFormSubmissionValue}). The UI shows only the
+ * human-readable summary above it; this regex strips the bracketed JSON
+ * trailer from the rendered bubble while leaving `message.content`
+ * untouched for the model.
+ */
+const FORM_VALUES_TRAILER = /\s*\[values:\s*\{[^{}]*\}\s*\]\s*$/s;
+
+function stripHumanInputFormTrailer(text: string): string {
+  return text.replace(FORM_VALUES_TRAILER, "").trimEnd();
+}
+
+/**
  * Decompose a human message into a single user-prompt segment.
  */
 export function parseUserPrompt(message: Message): UserPromptSegment {
-  const content =
+  const raw =
     extractContentFromMessage(message) ??
     extractReasoningContentFromMessage(message) ??
     "";
+  const content = stripHumanInputFormTrailer(raw);
   const files = (message.additional_kwargs?.files as
     | FileInMessage[]
     | undefined) ?? [];

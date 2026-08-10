@@ -28,7 +28,6 @@ import { useI18n } from "@/core/i18n/hooks";
 import { cn } from "@/lib/utils";
 
 import { AgentsSettingsPage } from "./agents-settings-page";
-import { BackendControlBar } from "./backend-control-bar";
 import { DataPersistenceSettingsPage } from "./data-persistence-settings-page";
 import { DatasourcesSettingsPage } from "./datasources-settings-page";
 import { GeneralSettingsPage } from "./general-settings-page";
@@ -257,7 +256,6 @@ export function SettingsView({
           </div>
           <ScrollArea className="min-h-0 flex-1">
             <div className="mx-auto w-full max-w-4xl px-8 py-6">
-              <BackendControlBar />
               {active.id === "general" && <GeneralSettingsPage />}
               {active.id === "models" && <ModelsSettingsPage />}
               {active.id === "memorySummary" && <MemorySummarySettingsPage />}

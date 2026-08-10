@@ -20,6 +20,7 @@ import { ThreadTitle } from "@/components/workspace/thread-title";
 import { Tooltip } from "@/components/workspace/tooltip";
 import { useAgent } from "@/core/agents";
 import { useI18n } from "@/core/i18n/hooks";
+import type { HumanInputResponse } from "@/core/messages/human-input";
 import { useNotification } from "@/core/notification/hooks";
 import { useThreadSettings } from "@/core/settings";
 import { useThreadStream } from "@/core/threads/hooks";
@@ -103,6 +104,18 @@ export default function AgentChatPage() {
   const handleStop = useCallback(async () => {
     await thread.stop();
   }, [thread]);
+
+  const handleHumanInputSubmit = useCallback(
+    (response: HumanInputResponse) => {
+      void sendMessage(
+        threadId,
+        { text: response.value, files: [] },
+        { agent_name },
+        { additionalKwargs: { human_input_response: response } },
+      );
+    },
+    [sendMessage, threadId, agent_name],
+  );
 
   // ── 队列协调器（Task 16） ──────────────────────────────────────────
   // sendMessage 签名适配：ThreadStreamLike 期望 (content, attachments)，
@@ -203,6 +216,7 @@ export default function AgentChatPage() {
                 hasMoreHistory={hasMoreHistory}
                 loadMoreHistory={loadMoreHistory}
                 isHistoryLoading={isHistoryLoading}
+                onHumanInputSubmit={handleHumanInputSubmit}
               />
             </div>
 

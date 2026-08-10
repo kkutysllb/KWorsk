@@ -2,34 +2,28 @@
 
 import {
   BotIcon,
+  CrownIcon,
+  EyeIcon,
   Loader2Icon,
   PencilIcon,
   PlusIcon,
   Trash2Icon,
+  WrenchIcon,
 } from "lucide-react";
 import { useCallback, useEffect, useState } from "react";
 import { toast } from "sonner";
 
+import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
-import {
-  Dialog,
-  DialogContent,
-  DialogFooter,
-  DialogHeader,
-  DialogTitle,
-} from "@/components/ui/dialog";
-import { Input } from "@/components/ui/input";
 import { Switch } from "@/components/ui/switch";
-import { Textarea } from "@/components/ui/textarea";
 import {
-  createAgent,
   deleteAgent,
   getAgent,
   listAgents,
-  updateAgent,
 } from "@/core/agents/api";
-import type { Agent, UpdateAgentRequest } from "@/core/agents/types";
+import type { Agent } from "@/core/agents/types";
 
+import { AgentWizardDialog } from "./agent-wizard-dialog";
 import { useConfigSection } from "./config/use-config-section";
 import { SettingsSection } from "./settings-section";
 
@@ -62,7 +56,7 @@ export function AgentsSettingsPage() {
   return (
     <SettingsSection
       title="代理"
-      description="管理自定义代理，启用/禁用代理管理 API。"
+      description="管理自定义代理，启用/禁用代理管理 API。创建的代理可同时用于 single 模式委派和 multi 编排。"
       icon={<BotIcon className="h-5 w-5 text-primary" />}
     >
       <div className="space-y-6">
@@ -121,7 +115,7 @@ export function AgentsSettingsPage() {
         </section>
 
         {/* Agent 列表 */}
-        <AgentsList />
+        <AgentsList enabled={data.enabled} />
       </div>
     </SettingsSection>
   );
@@ -129,7 +123,7 @@ export function AgentsSettingsPage() {
 
 /* ── Agent list ───────────────────────────────────────── */
 
-function AgentsList() {
+function AgentsList({ enabled }: { enabled: boolean }) {
   const [agents, setAgents] = useState<Agent[]>([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
@@ -152,7 +146,7 @@ function AgentsList() {
 
   useEffect(() => {
     void loadAgents();
-  }, [loadAgents]);
+  }, [loadAgents, enabled]);
 
   const handleDelete = async (name: string) => {
     setDeleting(name);
@@ -168,6 +162,10 @@ function AgentsList() {
   };
 
   const handleNew = () => {
+    if (!enabled) {
+      toast.warning("请先启用代理管理 API");
+      return;
+    }
     setEditingAgent(null);
     setDialogOpen(true);
   };
@@ -223,23 +221,52 @@ function AgentsList() {
                   <div className="flex items-center gap-2">
                     <BotIcon className="text-muted-foreground size-4 shrink-0" />
                     <span className="text-sm font-medium">{agent.name}</span>
+                    {agent.role && agent.role !== "worker" && (
+                      <Badge variant="secondary" className="gap-1 text-[10px]">
+                        {agent.role === "orchestrator" ? (
+                          <CrownIcon className="size-2.5" />
+                        ) : agent.role === "reviewer" ? (
+                          <EyeIcon className="size-2.5" />
+                        ) : null}
+                        {agent.role}
+                      </Badge>
+                    )}
                   </div>
                   {agent.description && (
                     <p className="text-muted-foreground mt-1 line-clamp-2 text-xs leading-relaxed">
                       {agent.description}
                     </p>
                   )}
-                  <div className="mt-1.5 flex flex-wrap items-center gap-x-3 gap-y-0.5 text-xs text-muted-foreground">
+                  <div className="mt-1.5 flex flex-wrap items-center gap-1.5 text-xs">
                     {agent.model && (
-                      <span>
-                        <span className="text-muted-foreground/70">模型:</span>{" "}
+                      <Badge variant="outline" className="text-[10px]">
                         {agent.model}
-                      </span>
+                      </Badge>
+                    )}
+                    {agent.tool_groups && agent.tool_groups.length > 0 && (
+                      <Badge variant="outline" className="gap-1 text-[10px]">
+                        <WrenchIcon className="size-2.5" />
+                        {agent.tool_groups.length} 工具
+                      </Badge>
                     )}
                     {agent.skills && agent.skills.length > 0 && (
-                      <span>
-                        <span className="text-muted-foreground/70">技能:</span>{" "}
-                        {agent.skills.length}
+                      <Badge variant="outline" className="text-[10px]">
+                        {agent.skills.length} 技能
+                      </Badge>
+                    )}
+                    {agent.max_turns != null && (
+                      <span className="text-muted-foreground text-[10px]">
+                        {agent.max_turns} 轮
+                      </span>
+                    )}
+                    {agent.timeout_seconds != null && (
+                      <span className="text-muted-foreground text-[10px]">
+                        {agent.timeout_seconds}s
+                      </span>
+                    )}
+                    {agent.thinking_enabled != null && (
+                      <span className="text-muted-foreground text-[10px]">
+                        thinking: {agent.thinking_enabled ? "on" : "off"}
                       </span>
                     )}
                   </div>
@@ -273,196 +300,12 @@ function AgentsList() {
         </div>
       )}
 
-      <AgentDialog
+      <AgentWizardDialog
         open={dialogOpen}
         onOpenChange={setDialogOpen}
         agent={editingAgent}
         onSuccess={handleDialogSuccess}
       />
     </section>
-  );
-}
-
-/* ── Agent create/edit dialog ─────────────────────────── */
-
-interface AgentFormData {
-  name: string;
-  description: string;
-  model: string;
-  skills: string;
-  soul: string;
-}
-
-const EMPTY_FORM: AgentFormData = {
-  name: "",
-  description: "",
-  model: "",
-  skills: "",
-  soul: "",
-};
-
-function AgentDialog({
-  open,
-  onOpenChange,
-  agent,
-  onSuccess,
-}: {
-  open: boolean;
-  onOpenChange: (open: boolean) => void;
-  agent: Agent | null;
-  onSuccess: () => void;
-}) {
-  const isEdit = agent !== null;
-  const [form, setForm] = useState<AgentFormData>(EMPTY_FORM);
-  const [submitting, setSubmitting] = useState(false);
-
-  useEffect(() => {
-    if (open) {
-      if (agent) {
-        setForm({
-          name: agent.name,
-          description: agent.description ?? "",
-          model: agent.model ?? "",
-          skills: agent.skills?.join(", ") ?? "",
-          soul: agent.soul ?? "",
-        });
-      } else {
-        setForm(EMPTY_FORM);
-      }
-    }
-  }, [open, agent]);
-
-  const update = (key: keyof AgentFormData, value: string) =>
-    setForm((prev) => ({ ...prev, [key]: value }));
-
-  const handleSubmit = async (e: React.FormEvent) => {
-    e.preventDefault();
-    if (!form.name.trim()) {
-      toast.error("请填写代理名称");
-      return;
-    }
-
-    const skills = form.skills
-      .split(",")
-      .map((s) => s.trim())
-      .filter(Boolean);
-
-    setSubmitting(true);
-    try {
-      if (isEdit) {
-        const req: UpdateAgentRequest = {
-          description: form.description.trim() || null,
-          model: form.model.trim() || null,
-          skills: skills.length > 0 ? skills : null,
-          soul: form.soul.trim() || null,
-        };
-        await updateAgent(agent!.name, req);
-        toast.success(`已更新代理「${agent!.name}」`);
-      } else {
-        await createAgent({
-          name: form.name.trim(),
-          description: form.description.trim() || undefined,
-          model: form.model.trim() || null,
-          skills: skills.length > 0 ? skills : null,
-          soul: form.soul.trim() || undefined,
-        });
-        toast.success(`已创建代理「${form.name.trim()}」`);
-      }
-      onOpenChange(false);
-      onSuccess();
-    } catch (e) {
-      toast.error(e instanceof Error ? e.message : "操作失败");
-    } finally {
-      setSubmitting(false);
-    }
-  };
-
-  return (
-    <Dialog open={open} onOpenChange={onOpenChange}>
-      <DialogContent className="sm:max-w-lg">
-        <DialogHeader>
-          <DialogTitle>
-            {isEdit ? `编辑代理「${agent?.name}」` : "新建代理"}
-          </DialogTitle>
-        </DialogHeader>
-        <form onSubmit={handleSubmit} className="space-y-4">
-          <div className="space-y-1.5">
-            <label htmlFor="agent-name" className="text-sm font-medium">名称</label>
-            <Input
-              id="agent-name"
-              value={form.name}
-              onChange={(e) => update("name", e.target.value)}
-              disabled={isEdit || submitting}
-              placeholder="如：financial-analyst"
-              className="h-9"
-            />
-            {isEdit && (
-              <p className="text-xs text-muted-foreground">名称创建后不可修改</p>
-            )}
-          </div>
-          <div className="space-y-1.5">
-            <label htmlFor="agent-desc" className="text-sm font-medium">描述</label>
-            <Input
-              id="agent-desc"
-              value={form.description}
-              onChange={(e) => update("description", e.target.value)}
-              disabled={submitting}
-              placeholder="该代理的用途说明"
-              className="h-9"
-            />
-          </div>
-          <div className="space-y-1.5">
-            <label htmlFor="agent-model" className="text-sm font-medium">模型</label>
-            <Input
-              id="agent-model"
-              value={form.model}
-              onChange={(e) => update("model", e.target.value)}
-              disabled={submitting}
-              placeholder="留空继承默认模型"
-              className="h-9"
-            />
-          </div>
-          <div className="space-y-1.5">
-            <label htmlFor="agent-skills" className="text-sm font-medium">技能</label>
-            <Input
-              id="agent-skills"
-              value={form.skills}
-              onChange={(e) => update("skills", e.target.value)}
-              disabled={submitting}
-              placeholder="逗号分隔，如：a-stock-screener, fund-flow"
-              className="h-9"
-            />
-          </div>
-          <div className="space-y-1.5">
-            <label htmlFor="agent-soul" className="text-sm font-medium">系统提示词 (Soul)</label>
-            <Textarea
-              id="agent-soul"
-              value={form.soul}
-              onChange={(e) => update("soul", e.target.value)}
-              disabled={submitting}
-              placeholder="定义该代理的行为和角色…"
-              className="min-h-24 resize-y"
-            />
-          </div>
-          <DialogFooter>
-            <Button
-              type="button"
-              variant="outline"
-              onClick={() => onOpenChange(false)}
-              disabled={submitting}
-            >
-              取消
-            </Button>
-            <Button type="submit" disabled={submitting}>
-              {submitting
-                ? "保存中…"
-                : isEdit
-                  ? "保存"
-                  : "创建"}
-            </Button>
-          </DialogFooter>
-        </form>
-      </DialogContent>
-    </Dialog>
   );
 }

@@ -20,6 +20,7 @@ import {
 import { ThreadContext } from "@/components/workspace/messages/context";
 import { Welcome } from "@/components/workspace/welcome";
 import { useI18n } from "@/core/i18n/hooks";
+import type { HumanInputResponse } from "@/core/messages/human-input";
 import { useNotification } from "@/core/notification/hooks";
 import {
   useThreadSettings,
@@ -108,6 +109,18 @@ export default function ChatPage() {
     await thread.stop();
   }, [thread]);
 
+  const handleHumanInputSubmit = useCallback(
+    (response: HumanInputResponse) => {
+      void sendMessage(threadId, {
+        text: response.value,
+        files: [],
+      }, undefined, {
+        additionalKwargs: { human_input_response: response },
+      });
+    },
+    [sendMessage, threadId],
+  );
+
   // ── 队列协调器（Task 16） ──────────────────────────────────────────
   // sendMessage 签名适配：ThreadStreamLike 期望 (content, attachments)，
   // 而真实 sendMessage 是 (threadId, PromptInputMessage)。这里用闭包包装。
@@ -189,6 +202,7 @@ export default function ChatPage() {
                   hasMoreHistory={hasMoreHistory}
                   loadMoreHistory={loadMoreHistory}
                   isHistoryLoading={isHistoryLoading}
+                  onHumanInputSubmit={handleHumanInputSubmit}
                 />
               </div>
             )}
