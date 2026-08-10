@@ -89,8 +89,21 @@ jobs:
       - name: 校验 macOS 签名与公证（防静默发布损坏包）
         if: runner.os == 'macOS'
         shell: bash
+        env:
+          # 与构建步骤引用相同的 secrets —— 诊断它们是否真的传到了 job。
+          CSC_LINK: ${{ secrets.MAC_CERTIFICATE }}
+          CSC_KEY_PASSWORD: ${{ secrets.MAC_CERTIFICATE_PWD }}
+          APPLE_ID: ${{ secrets.APPLE_ID }}
+          APPLE_APP_SPECIFIC_PASSWORD: ${{ secrets.APPLE_APP_SPECIFIC_PASSWORD }}
+          APPLE_TEAM_ID: ${{ secrets.APPLE_TEAM_ID }}
         run: |
           set -euo pipefail
+          # 诊断：确认 secrets 是否真的传进了 job（只打印长度/是否设置）。
+          echo "[signing-diag] CSC_LINK length=${#CSC_LINK}"
+          echo "[signing-diag] CSC_KEY_PASSWORD set=$([[ -n "$CSC_KEY_PASSWORD" ]] && echo yes || echo no)"
+          echo "[signing-diag] APPLE_ID set=$([[ -n "$APPLE_ID" ]] && echo yes || echo no)"
+          echo "[signing-diag] APPLE_APP_SPECIFIC_PASSWORD set=$([[ -n "$APPLE_APP_SPECIFIC_PASSWORD" ]] && echo yes || echo no)"
+          echo "[signing-diag] APPLE_TEAM_ID set=$([[ -n "$APPLE_TEAM_ID" ]] && echo yes || echo no)"
           APP_BUNDLE="$(find desktop/release -maxdepth 3 -name 'KWorks.app' -type d | head -1)"
           if [ -z "$APP_BUNDLE" ]; then
             echo "::error::未找到 KWorks.app，无法校验签名"
