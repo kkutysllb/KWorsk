@@ -80,11 +80,11 @@ jobs:
         run: |
           # 诊断：确认签名/公证 secrets 是否真的传进了构建步骤（只打印
           # 长度/是否设置，绝不打印内容）。CSC_LINK 应为 4236 字符。
-          echo "::debug::CSC_LINK length=${#CSC_LINK}"
-          echo "::debug::CSC_KEY_PASSWORD set=$([[ -n "$CSC_KEY_PASSWORD" ]] && echo yes || echo no)"
-          echo "::debug::APPLE_ID set=$([[ -n "$APPLE_ID" ]] && echo yes || echo no)"
-          echo "::debug::APPLE_APP_SPECIFIC_PASSWORD set=$([[ -n "$APPLE_APP_SPECIFIC_PASSWORD" ]] && echo yes || echo no)"
-          echo "::debug::APPLE_TEAM_ID set=$([[ -n "$APPLE_TEAM_ID" ]] && echo yes || echo no)"
+          echo "[signing-diag] CSC_LINK length=${#CSC_LINK}"
+          echo "[signing-diag] CSC_KEY_PASSWORD set=$([[ -n "$CSC_KEY_PASSWORD" ]] && echo yes || echo no)"
+          echo "[signing-diag] APPLE_ID set=$([[ -n "$APPLE_ID" ]] && echo yes || echo no)"
+          echo "[signing-diag] APPLE_APP_SPECIFIC_PASSWORD set=$([[ -n "$APPLE_APP_SPECIFIC_PASSWORD" ]] && echo yes || echo no)"
+          echo "[signing-diag] APPLE_TEAM_ID set=$([[ -n "$APPLE_TEAM_ID" ]] && echo yes || echo no)"
           pnpm --dir desktop exec electron-builder --publish never
       - name: 校验 macOS 签名与公证（防静默发布损坏包）
         if: runner.os == 'macOS'
