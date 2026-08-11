@@ -31,17 +31,16 @@ export interface UpdateInfo {
  * normal user quit.
  *
  * Why this matters: ``quitAndInstall()`` internally calls ``app.quit()``,
- * which fires ``before-quit``. The default ``before-quit`` handler in
- * ``main.ts`` calls ``e.preventDefault()`` + ``app.exit(0)`` to force-clean
- * the gateway subprocess. But ``app.exit()`` terminates the process
- * *immediately*, skipping ``will-quit`` / ``quit`` events — and on macOS
- * that also skips the Squirrel.Mac install hooks that swap in the new
- * ``.app`` bundle and relaunch. The result: the update never applies and
- * the user must quit/reopen manually.
+ * which fires ``before-quit``. The ``before-quit`` handler in ``main.ts``
+ * stops the gateway subprocess and then re-triggers ``app.quit()`` so the
+ * full quit lifecycle runs (Squirrel.Mac needs this). Without this flag,
+ * the handler would wait up to 3 seconds for the gateway to shut down
+ * before proceeding — an unnecessary delay when the user explicitly
+ * clicked "restart & install".
  *
- * When this flag is true, ``before-quit`` cleans up the gateway but then
- * *returns without preventing default*, letting the normal quit lifecycle
- * proceed so Squirrel can finish the install.
+ * When this flag is true, ``before-quit`` sends a fire-and-forget SIGTERM
+ * to the gateway and returns without ``preventDefault``, letting the quit
+ * proceed immediately so Squirrel can finish the install.
  */
 export let isUpdateInstallInProgress = false;
 
@@ -374,8 +373,8 @@ export async function registerUpdater(): Promise<void> {
       await autoUpdater.downloadUpdate();
       log.info("[updater] install requested — quitting and installing");
       // Mark this *before* quitAndInstall() so the before-quit handler in
-      // main.ts lets the normal quit lifecycle proceed (instead of calling
-      // app.exit(0), which would skip the Squirrel install hooks).
+      // main.ts does a fast fire-and-forget backend stop (instead of waiting
+      // for graceful shutdown) and lets the quit proceed immediately.
       markUpdateInstallInProgress();
       // quitAndInstall() restarts the app and installs the update. On macOS
       // it's a synchronous relaunch; on Windows/Linux the app quits and

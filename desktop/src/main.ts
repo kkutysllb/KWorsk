@@ -579,17 +579,14 @@ function closeWindowsForQuit(): void {
 }
 
 function quitApp(): void {
-  void forceQuitApp();
-}
-
-async function forceQuitApp(): Promise<void> {
-  if (isShuttingDown) return;
   isQuitting = true;
-  isShuttingDown = true;
-  destroyTray();
-  closeWindowsForQuit();
-  await stopBackendWithTimeout(backend, 2000);
-  app.exit(0);
+  // Use app.quit() — NOT app.exit() — so the full quit lifecycle
+  // (before-quit → close windows → will-quit → quit) runs. On macOS,
+  // Squirrel.Mac hooks into NSApplication's termination flow which only
+  // fires for app.quit(); app.exit() terminates immediately, skipping
+  // Squirrel entirely and preventing any downloaded update from being
+  // applied.
+  app.quit();
 }
 
 // ── Bootstrap ────────────────────────────────────────────────────────────
@@ -662,30 +659,39 @@ app.on("activate", () => {
 });
 
 let isShuttingDown = false;
-app.on("before-quit", async (e) => {
+app.on("before-quit", (e) => {
+  // Re-entry guard: when we re-trigger app.quit() after backend teardown,
+  // before-quit fires again. Let it pass through so the full lifecycle
+  // (close windows → will-quit → quit) completes — Squirrel.Mac needs
+  // this to apply any pending update.
   if (isShuttingDown) return;
 
-  // Update-triggered quit: clean up the gateway subprocess but let the
-  // normal quit lifecycle proceed. We must NOT call app.exit(0) here
-  // because it terminates the process immediately, skipping the
-  // will-quit / quit events that Squirrel.Mac needs to swap in the new
-  // .app bundle and relaunch. Instead we fire-and-forget the backend
-  // teardown (short timeout) and return without preventDefault so
-  // app.quit()'s default behavior runs to completion.
+  isQuitting = true;
+
+  // Update-triggered quit (user clicked "Restart & Install"):
+  // Fire-and-forget SIGTERM to the gateway and let the quit proceed
+  // immediately. The full lifecycle must run for Squirrel.Mac's
+  // applicationShouldTerminate: hook to swap in the new .app bundle.
   if (isUpdateInstallInProgress) {
     isShuttingDown = true;
-    isQuitting = true;
-    destroyTray();
-    closeWindowsForQuit();
-    // Best-effort: stop gateway without blocking the quit for long. If it
-    // doesn't die in time the OS reaps it when the main process exits.
     void stopBackendWithTimeout(backend, 2000);
-    return; // ← do NOT preventDefault; let Squirrel finish the install
+    return; // no preventDefault → quit proceeds → Squirrel installs
   }
 
-  if (backend?.getStatus().status === "stopped") return;
+  // Backend already stopped (or never started): nothing to wait for.
+  if (!backend || backend.getStatus().status === "stopped") return;
+
+  // Backend running: stop it gracefully, THEN re-trigger quit.
+  // preventDefault aborts the current quit; after backend teardown
+  // (or 3s timeout), app.quit() fires before-quit again — the
+  // isShuttingDown guard above lets it pass through the full lifecycle
+  // so Squirrel can apply any pending update via autoInstallOnAppQuit.
   e.preventDefault();
-  await forceQuitApp();
+  isShuttingDown = true;
+  closeWindowsForQuit();
+  void stopBackendWithTimeout(backend, 3000).finally(() => {
+    app.quit();
+  });
 });
 
 // Unregister shortcuts on quit.
