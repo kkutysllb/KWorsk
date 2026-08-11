@@ -164,10 +164,9 @@ export function getRendererLogPath(): string {
 /**
  * The user-writable skills root.
  *
- * `~/.kworks/skills/` contains bundled `builtin/` skills (seeded on
- * first run) AND a writable `custom/` directory so users can create their own
- * skills at runtime. The `builtin/` directory has sub-directories `core/`
- * and `task/` grouping skills by work mode.
+ * `~/.kworks/skills/` contains bundled `public/` skills (seeded on
+ * first run from the PyInstaller bundle) AND a writable `custom/`
+ * directory so users can create their own skills at runtime.
  */
 export function getSkillsDir(): string {
   return join(getAppDataDir(), "skills");

@@ -825,9 +825,11 @@ export class BackendManager extends EventEmitter {
    */
   private initSkills(): void {
     const skillsRoot = getSkillsDir();
+    const publicTarget = join(skillsRoot, "public");
     const customTarget = join(skillsRoot, "custom");
 
     // Create the target directory tree.
+    mkdirSync(publicTarget, { recursive: true });
     mkdirSync(customTarget, { recursive: true });
 
     const builtinRoots = getBundledBuiltinSkillRoots();
@@ -839,18 +841,12 @@ export class BackendManager extends EventEmitter {
     let totalCopied = 0;
 
     for (const bundledRoot of builtinRoots) {
-      // Determine the target sub-directory. New layout: builtinRoot ends
-      // with builtin/core or builtin/task. Legacy: ends with public/ (flat).
-      const rootBasename = bundledRoot.split(/[\\/]/).pop()!;
-      let targetSub: string;
-      if (rootBasename === "core" || rootBasename === "task") {
-        targetSub = join("builtin", rootBasename);
-      } else {
-        // Legacy flat public/ — copy to builtin/task/ as the default bucket
-        targetSub = join("builtin", "task");
-      }
-      const targetDir = join(skillsRoot, targetSub);
-      mkdirSync(targetDir, { recursive: true });
+      // The engine's SkillCategory enum defines: public, custom, integrations,
+      // legacy. Bundled skills are always seeded into the "public" directory
+      // (read-only built-in skills). Regardless of whether the bundled source
+      // uses builtin/core, builtin/task, or legacy public/ layout, they all
+      // go into ~/.kworks/skills/public/ so the engine can discover them.
+      const targetDir = publicTarget;
 
       // Sync: copy each bundled skill that doesn't already exist locally.
       const existing = existsSync(targetDir)
@@ -874,7 +870,7 @@ export class BackendManager extends EventEmitter {
 
     if (totalCopied > 0) {
       this.appendLog(
-        `[backend] synced ${totalCopied} bundled builtin skill(s) to ${skillsRoot}`,
+        `[backend] synced ${totalCopied} bundled public skill(s) to ${skillsRoot}`,
       );
     }
   }
