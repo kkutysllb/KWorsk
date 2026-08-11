@@ -15,6 +15,7 @@ import {
 } from "@/components/ui/select";
 import { Switch } from "@/components/ui/switch";
 import { fetch } from "@/core/api/fetcher";
+import { getBackendBaseURL } from "@/core/config";
 
 import { useConfigSection } from "../use-config-section";
 
@@ -50,7 +51,10 @@ interface EnvKeyItem {
 }
 
 async function fetchEnvKeys(): Promise<EnvKeyItem[]> {
-  const resp = await fetch("/api/datasources/env-keys");
+  // Absolute gateway URL is required: in the packaged build the frontend is a
+  // static export served over the app:// protocol with no /api proxy, so a
+  // relative fetch would hit the SPA fallback (index.html) and fail to parse.
+  const resp = await fetch(`${getBackendBaseURL()}/api/datasources/env-keys`);
   if (!resp.ok) return [];
   const data = await resp.json();
   return (data.keys ?? []) as EnvKeyItem[];
