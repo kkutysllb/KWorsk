@@ -108,6 +108,7 @@ hiddenimports = [
     *collect_submodules("qilin.mcp"),
     *collect_submodules("qilin.models"),
     *collect_submodules("qilin.community"),
+    *collect_submodules("qilin.utils"),
     *collect_submodules("qilin.subagents.builtins"),
     *collect_submodules("qilin.tools.builtins"),
     *collect_submodules("qilin.skills"),
