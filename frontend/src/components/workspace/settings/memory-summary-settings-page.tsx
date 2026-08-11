@@ -1,6 +1,7 @@
 "use client";
 
 import {
+  ChevronDownIcon,
   DatabaseIcon,
   Loader2Icon,
   MessageSquareTextIcon,
@@ -8,9 +9,11 @@ import {
   ScrollTextIcon,
   TypeIcon,
 } from "lucide-react";
+import { useState } from "react";
 
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
+import { cn } from "@/lib/utils";
 
 import { MemoryForm } from "./config/settings-forms/memory-form";
 import { SummarizationForm } from "./config/settings-forms/summarization-form";
@@ -20,6 +23,9 @@ import { useApplyAndRestart } from "./use-apply-and-restart";
 
 export function MemorySummarySettingsPage() {
   const { restarting, applyAndRestart } = useApplyAndRestart();
+  // 记忆事实管理整块可折叠（默认展开）：点击标题栏收起/展开整个
+  // 事实列表，避免长列表占据页面空间。
+  const [factsOpen, setFactsOpen] = useState(true);
 
   return (
     <div className="space-y-6">
@@ -62,14 +68,22 @@ export function MemorySummarySettingsPage() {
       </Card>
 
       <Card>
-        <CardHeader>
+        <CardHeader className="cursor-pointer select-none" onClick={() => setFactsOpen((v) => !v)}>
           <CardTitle className="flex items-center gap-2 text-sm">
             <DatabaseIcon className="size-4" /> 记忆事实管理
+            <ChevronDownIcon
+              className={cn(
+                "ml-auto size-4 text-muted-foreground transition-transform duration-200",
+                factsOpen ? "" : "-rotate-90",
+              )}
+            />
           </CardTitle>
         </CardHeader>
-        <CardContent>
-          <MemoryFactsManager />
-        </CardContent>
+        {factsOpen && (
+          <CardContent>
+            <MemoryFactsManager />
+          </CardContent>
+        )}
       </Card>
 
       <Card>
