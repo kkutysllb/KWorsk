@@ -1,5 +1,16 @@
 # Changelog
 
+## v1.0.1 - 2026-08-11
+
+Compare: `v1.0.0...v1.0.1`
+
+- feat: update welcome page and i18n locale types (46fcd98)
+- fix: add credential usage guidance to finance skill SKILL.md (7c2459d)
+- feat: sandbox credential passthrough UI in Tools & Sandbox settings (10fc15d)
+- feat(settings): collapse the whole memory-facts card as one block (89ad778)
+- Revert "feat(settings): collapse long memory facts in the fact-manager list" (6173d51)
+- feat(settings): collapse long memory facts in the fact-manager list (cc8fa01)
+
 ## v1.0.0 - 2026-08-10
 
 Compare: `v1.0.0`
