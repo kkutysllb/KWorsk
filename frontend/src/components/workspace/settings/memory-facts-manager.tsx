@@ -1,8 +1,6 @@
 "use client";
 
 import {
-  ChevronDownIcon,
-  ChevronUpIcon,
   DownloadIcon,
   Loader2Icon,
   PenLineIcon,
@@ -26,7 +24,6 @@ import {
 import { Input } from "@/components/ui/input";
 import { Textarea } from "@/components/ui/textarea";
 import { exportMemory } from "@/core/memory/api";
-import { cn } from "@/lib/utils";
 import {
   useClearMemory,
   useCreateMemoryFact,
@@ -121,12 +118,6 @@ export function MemoryFactsManager() {
     memory: UserMemory;
   } | null>(null);
   const [isExporting, setIsExporting] = useState(false);
-  // Per-fact expand/collapse state for long content. A fact is in the
-  // set when the user has explicitly expanded it; absent means
-  // collapsed (default). Short facts never appear in the UI toggle.
-  const [expandedFactIds, setExpandedFactIds] = useState<Set<string>>(
-    () => new Set(),
-  );
 
   const normalizedQuery = query.trim().toLowerCase();
   const filteredFacts = memory
@@ -226,23 +217,6 @@ export function MemoryFactsManager() {
       confidence: String(fact.confidence),
     });
     setEditorOpen(true);
-  }
-
-  function toggleFactExpanded(factId: string) {
-    setExpandedFactIds((prev) => {
-      const next = new Set(prev);
-      if (next.has(factId)) next.delete(factId);
-      else next.add(factId);
-      return next;
-    });
-  }
-
-  // Anything longer than ~3 rendered lines (~120 chars after whitespace
-  // collapse) becomes collapsible. Below that, the content fits with
-  // no clamp and no toggle button is shown.
-  const COLLAPSE_THRESHOLD = 120;
-  function isCollapsibleContent(content: string): boolean {
-    return content.replace(/\s+/g, " ").trim().length > COLLAPSE_THRESHOLD;
   }
 
   async function handleSaveFact() {
@@ -400,35 +374,7 @@ export function MemoryFactsManager() {
                     <span className="text-muted-foreground">手动添加</span>
                   )}
                 </div>
-                <p
-                  className={cn(
-                    "text-sm break-words whitespace-pre-wrap",
-                    isCollapsibleContent(fact.content) &&
-                      !expandedFactIds.has(fact.id) &&
-                      "line-clamp-3",
-                  )}
-                >
-                  {fact.content}
-                </p>
-                {isCollapsibleContent(fact.content) && (
-                  <button
-                    type="button"
-                    onClick={() => toggleFactExpanded(fact.id)}
-                    className="text-muted-foreground hover:text-foreground inline-flex items-center gap-0.5 text-xs transition-colors"
-                  >
-                    {expandedFactIds.has(fact.id) ? (
-                      <>
-                        <ChevronUpIcon className="size-3" />
-                        收起
-                      </>
-                    ) : (
-                      <>
-                        <ChevronDownIcon className="size-3" />
-                        展开
-                      </>
-                    )}
-                  </button>
-                )}
+                <p className="text-sm break-words">{fact.content}</p>
               </div>
 
               <div className="flex shrink-0 items-center gap-0.5">
