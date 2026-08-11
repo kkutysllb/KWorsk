@@ -313,6 +313,21 @@ export class BackendManager extends EventEmitter {
       PYTHONDONTWRITEBYTECODE: "1",
     };
 
+    // Playwright chromium location:
+    //  - Packaged desktop: shipped inside the gateway bundle under
+    //    resources/gateway/_internal/ms-playwright (collected by
+    //    kworks-gateway.spec at build time).
+    //  - Dev / source run: fall back to the per-user playwright cache so
+    //    `playwright install chromium` still works out of the box.
+    if (isPackaged() && process.resourcesPath) {
+      env.PLAYWRIGHT_BROWSERS_PATH = join(
+        process.resourcesPath,
+        "gateway",
+        "_internal",
+        "ms-playwright",
+      );
+    }
+
     // Only expose the qilin submodule root in development. The packaged
     // gateway resolves its source from the PyInstaller bundle, and an invalid
     // project root would crash the backend on import.

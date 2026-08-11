@@ -18,6 +18,14 @@ REPO_ROOT="$(cd "$DESKTOP_DIR/.." && pwd)"
 BACKEND_DIR="$REPO_ROOT/qilin"
 SPEC_FILE="$DESKTOP_DIR/backend-build/kworks-gateway.spec"
 RESOURCES_DIR="$DESKTOP_DIR/resources/gateway"
+# Playwright installs browsers (chromium + headless shell) into this
+# directory. We keep them inside the gateway bundle so the frozen
+# desktop build can launch chromium without depending on a per-user
+# ~/.cache/ms-playwright install. PyInstaller collects the directory
+# via kworks-gateway.spec (playwright section), and the gateway sets
+# PLAYWRIGHT_BROWSERS_PATH to this path on startup (see
+# desktop/src/main.ts and desktop/src/backend.ts).
+PLAYWRIGHT_BROWSERS_DIR="$RESOURCES_DIR/_internal/ms-playwright"
 
 # ── Colours ───────────────────────────────────────────────────────────────
 RED='\033[0;31m'
@@ -41,11 +49,13 @@ echo ""
 [[ -f "$SPEC_FILE" ]] || fail "Spec file not found: $SPEC_FILE"
 [[ -d "$BACKEND_DIR" ]] || fail "Backend directory not found: $BACKEND_DIR"
 
-# Ensure backend venv exists
-if [[ ! -d "$BACKEND_DIR/.venv" ]]; then
-    info "Backend venv not found, running 'uv sync'..."
-    (cd "$BACKEND_DIR" && uv sync)
-fi
+# Ensure backend venv has the gateway + browser extras (playwright +
+# chromium). PyInstaller bundles the Python `playwright` module; we
+# additionally download the chromium browser binary into the gateway
+# bundle so the frozen desktop build can launch it without per-user
+# installs (no ~/.cache/ms-playwright dependency at runtime).
+info "Syncing backend (gateway + browser extras)..."
+(cd "$BACKEND_DIR" && uv sync --extra gateway --extra browser)
 
 # Ensure PyInstaller is installed
 info "Checking PyInstaller..."
@@ -54,11 +64,25 @@ info "Checking PyInstaller..."
     (cd "$BACKEND_DIR" && uv add --dev pyinstaller)
 }
 
+# Download chromium into the gateway bundle directory BEFORE
+# PyInstaller runs (the spec reads this directory to add it as a
+# `datas` entry, so it must already exist). PyInstaller then copies
+# the browser binary into _internal/ms-playwright of the frozen
+# gateway so the desktop app can launch chromium without relying on
+# a per-user ~/.cache/ms-playwright install.
+info "Downloading chromium into gateway bundle (this may take a minute)..."
+mkdir -p "$PLAYWRIGHT_BROWSERS_DIR"
+(cd "$BACKEND_DIR" && \
+    PLAYWRIGHT_BROWSERS_PATH="$PLAYWRIGHT_BROWSERS_DIR" \
+    uv run playwright install chromium)
+
+echo ""
+
 # ── Run PyInstaller ──────────────────────────────────────────────────────
 info "Running PyInstaller (this may take several minutes)..."
 echo ""
 
-(cd "$BACKEND_DIR" && uv run pyinstaller "$SPEC_FILE" --noconfirm --clean)
+(cd "$BACKEND_DIR" && PLAYWRIGHT_BROWSERS_DIR="$PLAYWRIGHT_BROWSERS_DIR" uv run pyinstaller "$SPEC_FILE" --noconfirm --clean)
 
 echo ""
 

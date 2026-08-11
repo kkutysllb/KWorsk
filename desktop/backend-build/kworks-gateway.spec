@@ -27,6 +27,20 @@ repo_root = spec_dir.parent.parent           # KWorks 仓库根
 desktop_dir = repo_root / "desktop"
 qilin_root = repo_root / "qilin"
 
+# Playwright Chromium browser bundle (downloaded by build-gateway.sh via
+# `playwright install chromium` into resources/gateway/_internal/ms-playwright,
+# then collected by PyInstaller as datas). At runtime the gateway sets
+# PLAYWRIGHT_BROWSERS_PATH to this onedir-relative path so the frozen
+# build can launch chromium without a per-user ~/.cache/ms-playwright
+# install. The path can be overridden via PLAYWRIGHT_BROWSERS_DIR for
+# local builds outside the standard layout.
+playwright_browsers_dir = Path(
+    os.environ.get(
+        "PLAYWRIGHT_BROWSERS_DIR",
+        str(desktop_dir / "resources" / "gateway" / "_internal" / "ms-playwright"),
+    )
+).resolve()
+
 # macOS 签名：electron-builder 不会递归签名 extraResources 内的 Mach-O，
 # 必须在此预签 gateway 内嵌二进制（CI 传 APPLE_SIGNING_IDENTITY，
 # 格式 "Developer ID Application: 名字 (TeamID)"）。本地构建不传则免签。
@@ -66,6 +80,20 @@ datas = [
     *collect_data_files("app"),
     (str(qilin_root / "extensions_config.example.json"), "."),
 ]
+
+# Playwright Chromium (downloaded by build-gateway.sh into
+# PLAYWRIGHT_BROWSERS_DIR). Collected as datas so PyInstaller copies the
+# browser binary into _internal/ms-playwright of the gateway bundle.
+# The directory is populated before this spec runs (see build-gateway.sh);
+# if it's missing (e.g. someone ran pyinstaller directly without
+# build-gateway.sh), the gateway would still start but browser_navigate
+# would be unavailable — the runtime check logs that clearly.
+if playwright_browsers_dir.is_dir():
+    for entry in sorted(playwright_browsers_dir.iterdir()):
+        # chromium-<rev>/ is the actual browser; chromium_headless_shell-*/
+        # is the headless shell. Both are needed depending on launch mode.
+        if entry.name.startswith(("chromium-", "chromium_headless_shell-")):
+            datas.append((str(entry), f"_internal/ms-playwright/{entry.name}"))
 
 # 引擎按配置字符串动态 import 的模块区域（config.yaml 的 tools/use 字段、
 # 子代理分派、模型 provider 等），静态 import 链看不到，必须显式收集：

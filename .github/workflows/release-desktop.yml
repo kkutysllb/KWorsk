@@ -47,8 +47,8 @@ jobs:
         run: |
           pnpm --dir frontend install --frozen-lockfile
           pnpm --dir desktop install --frozen-lockfile
-      - name: 同步引擎依赖（含 gateway extras）
-        run: cd qilin && uv sync --extra gateway
+      - name: 同步引擎依赖（含 gateway + browser extras）
+        run: cd qilin && uv sync --extra gateway --extra browser
       - name: 编译桌面主进程（tsc）
         run: pnpm --dir desktop run build
       - name: 打包 gateway（PyInstaller onedir）

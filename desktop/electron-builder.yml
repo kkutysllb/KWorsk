@@ -58,6 +58,14 @@ mac:
   entitlements: build/Entitlements.plist
   entitlementsInherit: build/Entitlements.plist
   icon: build/icon.icns
+  # Lock the macOS bundle display name so the system title bar shows
+  # "KWorks" (not a derived double-K, which some build pipelines have
+  # produced in the past). electron-builder otherwise fills
+  # CFBundleDisplayName from `productName`; we pin both to the same
+  # string so the title bar matches the visible brand.
+  extendInfo:
+    CFBundleDisplayName: KWorks
+    CFBundleName: KWorks
   # Notarization: electron-builder v25 auto-notarizes when ALL of these
   # env vars are present — APPLE_ID, APPLE_APP_SPECIFIC_PASSWORD,
   # APPLE_TEAM_ID. We intentionally do NOT set `notarize.teamId` here:
