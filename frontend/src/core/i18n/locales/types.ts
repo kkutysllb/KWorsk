@@ -63,7 +63,11 @@ export interface Translations {
   // Welcome
   welcome: {
     tagline: string;
-    greeting: string;
+    greetings: {
+      morning: string;
+      afternoon: string;
+      evening: string;
+    };
     description: string;
     createYourOwnSkill: string;
     createYourOwnSkillDescription: string;

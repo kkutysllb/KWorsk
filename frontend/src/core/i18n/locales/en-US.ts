@@ -76,7 +76,11 @@ export const enUS: Translations = {
   // Welcome
   welcome: {
     tagline: "Give me a request, and I'll surprise you",
-    greeting: "Hello, again!",
+    greetings: {
+      morning: "Good morning, a fresh start to a new day",
+      afternoon: "Good afternoon, hope your work goes well",
+      evening: "Good evening, great job today",
+    },
     description:
       "Welcome to KWorks, an open source super agent. With built-in and custom skills, KWorks helps you search on the web, analyze data, and generate artifacts like slides, web pages and do almost anything.",
 

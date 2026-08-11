@@ -1,7 +1,16 @@
 "use client";
 
+import { useEffect, useState } from "react";
+
 import { useI18n } from "@/core/i18n/hooks";
 import { cn } from "@/lib/utils";
+
+/** Pick a time-of-day greeting key based on the local hour. */
+function greetingKeyForHour(hour: number): "morning" | "afternoon" | "evening" {
+  if (hour < 12) return "morning";
+  if (hour < 18) return "afternoon";
+  return "evening";
+}
 
 export function Welcome({
   className,
@@ -11,6 +20,15 @@ export function Welcome({
   effort?: "minimal" | "low" | "medium" | "high";
 }) {
   const { t } = useI18n();
+
+  // Compute the greeting on the client only to avoid SSR/CSR hydration
+  // mismatch (the server renders in UTC; the client uses local time).
+  const [greetingKey, setGreetingKey] =
+    useState<"morning" | "afternoon" | "evening">("morning");
+  useEffect(() => {
+    setGreetingKey(greetingKeyForHour(new Date().getHours()));
+  }, []);
+
   return (
     <div
       className={cn(
@@ -33,10 +51,17 @@ export function Welcome({
         </span>
       </div>
 
-      {/* Foreground tagline */}
-      <h2 className="text-foreground relative text-4xl font-semibold tracking-tight md:text-5xl">
-        {t.welcome.tagline}
-      </h2>
+      <div className="relative flex flex-col items-center gap-3">
+        {/* Time-of-day greeting */}
+        <h3 className="text-foreground/70 text-lg font-medium tracking-tight md:text-xl">
+          {t.welcome.greetings[greetingKey]}
+        </h3>
+
+        {/* Foreground tagline */}
+        <h2 className="text-foreground text-4xl font-semibold tracking-tight md:text-5xl">
+          {t.welcome.tagline}
+        </h2>
+      </div>
     </div>
   );
 }
