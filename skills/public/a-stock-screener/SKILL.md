@@ -89,3 +89,15 @@ metadata:
         package: "pandas numpy"
         python: python3
 ---
+
+## 凭证使用
+
+`TUSHARE_TOKEN` 和 `IWENCAI_API_KEY` 已通过沙箱环境变量自动注入，**直接使用即可**，无需查找 `.env` 文件：
+
+```python
+import os
+tushare_token = os.environ['TUSHARE_TOKEN']
+iwencai_key = os.environ['IWENCAI_API_KEY']
+```
+
+**不要**尝试 `load_dotenv()`、`cat .env`、或搜索文件系统——凭证已在环境中。

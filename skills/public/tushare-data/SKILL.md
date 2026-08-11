@@ -66,3 +66,23 @@ tags:
   - data-source
   - integration
 ---
+
+## 凭证使用
+
+`TUSHARE_TOKEN` 已通过沙箱环境变量自动注入，**直接使用即可**，无需查找 `.env` 文件：
+
+```python
+import tushare as ts
+# tushare SDK 自动读取环境变量 TUSHARE_TOKEN
+pro = ts.pro_api()
+data = pro.daily(ts_code='000001.SZ', start_date='20240101', end_date='20240301')
+```
+
+或通过 `os.environ` 显式读取：
+
+```python
+import os
+token = os.environ['TUSHARE_TOKEN']
+```
+
+**不要**尝试 `load_dotenv()`、`cat .env`、或搜索文件系统——凭证已在环境中。
