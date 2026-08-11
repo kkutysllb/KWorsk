@@ -27,13 +27,19 @@ repo_root = spec_dir.parent.parent           # KWorks 仓库根
 desktop_dir = repo_root / "desktop"
 qilin_root = repo_root / "qilin"
 
-# Playwright Chromium browser bundle (downloaded by build-gateway.sh via
-# `playwright install chromium` into resources/gateway/_internal/ms-playwright,
-# then collected by PyInstaller as datas). At runtime the gateway sets
-# PLAYWRIGHT_BROWSERS_PATH to this onedir-relative path so the frozen
-# build can launch chromium without a per-user ~/.cache/ms-playwright
-# install. The path can be overridden via PLAYWRIGHT_BROWSERS_DIR for
-# local builds outside the standard layout.
+# Playwright Chromium browser bundle (downloaded by build-gateway.sh).
+#
+# IMPORTANT: The browser binaries are NOT collected by PyInstaller because
+# COLLECT.assemble() inspects every data file for Mach-O headers and tries
+# to strip/re-sign them, which corrupts the Chromium .app bundle on macOS
+# ("Failed to process binary ...Google Chrome for Testing"). Instead,
+# build-gateway.sh copies the ms-playwright directory into the PyInstaller
+# output directory AFTER the build completes, bypassing PyInstaller's binary
+# processing entirely.
+#
+# At runtime the gateway sets PLAYWRIGHT_BROWSERS_PATH to this onedir-relative
+# path so the frozen build can launch chromium without a per-user
+# ~/.cache/ms-playwright install.
 playwright_browsers_dir = Path(
     os.environ.get(
         "PLAYWRIGHT_BROWSERS_DIR",
@@ -81,19 +87,9 @@ datas = [
     (str(qilin_root / "extensions_config.example.json"), "."),
 ]
 
-# Playwright Chromium (downloaded by build-gateway.sh into
-# PLAYWRIGHT_BROWSERS_DIR). Collected as datas so PyInstaller copies the
-# browser binary into _internal/ms-playwright of the gateway bundle.
-# The directory is populated before this spec runs (see build-gateway.sh);
-# if it's missing (e.g. someone ran pyinstaller directly without
-# build-gateway.sh), the gateway would still start but browser_navigate
-# would be unavailable — the runtime check logs that clearly.
-if playwright_browsers_dir.is_dir():
-    for entry in sorted(playwright_browsers_dir.iterdir()):
-        # chromium-<rev>/ is the actual browser; chromium_headless_shell-*/
-        # is the headless shell. Both are needed depending on launch mode.
-        if entry.name.startswith(("chromium-", "chromium_headless_shell-")):
-            datas.append((str(entry), f"_internal/ms-playwright/{entry.name}"))
+# Playwright Chromium is copied post-build by build-gateway.sh (see comment
+# above). Do NOT add it to datas — PyInstaller's COLLECT corrupts the
+# Chromium Mach-O binary during binary processing.
 
 # 引擎按配置字符串动态 import 的模块区域（config.yaml 的 tools/use 字段、
 # 子代理分派、模型 provider 等），静态 import 链看不到，必须显式收集：

@@ -11,6 +11,10 @@ release/
 resources/gateway/*
 !resources/gateway/.gitkeep
 
+# Playwright browser staging dir (build-gateway.sh downloads chromium here,
+# then copies it into the PyInstaller output post-build)
+.pyinstaller-playwright-staging/
+
 # Build-time assets
 #   icon-source.svg  — committed (source)
 #   icon.{icns,ico,png}, icons/ — committed (generated, needed by CI without rsvg-convert)

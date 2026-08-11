@@ -18,14 +18,14 @@ REPO_ROOT="$(cd "$DESKTOP_DIR/.." && pwd)"
 BACKEND_DIR="$REPO_ROOT/qilin"
 SPEC_FILE="$DESKTOP_DIR/backend-build/kworks-gateway.spec"
 RESOURCES_DIR="$DESKTOP_DIR/resources/gateway"
-# Playwright installs browsers (chromium + headless shell) into this
-# directory. We keep them inside the gateway bundle so the frozen
-# desktop build can launch chromium without depending on a per-user
-# ~/.cache/ms-playwright install. PyInstaller collects the directory
-# via kworks-gateway.spec (playwright section), and the gateway sets
-# PLAYWRIGHT_BROWSERS_PATH to this path on startup (see
+# Playwright installs browsers (chromium + headless shell) into a
+# staging directory. We copy them into the gateway bundle AFTER
+# PyInstaller finishes because PyInstaller's COLLECT step corrupts the
+# Chromium Mach-O binary during binary processing on macOS. The gateway
+# sets PLAYWRIGHT_BROWSERS_PATH to this path on startup (see
 # desktop/src/main.ts and desktop/src/backend.ts).
-PLAYWRIGHT_BROWSERS_DIR="$RESOURCES_DIR/_internal/ms-playwright"
+PLAYWRIGHT_STAGING_DIR="$DESKTOP_DIR/.pyinstaller-playwright-staging"
+PYINSTALLER_OUTPUT="$BACKEND_DIR/dist/kworks-gateway"
 
 # ── Colours ───────────────────────────────────────────────────────────────
 RED='\033[0;31m'
@@ -64,16 +64,17 @@ info "Checking PyInstaller..."
     (cd "$BACKEND_DIR" && uv add --dev pyinstaller)
 }
 
-# Download chromium into the gateway bundle directory BEFORE
-# PyInstaller runs (the spec reads this directory to add it as a
-# `datas` entry, so it must already exist). PyInstaller then copies
-# the browser binary into _internal/ms-playwright of the frozen
-# gateway so the desktop app can launch chromium without relying on
-# a per-user ~/.cache/ms-playwright install.
-info "Downloading chromium into gateway bundle (this may take a minute)..."
-mkdir -p "$PLAYWRIGHT_BROWSERS_DIR"
+# Download chromium into a staging directory (NOT directly into the
+# gateway bundle). PyInstaller cannot process the Chromium binary
+# through its datas/binaries pipeline — COLLECT.assemble() detects the
+# Mach-O header and tries to strip/re-sign it, which fails on macOS.
+# Instead, we copy the browser into the PyInstaller output AFTER the
+# build completes (see post-build copy step below).
+info "Downloading chromium into staging directory (this may take a minute)..."
+rm -rf "$PLAYWRIGHT_STAGING_DIR"
+mkdir -p "$PLAYWRIGHT_STAGING_DIR"
 (cd "$BACKEND_DIR" && \
-    PLAYWRIGHT_BROWSERS_PATH="$PLAYWRIGHT_BROWSERS_DIR" \
+    PLAYWRIGHT_BROWSERS_PATH="$PLAYWRIGHT_STAGING_DIR" \
     uv run playwright install chromium)
 
 echo ""
@@ -82,12 +83,11 @@ echo ""
 info "Running PyInstaller (this may take several minutes)..."
 echo ""
 
-(cd "$BACKEND_DIR" && PLAYWRIGHT_BROWSERS_DIR="$PLAYWRIGHT_BROWSERS_DIR" uv run pyinstaller "$SPEC_FILE" --noconfirm --clean)
+(cd "$BACKEND_DIR" && uv run pyinstaller "$SPEC_FILE" --noconfirm --clean)
 
 echo ""
 
 # ── Verify output ────────────────────────────────────────────────────────
-PYINSTALLER_OUTPUT="$BACKEND_DIR/dist/kworks-gateway"
 
 [[ -d "$PYINSTALLER_OUTPUT" ]] || fail "PyInstaller output not found: $PYINSTALLER_OUTPUT"
 [[ -f "$PYINSTALLER_OUTPUT/kworks-gateway" || -f "$PYINSTALLER_OUTPUT/kworks-gateway.exe" ]] || \
@@ -95,6 +95,21 @@ PYINSTALLER_OUTPUT="$BACKEND_DIR/dist/kworks-gateway"
 
 OUTPUT_SIZE=$(du -sh "$PYINSTALLER_OUTPUT" | cut -f1)
 ok "PyInstaller build complete (${OUTPUT_SIZE})"
+
+# ── Copy Chromium into PyInstaller output (post-build) ───────────────────
+# PyInstaller's COLLECT corrupts the Chromium Mach-O binary, so we copy
+# it after the build finishes. This bypasses PyInstaller's binary
+# processing (strip/re-sign) entirely.
+if [[ -d "$PLAYWRIGHT_STAGING_DIR" ]]; then
+    info "Copying Chromium browser into gateway bundle..."
+    mkdir -p "$PYINSTALLER_OUTPUT/_internal/ms-playwright"
+    cp -R "$PLAYWRIGHT_STAGING_DIR/"* "$PYINSTALLER_OUTPUT/_internal/ms-playwright/"
+    rm -rf "$PLAYWRIGHT_STAGING_DIR"
+    PLAYWRIGHT_SIZE=$(du -sh "$PYINSTALLER_OUTPUT/_internal/ms-playwright" | cut -f1)
+    ok "Chromium browser copied (${PLAYWRIGHT_SIZE})"
+else
+    warn "Playwright staging directory not found — browser tools will be unavailable"
+fi
 
 # ── Copy to resources/gateway/ ──────────────────────────────────────────
 info "Copying gateway bundle to resources/gateway/ ..."
