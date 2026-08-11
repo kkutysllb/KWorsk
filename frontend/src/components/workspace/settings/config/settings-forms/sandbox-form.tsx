@@ -1,7 +1,7 @@
 "use client";
 
-import { Loader2Icon } from "lucide-react";
-import { useEffect, useState } from "react";
+import { KeyRoundIcon, Loader2Icon } from "lucide-react";
+import { useCallback, useEffect, useState } from "react";
 import { toast } from "sonner";
 
 import { Button } from "@/components/ui/button";
@@ -14,6 +14,7 @@ import {
   SelectValue,
 } from "@/components/ui/select";
 import { Switch } from "@/components/ui/switch";
+import { fetch } from "@/core/api/fetcher";
 
 import { useConfigSection } from "../use-config-section";
 
@@ -27,6 +28,7 @@ interface SandboxConfig {
   read_file_output_max_chars: number;
   ls_output_max_chars: number;
   bash_command_timeout: number;
+  environment: Record<string, string>;
 }
 
 const defaultConfig: SandboxConfig = {
@@ -36,7 +38,23 @@ const defaultConfig: SandboxConfig = {
   read_file_output_max_chars: 50000,
   ls_output_max_chars: 20000,
   bash_command_timeout: 600,
+  environment: {},
 };
+
+// ── Env key discovery ──────────────────────────────────────────────────
+
+interface EnvKeyItem {
+  key: string;
+  configured: boolean;
+  is_secret: boolean;
+}
+
+async function fetchEnvKeys(): Promise<EnvKeyItem[]> {
+  const resp = await fetch("/api/datasources/env-keys");
+  if (!resp.ok) return [];
+  const data = await resp.json();
+  return (data.keys ?? []) as EnvKeyItem[];
+}
 
 export function SandboxForm() {
   const { data: rawData, loading, saving, save } = useConfigSection<SandboxConfig>(
@@ -47,11 +65,28 @@ export function SandboxForm() {
   const data: SandboxConfig = { ...defaultConfig, ...rawData };
   const [local, setLocal] = useState<SandboxConfig>(data);
   const [providerKey, setProviderKey] = useState("local");
+  const [envKeys, setEnvKeys] = useState<EnvKeyItem[]>([]);
+  const [envKeysLoading, setEnvKeysLoading] = useState(true);
 
   useEffect(() => {
     setLocal({ ...defaultConfig, ...rawData });
     setProviderKey(rawData.use?.includes("Local") ? "local" : "docker");
   }, [rawData]);
+
+  const refreshEnvKeys = useCallback(async () => {
+    setEnvKeysLoading(true);
+    try {
+      setEnvKeys(await fetchEnvKeys());
+    } catch {
+      setEnvKeys([]);
+    } finally {
+      setEnvKeysLoading(false);
+    }
+  }, []);
+
+  useEffect(() => {
+    void refreshEnvKeys();
+  }, [refreshEnvKeys]);
 
   const dirty = JSON.stringify(local) !== JSON.stringify(data);
 
@@ -68,6 +103,22 @@ export function SandboxForm() {
       update("use", "kworks.sandbox.docker:DockerSandboxProvider");
     }
   };
+
+  // Toggle a credential key in sandbox.environment. When enabled, the value
+  // is stored as "$KEY" so the gateway resolves it from os.environ at runtime.
+  const toggleEnvKey = (key: string, enabled: boolean) => {
+    setLocal((prev) => {
+      const next = { ...prev.environment };
+      if (enabled) {
+        next[key] = `$${key}`;
+      } else {
+        delete next[key];
+      }
+      return { ...prev, environment: next };
+    });
+  };
+
+  const isEnvKeyEnabled = (key: string) => key in local.environment;
 
   const handleSave = async () => {
     try {
@@ -187,6 +238,51 @@ export function SandboxForm() {
             <p className={hintCls}>
               单条主机 Bash 命令的最大执行时间，超时后进程组将被终止
             </p>
+          </div>
+
+          {/* Credential passthrough */}
+          <div className="space-y-2 border-t pt-3">
+            <div className="flex items-center gap-1.5">
+              <KeyRoundIcon className="size-3.5 text-muted-foreground" />
+              <label className={labelCls}>凭证透传</label>
+            </div>
+            <p className={hintCls}>
+              沙箱默认清除 <code className="text-xs">*KEY</code> / <code className="text-xs">*TOKEN</code> / <code className="text-xs">*SECRET</code> 环境变量。
+              开启需要的凭证后，智能体的 bash/python 脚本才能读取它们。
+            </p>
+            {envKeysLoading ? (
+              <div className="flex items-center gap-2 text-xs text-muted-foreground">
+                <Loader2Icon className="size-3 animate-spin" />
+                加载凭证列表…
+              </div>
+            ) : envKeys.length === 0 ? (
+              <p className="text-xs text-muted-foreground">
+                .env 中没有已配置的凭证。请在「数据源」或「技能模型」中先配置。
+              </p>
+            ) : (
+              <div className="space-y-1.5">
+                {envKeys.map((item) => (
+                  <div
+                    key={item.key}
+                    className="flex items-center justify-between rounded-md border bg-muted/20 px-3 py-1.5"
+                  >
+                    <div className="min-w-0">
+                      <span className="font-mono text-xs">{item.key}</span>
+                      {!item.configured && (
+                        <span className="ml-1.5 text-xs text-muted-foreground">
+                          （未配置）
+                        </span>
+                      )}
+                    </div>
+                    <Switch
+                      checked={isEnvKeyEnabled(item.key)}
+                      onCheckedChange={(v) => toggleEnvKey(item.key, v)}
+                      disabled={saving || !item.configured}
+                    />
+                  </div>
+                ))}
+              </div>
+            )}
           </div>
 
           <div className="flex gap-2 pt-1">
