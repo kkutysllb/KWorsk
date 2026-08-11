@@ -83,6 +83,10 @@ datas = [
             "skills/storage/**",
         ],
     ),
+    # qilinmem backend YAML data: message_patterns/*.yaml + prompts/*.yaml.
+    # These are loaded at runtime by load_patterns() / load_prompt() and
+    # must be in the bundle for the memory subsystem to work.
+    *collect_data_files("qilin.agents.memory.backends.qilinmem"),
     *collect_data_files("app"),
     (str(qilin_root / "extensions_config.example.json"), "."),
 ]
@@ -115,7 +119,12 @@ hiddenimports = [
     # Memory backends: _scan_backends() discovers these dynamically via
     # pkgutil.iter_modules, so they must be explicitly collected for the
     # frozen build (the static import chain does not reach them).
+    # The qilinmem backend has a deeply nested qilinmem/qilinmem/core/
+    # structure — force-collect each level to ensure no submodule is missed.
     *collect_submodules("qilin.agents.memory.backends"),
+    *collect_submodules("qilin.agents.memory.backends.qilinmem"),
+    *collect_submodules("qilin.agents.memory.backends.qilinmem.qilinmem"),
+    *collect_submodules("qilin.agents.memory.backends.qilinmem.qilinmem.core"),
 ]
 
 a = Analysis(
