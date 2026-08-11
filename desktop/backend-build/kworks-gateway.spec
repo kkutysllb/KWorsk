@@ -111,6 +111,10 @@ hiddenimports = [
     *collect_submodules("qilin.subagents.builtins"),
     *collect_submodules("qilin.tools.builtins"),
     *collect_submodules("qilin.skills"),
+    # Memory backends: _scan_backends() discovers these dynamically via
+    # pkgutil.iter_modules, so they must be explicitly collected for the
+    # frozen build (the static import chain does not reach them).
+    *collect_submodules("qilin.agents.memory.backends"),
 ]
 
 a = Analysis(
