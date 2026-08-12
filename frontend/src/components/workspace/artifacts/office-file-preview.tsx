@@ -94,31 +94,35 @@ function ErrorState({ message }: { message: string }) {
 /* -------------------------------------------------------------------------- */
 
 function XlsxRenderer({ data }: { data: ArrayBuffer }) {
-  const [sheets, setSheets] = useState<{ name: string; html: string }[]>([]);
+  const [workbook, setWorkbook] = useState<{
+    names: string[];
+    getHtml: (index: number) => string;
+  }>();
   const [activeSheet, setActiveSheet] = useState(0);
   const [error, setError] = useState<string>();
+  const tableRef = useRef<HTMLDivElement>(null);
 
   useEffect(() => {
     let cancelled = false;
-    // Lazy-load SheetJS to keep initial bundle small
     import("xlsx")
       .then((XLSX) => {
         if (cancelled) return;
         try {
           const wb = XLSX.read(data, { type: "array" });
-          const rendered = wb.SheetNames.map((name) => {
-            const sheet = wb.Sheets[name];
-            if (!sheet) return { name, html: "<p>Empty sheet</p>" };
-            // sheet_to_html returns a full <html><body>...</body></html>.
-            // Extract just the <table> so it renders as an inline fragment.
-            const full = XLSX.utils.sheet_to_html(sheet, {
-              editable: false,
-            });
-            const match = full.match(/<table[\s\S]*<\/table>/i);
-            return { name, html: match ? match[0] : full };
-          });
           if (!cancelled) {
-            setSheets(rendered);
+            setWorkbook({
+              names: wb.SheetNames as string[],
+              getHtml: (i: number) => {
+                const sheetName = wb.SheetNames[i];
+                const sheet = sheetName ? wb.Sheets[sheetName] : undefined;
+                if (!sheet) return "<p>Empty sheet</p>";
+                const full = XLSX.utils.sheet_to_html(sheet, {
+                  editable: false,
+                });
+                const m = full.match(/<table[\s\S]*<\/table>/i);
+                return m ? m[0] : full;
+              },
+            });
             setActiveSheet(0);
           }
         } catch {
@@ -133,16 +137,22 @@ function XlsxRenderer({ data }: { data: ArrayBuffer }) {
     };
   }, [data]);
 
+  // Render active sheet's HTML into the ref div
+  useEffect(() => {
+    if (!tableRef.current || !workbook) return;
+    tableRef.current.innerHTML = workbook.getHtml(activeSheet);
+  }, [workbook, activeSheet]);
+
   if (error) return <ErrorState message={error} />;
-  if (sheets.length === 0) return <LoadingState />;
+  if (!workbook) return <LoadingState />;
 
   return (
     <div className="flex size-full flex-col overflow-hidden">
-      {sheets.length > 1 && (
-        <div className="relative z-30 flex shrink-0 items-center gap-1 border-b bg-background px-3 py-1.5">
-          {sheets.map((s, i) => (
+      {workbook.names.length > 1 && (
+        <div className="z-30 flex shrink-0 items-center gap-1 border-b bg-background px-3 py-1.5">
+          {workbook.names.map((name, i) => (
             <button
-              key={s.name}
+              key={name}
               type="button"
               onClick={() => setActiveSheet(i)}
               className={cn(
@@ -152,14 +162,14 @@ function XlsxRenderer({ data }: { data: ArrayBuffer }) {
                   : "text-muted-foreground hover:bg-muted hover:text-foreground",
               )}
             >
-              {s.name}
+              {name}
             </button>
           ))}
         </div>
       )}
       <div
+        ref={tableRef}
         className="xlsx-preview min-h-0 flex-1 overflow-auto p-4"
-        dangerouslySetInnerHTML={{ __html: sheets[activeSheet]?.html ?? "" }}
       />
     </div>
   );
