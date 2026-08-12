@@ -108,12 +108,14 @@ function XlsxRenderer({ data }: { data: ArrayBuffer }) {
           const wb = XLSX.read(data, { type: "array" });
           const rendered = wb.SheetNames.map((name) => {
             const sheet = wb.Sheets[name];
-            return {
-              name,
-              html: sheet
-                ? XLSX.utils.sheet_to_html(sheet, { editable: false })
-                : "<p>Empty sheet</p>",
-            };
+            if (!sheet) return { name, html: "<p>Empty sheet</p>" };
+            // sheet_to_html returns a full <html><body>...</body></html>.
+            // Extract just the <table> so it renders as an inline fragment.
+            const full = XLSX.utils.sheet_to_html(sheet, {
+              editable: false,
+            });
+            const match = full.match(/<table[\s\S]*<\/table>/i);
+            return { name, html: match ? match[0] : full };
           });
           if (!cancelled) {
             setSheets(rendered);
@@ -135,12 +137,13 @@ function XlsxRenderer({ data }: { data: ArrayBuffer }) {
   if (sheets.length === 0) return <LoadingState />;
 
   return (
-    <div className="flex size-full flex-col">
+    <div className="flex size-full flex-col overflow-hidden">
       {sheets.length > 1 && (
-        <div className="relative z-20 flex shrink-0 items-center gap-1 border-b px-3 py-1.5">
+        <div className="relative z-30 flex shrink-0 items-center gap-1 border-b bg-background px-3 py-1.5">
           {sheets.map((s, i) => (
             <button
               key={s.name}
+              type="button"
               onClick={() => setActiveSheet(i)}
               className={cn(
                 "rounded-md px-3 py-1 text-xs font-medium transition-colors",
