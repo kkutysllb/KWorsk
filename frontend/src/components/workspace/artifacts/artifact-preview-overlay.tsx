@@ -4,9 +4,7 @@ import { ArrowLeftIcon, DownloadIcon } from "lucide-react";
 import { useCallback } from "react";
 
 import { Button } from "@/components/ui/button";
-import {
-  downloadArtifactUrl,
-} from "@/core/artifacts/authenticated-url";
+import { downloadArtifactUrl } from "@/core/artifacts/authenticated-url";
 import { urlOfArtifact } from "@/core/artifacts/utils";
 import { useI18n } from "@/core/i18n/hooks";
 import { getFileName } from "@/core/utils/files";
@@ -58,39 +56,45 @@ export function ArtifactPreviewOverlay({
       aria-modal="true"
       aria-label="Artifact preview"
       className={cn(
-        "fixed inset-0 z-50 flex flex-col bg-background/95 backdrop-blur-sm",
+        "bg-background/95 fixed inset-0 z-50 flex min-h-0 flex-col backdrop-blur-sm",
         className,
       )}
     >
-      {/* Top-right toolbar: 下载 + 返回任务 */}
-      <div className="pointer-events-none absolute top-3 right-4 z-10 flex items-center gap-2">
-        <Button
-          size="sm"
-          variant="outline"
-          className="pointer-events-auto gap-1.5 bg-background/80 backdrop-blur"
-          onClick={handleDownload}
-          aria-label={t.common.download}
-        >
-          <DownloadIcon className="size-4" />
-          <span>{t.common.download}</span>
-        </Button>
-        <Button
-          size="sm"
-          className="pointer-events-auto gap-1.5"
-          onClick={handleClose}
-          aria-label="返回任务"
-        >
-          <ArrowLeftIcon className="size-4" />
-          <span>返回任务</span>
-        </Button>
+      {/* Reserve the desktop title-bar/drag region for every preview type.
+          Interactive controls opt out of dragging; file content begins below
+          this shared header instead of rendering under it. */}
+      <div className="bg-background/90 relative z-20 flex h-12 shrink-0 items-center justify-end border-b px-4 backdrop-blur [-webkit-app-region:drag]">
+        <div className="flex items-center gap-2 [-webkit-app-region:no-drag]">
+          <Button
+            size="sm"
+            variant="outline"
+            className="bg-background/80 gap-1.5 backdrop-blur"
+            onClick={handleDownload}
+            aria-label={t.common.download}
+          >
+            <DownloadIcon className="size-4" />
+            <span>{t.common.download}</span>
+          </Button>
+          <Button
+            size="sm"
+            className="gap-1.5"
+            onClick={handleClose}
+            aria-label="返回任务"
+          >
+            <ArrowLeftIcon className="size-4" />
+            <span>返回任务</span>
+          </Button>
+        </div>
       </div>
 
-      <ArtifactFileDetail
-        className="size-full"
-        hideHeader
-        filepath={selectedArtifact}
-        threadId={threadId}
-      />
+      <div className="min-h-0 flex-1 overflow-hidden [-webkit-app-region:no-drag]">
+        <ArtifactFileDetail
+          className="size-full rounded-none border-0 shadow-none"
+          hideHeader
+          filepath={selectedArtifact}
+          threadId={threadId}
+        />
+      </div>
     </div>
   );
 }

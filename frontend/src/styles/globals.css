@@ -400,6 +400,29 @@
   max-width: 100%;
 }
 
+/* Keep Streamdown code/diagram actions inside the message block. The
+   renderer's default sticky, negative-margin toolbar is intended for a
+   scrolling code viewer; in the chat feed it can float above the card and
+   appear detached from the rendered message. */
+.streamdown-tight [data-streamdown="code-block"],
+.streamdown-tight [data-streamdown="mermaid-block"] {
+  position: relative;
+}
+
+.streamdown-tight
+  [data-streamdown="code-block"]
+  > :has(> [data-streamdown="code-block-actions"]),
+.streamdown-tight
+  [data-streamdown="mermaid-block"]
+  > :has(> [data-streamdown="mermaid-block-actions"]) {
+  position: absolute;
+  top: 0.5rem;
+  right: 0.5rem;
+  z-index: 10;
+  height: auto;
+  margin-top: 0;
+}
+
 @theme inline {
   --radius-sm: calc(var(--radius) - 4px);
   --radius-md: calc(var(--radius) - 2px);
