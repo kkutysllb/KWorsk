@@ -87,6 +87,7 @@ export function ArtifactPreviewOverlay({
 
       <ArtifactFileDetail
         className="size-full"
+        headerClassName="pl-[78px]"
         filepath={selectedArtifact}
         threadId={threadId}
       />

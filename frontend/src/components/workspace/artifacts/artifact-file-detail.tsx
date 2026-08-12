@@ -50,11 +50,13 @@ import { useArtifacts } from "./context";
 
 export function ArtifactFileDetail({
   className,
+  headerClassName,
   filepath: filepathFromProps,
   threadId,
   isMock: isMockFromProps = false,
 }: {
   className?: string;
+  headerClassName?: string;
   filepath: string;
   threadId: string;
   isMock?: boolean;
@@ -144,7 +146,7 @@ export function ArtifactFileDetail({
   }, [threadId, filepath, isInstalling, installSkillMutation]);
   return (
     <Artifact className={cn(className)}>
-      <ArtifactHeader className="px-2">
+      <ArtifactHeader className={cn("px-2", headerClassName)}>
         <div className="flex items-center gap-2">
           <ArtifactTitle>
             {isWriteFile ? (
