@@ -1,5 +1,11 @@
 # Changelog
 
+## v1.0.3 - 2026-08-12
+
+Compare: `v1.0.2...v1.0.3`
+
+- fix: add qilin.sandbox and other dynamic-loaded packages to PyInstaller hiddenimports (59051fd)
+
 ## v1.0.2 - 2026-08-11
 
 Compare: `v1.0.1...v1.0.2`
