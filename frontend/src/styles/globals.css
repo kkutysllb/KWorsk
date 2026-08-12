@@ -667,3 +667,53 @@
   height: 0 !important;
   display: none !important; /* Chrome/Safari/macOS */
 }
+
+/* -------------------------------------------------------------------------- */
+/* Office file preview styles                                                 */
+/* -------------------------------------------------------------------------- */
+
+/* XLSX preview (SheetJS sheet_to_html output) */
+.xlsx-preview table {
+  border-collapse: collapse;
+  width: 100%;
+  font-size: 0.8rem;
+  font-family: var(--font-sans);
+}
+
+.xlsx-preview th,
+.xlsx-preview td {
+  padding: 0.25rem 0.5rem;
+  border: 1px solid var(--border);
+  text-align: left;
+  white-space: nowrap;
+}
+
+.xlsx-preview th {
+  background: color-mix(in oklch, var(--muted) 70%, transparent);
+  font-weight: 600;
+  color: var(--foreground);
+}
+
+.xlsx-preview tr:nth-child(even) td {
+  background: color-mix(in oklch, var(--muted) 30%, transparent);
+}
+
+/* DOCX preview (docx-preview renderAsync output) */
+.docx-preview-container {
+  background: color-mix(in oklch, var(--muted) 20%, var(--background));
+}
+
+.docx-preview-wrapper {
+  display: flex;
+  justify-content: center;
+  padding: 1rem;
+}
+
+.docx-preview-wrapper > .docx-preview {
+  background: var(--background);
+  box-shadow: 0 1px 6px rgba(0, 0, 0, 0.1);
+  padding: 2rem 3rem;
+  max-width: 9in;
+  width: 100%;
+  color: var(--foreground);
+}

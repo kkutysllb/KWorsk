@@ -45,6 +45,7 @@ import { useOptionalThread } from "../messages/context";
 import { Tooltip } from "../tooltip";
 
 import { ArtifactFilePreview } from "./artifact-file-preview";
+import { OfficeFilePreview, isOfficeFile } from "./office-file-preview";
 import { useArtifacts } from "./context";
 
 export function ArtifactFileDetail({
@@ -90,6 +91,10 @@ export function ArtifactFileDetail({
   const isSupportPreview = useMemo(() => {
     return language === "html" || language === "markdown";
   }, [language]);
+  const isOfficePreview = useMemo(
+    () => !isWriteFile && isOfficeFile(filepath),
+    [filepath, isWriteFile],
+  );
   const { content } = useArtifactContent({
     threadId,
     filepath: filepathFromProps,
@@ -109,12 +114,12 @@ export function ArtifactFileDetail({
   const [isInstalling, setIsInstalling] = useState(false);
   const installSkillMutation = useInstallSkill();
   useEffect(() => {
-    if (isSupportPreview) {
+    if (isSupportPreview || isOfficePreview) {
       setViewMode("preview");
     } else {
       setViewMode("code");
     }
-  }, [isSupportPreview]);
+  }, [isSupportPreview, isOfficePreview]);
 
   const handleInstallSkill = useCallback(async () => {
     if (isInstalling) return;
@@ -163,7 +168,7 @@ export function ArtifactFileDetail({
           </ArtifactTitle>
         </div>
         <div className="flex min-w-0 grow items-center justify-center">
-          {isSupportPreview && (
+          {(isSupportPreview || isOfficePreview) && (
             <ToggleGroup
               className="mx-auto"
               type="single"
@@ -176,9 +181,11 @@ export function ArtifactFileDetail({
                 }
               }}
             >
-              <ToggleGroupItem value="code">
-                <Code2Icon />
-              </ToggleGroupItem>
+              {isCodeFile && (
+                <ToggleGroupItem value="code">
+                  <Code2Icon />
+                </ToggleGroupItem>
+              )}
               <ToggleGroupItem value="preview">
                 <EyeIcon />
               </ToggleGroupItem>
@@ -267,6 +274,14 @@ export function ArtifactFileDetail({
               language={language ?? "text"}
             />
           )}
+        {isOfficePreview &&
+          viewMode === "preview" &&
+          authenticatedArtifactUrl && (
+            <OfficeFilePreview
+              url={authenticatedArtifactUrl}
+              filepath={filepath}
+            />
+          )}
         {isCodeFile && viewMode === "code" && (
           <CodeEditor
             className="size-full resize-none rounded-none border-none"
@@ -274,7 +289,7 @@ export function ArtifactFileDetail({
             readonly
           />
         )}
-        {!isCodeFile && (
+        {!isCodeFile && !isSupportPreview && !isOfficePreview && (
           <iframe
             className="size-full"
             src={authenticatedArtifactUrl}

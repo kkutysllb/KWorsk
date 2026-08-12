@@ -65,6 +65,7 @@
     "cmdk": "^1.1.1",
     "codemirror": "^6.0.2",
     "date-fns": "^4.1.0",
+    "docx-preview": "^0.4.0",
     "dotenv": "^17.2.3",
     "embla-carousel-react": "^8.6.0",
     "gsap": "^3.13.0",
@@ -80,6 +81,7 @@
     "nextra-theme-docs": "^4.6.1",
     "nuxt-og-image": "^5.1.13",
     "ogl": "^1.0.11",
+    "pptx-react-viewer": "^2.16.9",
     "react": "^19.0.0",
     "react-dom": "^19.0.0",
     "react-resizable-panels": "^4.4.1",
@@ -96,6 +98,7 @@
     "unist-util-visit": "^5.0.0",
     "use-stick-to-bottom": "^1.1.1",
     "uuid": "^14.0.0",
+    "xlsx": "^0.18.5",
     "zod": "^3.24.2"
   },
   "devDependencies": {
