@@ -90,17 +90,18 @@ function ErrorState({ message }: { message: string }) {
 }
 
 /* -------------------------------------------------------------------------- */
-/* XLSX (SheetJS)                                                             */
+/* XLSX (SheetJS) — pure React table, no innerHTML                         */
 /* -------------------------------------------------------------------------- */
 
+interface SheetData {
+  name: string;
+  rows: (string | number | boolean | null)[][];
+}
+
 function XlsxRenderer({ data }: { data: ArrayBuffer }) {
-  const [workbook, setWorkbook] = useState<{
-    names: string[];
-    getHtml: (index: number) => string;
-  }>();
+  const [sheets, setSheets] = useState<SheetData[]>([]);
   const [activeSheet, setActiveSheet] = useState(0);
   const [error, setError] = useState<string>();
-  const tableRef = useRef<HTMLDivElement>(null);
 
   useEffect(() => {
     let cancelled = false;
@@ -109,20 +110,20 @@ function XlsxRenderer({ data }: { data: ArrayBuffer }) {
         if (cancelled) return;
         try {
           const wb = XLSX.read(data, { type: "array" });
+          const parsed: SheetData[] = wb.SheetNames.filter(
+            (n): n is string => typeof n === "string",
+          ).map((name) => {
+            const sheet = wb.Sheets[name];
+            const json = sheet
+              ? (XLSX.utils.sheet_to_json<(string | number | boolean | null)[]>(
+                  sheet,
+                  { header: 1, blankrows: false, defval: null },
+                ) as (string | number | boolean | null)[][])
+              : [];
+            return { name, rows: json };
+          });
           if (!cancelled) {
-            setWorkbook({
-              names: wb.SheetNames as string[],
-              getHtml: (i: number) => {
-                const sheetName = wb.SheetNames[i];
-                const sheet = sheetName ? wb.Sheets[sheetName] : undefined;
-                if (!sheet) return "<p>Empty sheet</p>";
-                const full = XLSX.utils.sheet_to_html(sheet, {
-                  editable: false,
-                });
-                const m = full.match(/<table[\s\S]*<\/table>/i);
-                return m ? m[0] : full;
-              },
-            });
+            setSheets(parsed);
             setActiveSheet(0);
           }
         } catch {
@@ -137,22 +138,19 @@ function XlsxRenderer({ data }: { data: ArrayBuffer }) {
     };
   }, [data]);
 
-  // Render active sheet's HTML into the ref div
-  useEffect(() => {
-    if (!tableRef.current || !workbook) return;
-    tableRef.current.innerHTML = workbook.getHtml(activeSheet);
-  }, [workbook, activeSheet]);
-
   if (error) return <ErrorState message={error} />;
-  if (!workbook) return <LoadingState />;
+  if (sheets.length === 0) return <LoadingState />;
+
+  const sheet = sheets[activeSheet] ?? sheets[0];
+  if (!sheet) return <LoadingState />;
 
   return (
     <div className="flex size-full flex-col overflow-hidden">
-      {workbook.names.length > 1 && (
-        <div className="z-30 flex shrink-0 items-center gap-1 border-b bg-background px-3 py-1.5">
-          {workbook.names.map((name, i) => (
+      {sheets.length > 1 && (
+        <div className="flex shrink-0 items-center gap-1 border-b bg-background px-3 py-1.5">
+          {sheets.map((s, i) => (
             <button
-              key={name}
+              key={s.name}
               type="button"
               onClick={() => setActiveSheet(i)}
               className={cn(
@@ -162,15 +160,37 @@ function XlsxRenderer({ data }: { data: ArrayBuffer }) {
                   : "text-muted-foreground hover:bg-muted hover:text-foreground",
               )}
             >
-              {name}
+              {s.name}
             </button>
           ))}
         </div>
       )}
-      <div
-        ref={tableRef}
-        className="xlsx-preview min-h-0 flex-1 overflow-auto p-4"
-      />
+      <div className="xlsx-preview min-h-0 flex-1 overflow-auto">
+        <table className="w-full border-collapse text-xs">
+          <tbody>
+            {sheet.rows.map((row, ri) => (
+              <tr key={ri} className={ri === 0 ? "sticky top-0" : ""}>
+                {row.map((cell, ci) => (
+                  <td
+                    key={ci}
+                    className="border border-border px-2 py-1 whitespace-nowrap"
+                    style={
+                      ri === 0
+                        ? {
+                            fontWeight: 600,
+                            backgroundColor: "var(--muted)",
+                          }
+                        : undefined
+                    }
+                  >
+                    {cell === null || cell === undefined ? "" : String(cell)}
+                  </td>
+                ))}
+              </tr>
+            ))}
+          </tbody>
+        </table>
+      </div>
     </div>
   );
 }
