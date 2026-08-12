@@ -3,13 +3,7 @@
 import { AlertCircleIcon, LoaderIcon } from "lucide-react";
 import { useEffect, useRef, useState } from "react";
 
-import {
-  Select,
-  SelectContent,
-  SelectItem,
-  SelectTrigger,
-  SelectValue,
-} from "@/components/ui/select";
+import { cn } from "@/lib/utils";
 
 export type OfficeFormat = "xlsx" | "docx" | "pptx";
 
@@ -143,26 +137,25 @@ function XlsxRenderer({ data }: { data: ArrayBuffer }) {
   return (
     <div className="flex size-full flex-col">
       {sheets.length > 1 && (
-        <div className="border-b px-3 py-2">
-          <Select
-            value={String(activeSheet)}
-            onValueChange={(v) => setActiveSheet(Number(v))}
-          >
-            <SelectTrigger className="h-8 w-48 text-xs">
-              <SelectValue />
-            </SelectTrigger>
-            <SelectContent>
-              {sheets.map((s, i) => (
-                <SelectItem key={s.name} value={String(i)}>
-                  {s.name}
-                </SelectItem>
-              ))}
-            </SelectContent>
-          </Select>
+        <div className="relative z-20 flex shrink-0 items-center gap-1 border-b px-3 py-1.5">
+          {sheets.map((s, i) => (
+            <button
+              key={s.name}
+              onClick={() => setActiveSheet(i)}
+              className={cn(
+                "rounded-md px-3 py-1 text-xs font-medium transition-colors",
+                i === activeSheet
+                  ? "bg-primary text-primary-foreground"
+                  : "text-muted-foreground hover:bg-muted hover:text-foreground",
+              )}
+            >
+              {s.name}
+            </button>
+          ))}
         </div>
       )}
       <div
-        className="xlsx-preview flex-1 overflow-auto p-4"
+        className="xlsx-preview min-h-0 flex-1 overflow-auto p-4"
         dangerouslySetInnerHTML={{ __html: sheets[activeSheet]?.html ?? "" }}
       />
     </div>
