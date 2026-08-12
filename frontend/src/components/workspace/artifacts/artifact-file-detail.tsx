@@ -51,12 +51,14 @@ import { useArtifacts } from "./context";
 export function ArtifactFileDetail({
   className,
   headerClassName,
+  hideHeader = false,
   filepath: filepathFromProps,
   threadId,
   isMock: isMockFromProps = false,
 }: {
   className?: string;
   headerClassName?: string;
+  hideHeader?: boolean;
   filepath: string;
   threadId: string;
   isMock?: boolean;
@@ -146,6 +148,7 @@ export function ArtifactFileDetail({
   }, [threadId, filepath, isInstalling, installSkillMutation]);
   return (
     <Artifact className={cn(className)}>
+      {!hideHeader && (
       <ArtifactHeader className={cn("px-2", headerClassName)}>
         <div className="flex items-center gap-2">
           <ArtifactTitle>
@@ -265,6 +268,7 @@ export function ArtifactFileDetail({
           </ArtifactActions>
         </div>
       </ArtifactHeader>
+      )}
       <ArtifactContent className="p-0">
         {isSupportPreview &&
           viewMode === "preview" &&
