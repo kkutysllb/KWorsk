@@ -168,7 +168,7 @@ export function ArtifactFileDetail({
           </ArtifactTitle>
         </div>
         <div className="flex min-w-0 grow items-center justify-center">
-          {(isSupportPreview || isOfficePreview) && (
+          {isCodeFile && isSupportPreview && (
             <ToggleGroup
               className="mx-auto"
               type="single"
@@ -181,11 +181,9 @@ export function ArtifactFileDetail({
                 }
               }}
             >
-              {isCodeFile && (
-                <ToggleGroupItem value="code">
-                  <Code2Icon />
-                </ToggleGroupItem>
-              )}
+              <ToggleGroupItem value="code">
+                <Code2Icon />
+              </ToggleGroupItem>
               <ToggleGroupItem value="preview">
                 <EyeIcon />
               </ToggleGroupItem>
