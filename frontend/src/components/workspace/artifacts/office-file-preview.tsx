@@ -1,8 +1,7 @@
 "use client";
 
 import { AlertCircleIcon, LoaderIcon } from "lucide-react";
-import dynamic from "next/dynamic";
-import { useEffect, useMemo, useRef, useState } from "react";
+import { useEffect, useRef, useState } from "react";
 
 import {
   Select,
@@ -11,16 +10,6 @@ import {
   SelectTrigger,
   SelectValue,
 } from "@/components/ui/select";
-import { cn } from "@/lib/utils";
-
-/** PPTX viewer is heavy (~10 MB) — lazy-load to avoid bloating main bundle. */
-const PowerPointViewer = dynamic(
-  () => import("pptx-react-viewer").then((m) => m.PowerPointViewer),
-  {
-    ssr: false,
-    loading: () => <LoadingState />,
-  },
-);
 
 export type OfficeFormat = "xlsx" | "docx" | "pptx";
 
@@ -238,14 +227,65 @@ function DocxRenderer({ data }: { data: ArrayBuffer }) {
 }
 
 /* -------------------------------------------------------------------------- */
-/* PPTX (pptx-react-viewer)                                                   */
+/* PPTX (pptx-vanilla-viewer)                                                 */
 /* -------------------------------------------------------------------------- */
 
+/**
+ * Minimal type for the viewer instance — we only call destroy().
+ * The full type lives in the package's .d.ts; importing it here would pull
+ * the entire 12k-line declaration into the build graph.
+ */
+type PptxViewerHandle = { destroy: () => void };
+
 function PptxRenderer({ data }: { data: ArrayBuffer }) {
-  const uint8 = useMemo(() => new Uint8Array(data), [data]);
+  const containerRef = useRef<HTMLDivElement>(null);
+  const viewerRef = useRef<PptxViewerHandle | null>(null);
+  const [error, setError] = useState<string>();
+  const [loading, setLoading] = useState(true);
+
+  useEffect(() => {
+    if (!containerRef.current) return;
+    let cancelled = false;
+    setLoading(true);
+    setError(undefined);
+
+    import("pptx-vanilla-viewer")
+      .then(({ createPptxViewer }) => {
+        if (cancelled || !containerRef.current) return;
+        viewerRef.current?.destroy();
+        const viewer = createPptxViewer(containerRef.current, {
+          source: data,
+          onLoad: () => {
+            if (!cancelled) setLoading(false);
+          },
+          onError: (msg: string) => {
+            if (!cancelled) {
+              setError(msg || "Failed to load presentation");
+              setLoading(false);
+            }
+          },
+        }) as PptxViewerHandle;
+        viewerRef.current = viewer;
+      })
+      .catch(() => {
+        if (!cancelled) {
+          setError("Failed to load presentation library");
+          setLoading(false);
+        }
+      });
+
+    return () => {
+      cancelled = true;
+      viewerRef.current?.destroy();
+      viewerRef.current = null;
+    };
+  }, [data]);
+
+  if (error) return <ErrorState message={error} />;
   return (
     <div className="size-full overflow-auto">
-      <PowerPointViewer content={uint8} canEdit={false} />
+      {loading && <LoadingState />}
+      <div ref={containerRef} className="size-full" />
     </div>
   );
 }
