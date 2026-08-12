@@ -90,40 +90,27 @@ function ErrorState({ message }: { message: string }) {
 }
 
 /* -------------------------------------------------------------------------- */
-/* XLSX (SheetJS) — pure React table, no innerHTML                         */
+/* XLSX (SheetJS)                                                             */
 /* -------------------------------------------------------------------------- */
 
-interface SheetData {
-  name: string;
-  rows: (string | number | boolean | null)[][];
-}
-
 function XlsxRenderer({ data }: { data: ArrayBuffer }) {
-  const [sheets, setSheets] = useState<SheetData[]>([]);
+  const [sheetNames, setSheetNames] = useState<string[]>([]);
   const [activeSheet, setActiveSheet] = useState(0);
   const [error, setError] = useState<string>();
+  const tableRef = useRef<HTMLDivElement>(null);
+  // 保存 XLSX 模块和工作簿，用于切换 sheet 时重新生成 HTML
+  const xlsxRef = useRef<{ wb: any; XLSX: any } | null>(null);
 
   useEffect(() => {
     let cancelled = false;
     import("xlsx")
-      .then((XLSX) => {
+      .then((XLSX: any) => {
         if (cancelled) return;
         try {
           const wb = XLSX.read(data, { type: "array" });
-          const parsed: SheetData[] = wb.SheetNames.filter(
-            (n): n is string => typeof n === "string",
-          ).map((name) => {
-            const sheet = wb.Sheets[name];
-            const json = sheet
-              ? (XLSX.utils.sheet_to_json<(string | number | boolean | null)[]>(
-                  sheet,
-                  { header: 1, blankrows: false, defval: null },
-                ) as (string | number | boolean | null)[][])
-              : [];
-            return { name, rows: json };
-          });
+          xlsxRef.current = { wb, XLSX };
           if (!cancelled) {
-            setSheets(parsed);
+            setSheetNames(wb.SheetNames as string[]);
             setActiveSheet(0);
           }
         } catch {
@@ -138,59 +125,49 @@ function XlsxRenderer({ data }: { data: ArrayBuffer }) {
     };
   }, [data]);
 
-  if (error) return <ErrorState message={error} />;
-  if (sheets.length === 0) return <LoadingState />;
+  // 当 sheet 列表或选中 sheet 变化时，生成 HTML 写入 tableRef
+  useEffect(() => {
+    if (!tableRef.current || !xlsxRef.current || sheetNames.length === 0) return;
+    const { wb, XLSX } = xlsxRef.current;
+    const sheetName = sheetNames[activeSheet];
+    const sheet = sheetName ? wb.Sheets[sheetName] : undefined;
+    if (sheet) {
+      const full = XLSX.utils.sheet_to_html(sheet, { editable: false }) as string;
+      const match = full.match(/<table[\s\S]*?<\/table>/i);
+      tableRef.current.innerHTML = match ? match[0] : full;
+    } else {
+      tableRef.current.innerHTML = "";
+    }
+  }, [sheetNames, activeSheet]);
 
-  const sheet = sheets[activeSheet] ?? sheets[0];
-  if (!sheet) return <LoadingState />;
+  if (error) return <ErrorState message={error} />;
+  if (sheetNames.length === 0) return <LoadingState />;
 
   return (
-    <div className="flex size-full flex-col overflow-hidden">
-      {sheets.length > 1 && (
-        <div className="flex shrink-0 items-center gap-1 border-b bg-background px-3 py-1.5">
-          {sheets.map((s, i) => (
+    <div className="flex h-full flex-col">
+      {sheetNames.length > 1 && (
+        <div className="flex shrink-0 gap-1 border-b bg-background p-1">
+          {sheetNames.map((name, i) => (
             <button
-              key={s.name}
+              key={name}
               type="button"
               onClick={() => setActiveSheet(i)}
               className={cn(
-                "rounded-md px-3 py-1 text-xs font-medium transition-colors",
+                "rounded px-3 py-1 text-xs font-medium",
                 i === activeSheet
                   ? "bg-primary text-primary-foreground"
-                  : "text-muted-foreground hover:bg-muted hover:text-foreground",
+                  : "text-muted-foreground hover:bg-muted",
               )}
             >
-              {s.name}
+              {name}
             </button>
           ))}
         </div>
       )}
-      <div className="xlsx-preview min-h-0 flex-1 overflow-auto">
-        <table className="w-full border-collapse text-xs">
-          <tbody>
-            {sheet.rows.map((row, ri) => (
-              <tr key={ri} className={ri === 0 ? "sticky top-0" : ""}>
-                {row.map((cell, ci) => (
-                  <td
-                    key={ci}
-                    className="border border-border px-2 py-1 whitespace-nowrap"
-                    style={
-                      ri === 0
-                        ? {
-                            fontWeight: 600,
-                            backgroundColor: "var(--muted)",
-                          }
-                        : undefined
-                    }
-                  >
-                    {cell === null || cell === undefined ? "" : String(cell)}
-                  </td>
-                ))}
-              </tr>
-            ))}
-          </tbody>
-        </table>
-      </div>
+      <div
+        ref={tableRef}
+        className="xlsx-preview min-h-0 flex-1 overflow-auto"
+      />
     </div>
   );
 }
@@ -213,7 +190,6 @@ function DocxRenderer({ data }: { data: ArrayBuffer }) {
     import("docx-preview")
       .then(({ renderAsync }) => {
         if (cancelled || !containerRef.current) return;
-        // Clear previous content
         containerRef.current.innerHTML = "";
         return renderAsync(
           new Blob([data]),
@@ -256,11 +232,6 @@ function DocxRenderer({ data }: { data: ArrayBuffer }) {
 /* PPTX (pptx-vanilla-viewer)                                                 */
 /* -------------------------------------------------------------------------- */
 
-/**
- * Minimal type for the viewer instance — we only call destroy().
- * The full type lives in the package's .d.ts; importing it here would pull
- * the entire 12k-line declaration into the build graph.
- */
 type PptxViewerHandle = { destroy: () => void };
 
 function PptxRenderer({ data }: { data: ArrayBuffer }) {
