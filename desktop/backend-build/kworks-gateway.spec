@@ -102,6 +102,11 @@ datas = [
 #   - qilin.subagents.builtins.*  子代理分派（task 工具）
 #   - qilin.tools.builtins.*    内置工具（部分按需注册）
 #   - qilin.skills.*            技能子系统（storage/installer/review）
+#   - qilin.sandbox.*           沙箱 provider（config.yaml sandbox.use）
+#   - qilin.agents.middlewares.*  agent 中间件（safety / guardrails / extensions）
+#   - qilin.guardrails.*        guardrails provider
+#   - qilin.authz.*             授权 provider
+#   - qilin.reflection.*        resolve_class/resolve_variable 动态加载器
 #   - mcp（MCP SDK 顶层包）     必须显式收集：qilin.mcp.session_pool 的
 #     `from mcp import ClientSession` 需要顶层 mcp 包；若缺失，冻结态会把
 #     `mcp` 解析为同名的 qilin.mcp 子包，触发循环导入。
@@ -116,6 +121,26 @@ hiddenimports = [
     *collect_submodules("qilin.subagents.builtins"),
     *collect_submodules("qilin.tools.builtins"),
     *collect_submodules("qilin.skills"),
+    # Sandbox providers: config.yaml sandbox.use is resolved at runtime via
+    # resolve_class("qilin.sandbox.local:LocalSandboxProvider"). The static
+    # import chain only reaches qilin.sandbox.sandbox_provider (for the
+    # SandboxProvider base class) — it does NOT reach
+    # qilin.sandbox.local.local_sandbox_provider because nothing imports
+    # that submodule at module load time. Without this entry the frozen
+    # build raises:
+    #   ImportError: Could not import module qilin.sandbox.local.
+    *collect_submodules("qilin.sandbox"),
+    # Agent middlewares: config.yaml middlewares[].use resolves class paths
+    # via resolve_class(). Includes safety detectors and guardrails providers.
+    *collect_submodules("qilin.agents.middlewares"),
+    # Guardrails providers: loaded by resolve_variable() from config.
+    *collect_submodules("qilin.guardrails"),
+    # Authz providers: loaded by resolve_variable() from config.
+    *collect_submodules("qilin.authz"),
+    # Reflection (resolvers): the resolve_class/resolve_variable functions
+    # themselves are in qilin.reflection.resolvers — collect the whole
+    # package to ensure no helper submodule is missed.
+    *collect_submodules("qilin.reflection"),
     # Memory backends: _scan_backends() discovers these dynamically via
     # pkgutil.iter_modules, so they must be explicitly collected for the
     # frozen build (the static import chain does not reach them).
