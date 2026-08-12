@@ -1,5 +1,24 @@
 # Changelog
 
+## v1.0.5 - 2026-08-12
+
+Compare: `v1.0.3...v1.0.5`
+
+- fix: overlay 预览层分离拖拽区与内容区，修复 xlsx tab 及所有交互被吞事件 (5cc097d)
+- fix: rewrite xlsx renderer with clean state management (f170be9)
+- fix: hide entire ArtifactHeader in overlay mode — remove all legacy icons (0c41687)
+- fix: xlsx tabs still unclickable + remove select dropdown arrow (d8fd7a3)
+- fix: artifact preview header overlaps macOS traffic lights (d309728)
+- fix: xlsx tab click — use ref-based rendering instead of dangerouslySetInnerHTML (3998cac)
+- fix: xlsx tab buttons unclickable — extract table from full HTML doc (f0558cc)
+- fix: hide code/preview toggle for office files — single eye icon is visual noise (5487d95)
+- fix: xlsx sheet selector unclickable — replace Radix Select with tab buttons (317076a)
+- fix: add three.js dependency required by pptx-vanilla-viewer SmartArt 3D module (22d6ea7)
+- fix: switch pptx-react-viewer → pptx-vanilla-viewer to avoid @ai-sdk/react dependency (127b64c)
+- feat: add office file preview (xlsx/docx/pptx) in artifact panel (b071c64)
+- chore(release): v1.0.4 (bebbf57)
+- fix: collect entire qilin package in PyInstaller to eliminate dynamic-import failures (4e5beb2)
+
 ## v1.0.4 - 2026-08-12
 
 Compare: `v1.0.2...v1.0.4`
