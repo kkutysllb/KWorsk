@@ -95,61 +95,30 @@ datas = [
 # above). Do NOT add it to datas — PyInstaller's COLLECT corrupts the
 # Chromium Mach-O binary during binary processing.
 
-# 引擎按配置字符串动态 import 的模块区域（config.yaml 的 tools/use 字段、
-# 子代理分派、模型 provider 等），静态 import 链看不到，必须显式收集：
-#   - qilin.models.*            config.yaml models[].use: "qilin.models.xxx:Class"
-#   - qilin.community.*         config.yaml tools[].use: "qilin.community.xxx.tools:xxx"
-#   - qilin.subagents.builtins.*  子代理分派（task 工具）
-#   - qilin.tools.builtins.*    内置工具（部分按需注册）
-#   - qilin.skills.*            技能子系统（storage/installer/review）
-#   - qilin.sandbox.*           沙箱 provider（config.yaml sandbox.use）
-#   - qilin.agents.middlewares.*  agent 中间件（safety / guardrails / extensions）
-#   - qilin.guardrails.*        guardrails provider
-#   - qilin.authz.*             授权 provider
-#   - qilin.reflection.*        resolve_class/resolve_variable 动态加载器
-#   - mcp（MCP SDK 顶层包）     必须显式收集：qilin.mcp.session_pool 的
-#     `from mcp import ClientSession` 需要顶层 mcp 包；若缺失，冻结态会把
-#     `mcp` 解析为同名的 qilin.mcp 子包，触发循环导入。
+# 引擎有大量运行时动态加载路径，静态 import 链无法全部覆盖：
+#   - config.yaml 的 use/sandbox.use/tools[].use/middlewares[].use
+#     通过 resolve_class()/resolve_variable() → importlib.import_module() 加载
+#   - memory backend 通过 pkgutil.iter_modules() 动态发现
+#   - lead_agent/orchestration/subagents 通过函数级 lazy import 加载
+#   - skills storage 通过 config 默认值 "qilin.skills.storage.xxx:Class" 加载
+#
+# 之前逐个子包枚举（qilin.sandbox、qilin.guardrails、…），但每遗漏一个
+# 子包就是一个打包版 bug（dev 环境正常，打包后 ImportError）。
+# 现在直接收集整个 qilin 顶层包，彻底杜绝遗漏。额外成本仅为 PYZ 体积略增
+#（几 MB），对 onedir 分发可忽略。
+#
+# mcp（MCP SDK 顶层包）必须单独收集：qilin.mcp.session_pool 的
+#   `from mcp import ClientSession` 需要顶层 mcp 包；若缺失，冻结态会把
+#   `mcp` 解析为同名的 qilin.mcp 子包，触发循环导入。
 hiddenimports = [
     # mcp.cli 是 MCP SDK 的命令行入口，import 时对非交互环境直接 sys.exit(1)，
     # collect_submodules 枚举会失败——gateway 不需要它，过滤掉。
     *collect_submodules("mcp", filter=lambda name: not name.startswith("mcp.cli")),
-    *collect_submodules("qilin.mcp"),
-    *collect_submodules("qilin.models"),
-    *collect_submodules("qilin.community"),
-    *collect_submodules("qilin.utils"),
-    *collect_submodules("qilin.subagents.builtins"),
-    *collect_submodules("qilin.tools.builtins"),
-    *collect_submodules("qilin.skills"),
-    # Sandbox providers: config.yaml sandbox.use is resolved at runtime via
-    # resolve_class("qilin.sandbox.local:LocalSandboxProvider"). The static
-    # import chain only reaches qilin.sandbox.sandbox_provider (for the
-    # SandboxProvider base class) — it does NOT reach
-    # qilin.sandbox.local.local_sandbox_provider because nothing imports
-    # that submodule at module load time. Without this entry the frozen
-    # build raises:
-    #   ImportError: Could not import module qilin.sandbox.local.
-    *collect_submodules("qilin.sandbox"),
-    # Agent middlewares: config.yaml middlewares[].use resolves class paths
-    # via resolve_class(). Includes safety detectors and guardrails providers.
-    *collect_submodules("qilin.agents.middlewares"),
-    # Guardrails providers: loaded by resolve_variable() from config.
-    *collect_submodules("qilin.guardrails"),
-    # Authz providers: loaded by resolve_variable() from config.
-    *collect_submodules("qilin.authz"),
-    # Reflection (resolvers): the resolve_class/resolve_variable functions
-    # themselves are in qilin.reflection.resolvers — collect the whole
-    # package to ensure no helper submodule is missed.
-    *collect_submodules("qilin.reflection"),
-    # Memory backends: _scan_backends() discovers these dynamically via
-    # pkgutil.iter_modules, so they must be explicitly collected for the
-    # frozen build (the static import chain does not reach them).
-    # The qilinmem backend has a deeply nested qilinmem/qilinmem/core/
-    # structure — force-collect each level to ensure no submodule is missed.
-    *collect_submodules("qilin.agents.memory.backends"),
-    *collect_submodules("qilin.agents.memory.backends.qilinmem"),
-    *collect_submodules("qilin.agents.memory.backends.qilinmem.qilinmem"),
-    *collect_submodules("qilin.agents.memory.backends.qilinmem.qilinmem.core"),
+    # Collect the ENTIRE qilin package — every submodule, every subpackage.
+    # This eliminates an entire class of "works in dev, broken in packaged
+    # build" bugs caused by runtime dynamic imports that PyInstaller's
+    # static analysis cannot trace.
+    *collect_submodules("qilin"),
 ]
 
 a = Analysis(
