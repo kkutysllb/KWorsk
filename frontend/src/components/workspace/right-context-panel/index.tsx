@@ -7,9 +7,11 @@ import { useActiveThreadId } from "@/hooks/use-active-thread";
 import { cn } from "@/lib/utils";
 
 import { useWorkspaceLayout } from "../workspace-layout-context";
+
 import { ResourcesSection } from "./sections/resources-section";
 import { SubagentsSection } from "./sections/subagents-section";
 import { TodosSection } from "./sections/todos-section";
+import { WorkspaceChangesSection } from "./sections/workspace-changes-section";
 
 export function RightContextPanel() {
   const { t } = useI18n();
@@ -40,6 +42,7 @@ export function RightContextPanel() {
           <div className="flex h-full flex-col overflow-y-auto">
             <TodosSection />
             <SubagentsSection />
+            <WorkspaceChangesSection />
             <ResourcesSection threadId={threadId} />
           </div>
         )}

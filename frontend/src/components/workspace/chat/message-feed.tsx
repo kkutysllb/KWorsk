@@ -1,7 +1,12 @@
 "use client";
 
 import type { BaseStream, Message } from "@langchain/langgraph-sdk";
-import { ChevronDownIcon, ChevronUpIcon, Loader2Icon } from "lucide-react";
+import {
+  ChevronDownIcon,
+  ChevronUpIcon,
+  Loader2Icon,
+  RefreshCwIcon,
+} from "lucide-react";
 import { useCallback, useEffect, useMemo, useRef } from "react";
 import {
   useStickToBottomContext,
@@ -29,6 +34,12 @@ import {
 } from "@/core/messages/utils";
 import { useUpdateSubtask } from "@/core/tasks/context";
 import type { AgentThreadState } from "@/core/threads";
+import {
+  buildEditResubmitMessages,
+  buildRegenerateMessages,
+  prepareEditRegenerate,
+  prepareRegenerate,
+} from "@/core/threads/regenerate";
 import { checkCodeFile } from "@/core/utils/files";
 import { cn } from "@/lib/utils";
 
@@ -68,7 +79,6 @@ export function MessageFeed({
   hasMoreHistory,
   loadMoreHistory,
   isHistoryLoading,
-  onEditMessage,
   onHumanInputSubmit,
 }: {
   className?: string;
@@ -78,8 +88,6 @@ export function MessageFeed({
   hasMoreHistory?: boolean;
   loadMoreHistory?: () => void;
   isHistoryLoading?: boolean;
-  /** Called when the user edits a human message and saves it. */
-  onEditMessage?: (messageId: string, replacementText: string) => void;
   /** Called when the user submits a clarification card response. */
   onHumanInputSubmit?: (
     response: HumanInputResponse,
@@ -111,6 +119,74 @@ export function MessageFeed({
     () => deriveHumanInputThreadState(messages).answeredResponses,
     [messages],
   );
+
+  // ── Regenerate & edit-resubmit ─────────────────────────────────────────
+  // Preferred: the gateway's checkpoint-replay prepare endpoints return a
+  // validated {input, checkpoint, metadata} triple that restores titles and
+  // handles interrupted turns. Fallback: rewrite history through one run
+  // input ({role:"remove"} dicts the backend coerces to RemoveMessage; the
+  // edited human message re-submitted with the same id replaces it).
+  const submitThreadMessages = useCallback(
+    (inputMessages: Message[]) => {
+      void thread.submit({ messages: inputMessages } as Partial<AgentThreadState>);
+    },
+    [thread],
+  );
+
+  const handleRegenerate = useCallback(() => {
+    if (thread.isLoading) return;
+    const lastAi = [...messages].reverse().find((msg) => msg.type === "ai");
+    void (async () => {
+      const prepared =
+        lastAi?.id != null
+          ? await prepareRegenerate(threadId, lastAi.id)
+          : null;
+      if (prepared) {
+        await thread.submit(prepared.input as Partial<AgentThreadState>, {
+          checkpoint: prepared.checkpoint,
+          metadata: prepared.metadata,
+        } as Parameters<typeof thread.submit>[1]);
+        return;
+      }
+      const fallback = buildRegenerateMessages(thread.messages);
+      if (fallback) submitThreadMessages(fallback);
+    })();
+  }, [thread, threadId, messages, submitThreadMessages]);
+
+  const handleEditMessage = useCallback(
+    (messageId: string, replacementText: string) => {
+      if (thread.isLoading) return;
+      void (async () => {
+        const prepared = await prepareEditRegenerate(
+          threadId,
+          messageId,
+          replacementText,
+        );
+        if (prepared) {
+          await thread.submit(
+            prepared.input as Partial<AgentThreadState>,
+            {
+              checkpoint: prepared.checkpoint,
+              metadata: prepared.metadata,
+            } as Parameters<typeof thread.submit>[1],
+          );
+          return;
+        }
+        const fallback = buildEditResubmitMessages(
+          thread.messages,
+          messageId,
+          replacementText,
+        );
+        if (fallback) submitThreadMessages(fallback);
+      })();
+    },
+    [thread, threadId, submitThreadMessages],
+  );
+
+  const canRegenerate =
+    !thread.isLoading &&
+    messages.length > 0 &&
+    messages[messages.length - 1]?.type !== "human";
 
   // Populate subtask context from AI messages that contain `task` tool
   // calls.  This MUST be in useEffect — calling updateSubtask (which calls
@@ -158,7 +234,7 @@ export function MessageFeed({
                   isLoading={
                     msg.id != null && msg.id === streamingMessageId
                   }
-                  onEditMessage={onEditMessage}
+                  onEditMessage={handleEditMessage}
                 />
               ));
             }
@@ -178,7 +254,7 @@ export function MessageFeed({
                     isLoading={
                       msg.id != null && msg.id === streamingMessageId
                     }
-                    onEditMessage={onEditMessage}
+                    onEditMessage={handleEditMessage}
                   />
                 ));
             }
@@ -308,6 +384,23 @@ export function MessageFeed({
             return null;
           },
           { isCurrentTurnLoading: thread.isLoading },
+        )}
+        {/* Regenerate the last turn: removes everything after the latest
+            user message and re-runs the model against it. Only offered
+            when the thread is idle and there is a turn to redo. */}
+        {canRegenerate && (
+          <div className="flex">
+            <Button
+              type="button"
+              variant="ghost"
+              size="sm"
+              className="text-muted-foreground hover:text-foreground gap-1.5 rounded-full px-3"
+              onClick={handleRegenerate}
+            >
+              <RefreshCwIcon className="size-3.5" />
+              重新生成
+            </Button>
+          </div>
         )}
         {/* Persistent loading indicator: stays visible for the entire
             duration of a turn, regardless of which segment type is

@@ -45,8 +45,10 @@ import { useOptionalThread } from "../messages/context";
 import { Tooltip } from "../tooltip";
 
 import { ArtifactFilePreview } from "./artifact-file-preview";
-import { OfficeFilePreview, isOfficeFile } from "./office-file-preview";
 import { useArtifacts } from "./context";
+import { ImageFilePreview, isImageFile } from "./image-file-preview";
+import { OfficeFilePreview, isOfficeFile } from "./office-file-preview";
+import { PdfFilePreview, isPdfFile } from "./pdf-file-preview";
 
 export function ArtifactFileDetail({
   className,
@@ -99,6 +101,14 @@ export function ArtifactFileDetail({
     () => !isWriteFile && isOfficeFile(filepath),
     [filepath, isWriteFile],
   );
+  const isImagePreview = useMemo(
+    () => !isWriteFile && isImageFile(filepath),
+    [filepath, isWriteFile],
+  );
+  const isPdfPreview = useMemo(
+    () => !isWriteFile && isPdfFile(filepath),
+    [filepath, isWriteFile],
+  );
   const { content } = useArtifactContent({
     threadId,
     filepath: filepathFromProps,
@@ -118,12 +128,12 @@ export function ArtifactFileDetail({
   const [isInstalling, setIsInstalling] = useState(false);
   const installSkillMutation = useInstallSkill();
   useEffect(() => {
-    if (isSupportPreview || isOfficePreview) {
+    if (isSupportPreview || isOfficePreview || isImagePreview || isPdfPreview) {
       setViewMode("preview");
     } else {
       setViewMode("code");
     }
-  }, [isSupportPreview, isOfficePreview]);
+  }, [isSupportPreview, isOfficePreview, isImagePreview, isPdfPreview]);
 
   const handleInstallSkill = useCallback(async () => {
     if (isInstalling) return;
@@ -286,6 +296,15 @@ export function ArtifactFileDetail({
               filepath={filepath}
             />
           )}
+        {isImagePreview && authenticatedArtifactUrl && (
+          <ImageFilePreview url={authenticatedArtifactUrl} />
+        )}
+        {isPdfPreview && authenticatedArtifactUrl && (
+          <PdfFilePreview
+            url={authenticatedArtifactUrl}
+            filepath={filepath}
+          />
+        )}
         {isCodeFile && viewMode === "code" && (
           <CodeEditor
             className="size-full resize-none rounded-none border-none"
@@ -293,12 +312,16 @@ export function ArtifactFileDetail({
             readonly
           />
         )}
-        {!isCodeFile && !isSupportPreview && !isOfficePreview && (
-          <iframe
-            className="size-full"
-            src={authenticatedArtifactUrl}
-          />
-        )}
+        {!isCodeFile &&
+          !isSupportPreview &&
+          !isOfficePreview &&
+          !isImagePreview &&
+          !isPdfPreview && (
+            <iframe
+              className="size-full"
+              src={authenticatedArtifactUrl}
+            />
+          )}
       </ArtifactContent>
     </Artifact>
   );

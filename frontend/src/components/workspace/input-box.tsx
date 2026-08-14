@@ -82,6 +82,7 @@ import {
 
 import { useThread } from "./messages/context";
 import { QueuedMessagesBar } from "./queued-messages-bar";
+import { SlashCommandMenu } from "./slash-command-menu";
 import { Tooltip } from "./tooltip";
 import { WorkspaceSelector } from "./workspace-selector";
 
@@ -514,6 +515,7 @@ export function InputBox({
   // Provider's value identity changes, calling setData again and looping.
   return (
     <div ref={promptRootRef} className="relative flex flex-col gap-4">
+      <SlashCommandMenu rootRef={promptRootRef} />
       {queuedMessages && queuedMessages.length > 0 && (
         <QueuedMessagesBar
           messages={queuedMessages}

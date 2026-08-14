@@ -23,7 +23,8 @@ export type PanelSectionId =
   | "todos"
   | "subagents"
   | "resources"
-  | "artifacts";
+  | "artifacts"
+  | "workspaceChanges";
 
 /** 设置页可用的 section id，与 SettingsView 内部保持一致。 */
 export type SettingsSectionId =
@@ -84,12 +85,19 @@ function readSections(): Record<PanelSectionId, boolean> {
         subagents: parsed.subagents ?? false,
         resources: parsed.resources ?? false,
         artifacts: parsed.artifacts ?? false,
+        workspaceChanges: parsed.workspaceChanges ?? false,
       };
     }
   } catch {
     /* ignore */
   }
-  return { todos: false, subagents: false, resources: false, artifacts: false };
+  return {
+    todos: false,
+    subagents: false,
+    resources: false,
+    artifacts: false,
+    workspaceChanges: false,
+  };
 }
 
 export function WorkspaceLayoutProvider({
@@ -105,6 +113,7 @@ export function WorkspaceLayoutProvider({
     subagents: false,
     resources: false,
     artifacts: false,
+    workspaceChanges: false,
   });
   const [settingsOpen, setSettingsOpen] = useState(false);
   const [settingsSection, setSettingsSection] =
