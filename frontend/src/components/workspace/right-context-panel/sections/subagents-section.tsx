@@ -20,6 +20,19 @@ export function SubagentsSection() {
   const { tasks } = useSubtaskContext();
   const taskList = Object.values(tasks);
 
+  // Orchestration at-a-glance: status counts + aggregate token spend
+  // across all subtasks of the current turn.
+  const statusCounts = taskList.reduce(
+    (acc, task) => {
+      if (task.status === "completed") acc.completed += 1;
+      else if (task.status === "failed") acc.failed += 1;
+      else acc.running += 1;
+      acc.totalTokens += task.token_usage?.total_tokens ?? 0;
+      return acc;
+    },
+    { running: 0, completed: 0, failed: 0, totalTokens: 0 },
+  );
+
   return (
     <PanelSection
       id="subagents"
@@ -30,13 +43,59 @@ export function SubagentsSection() {
       {taskList.length === 0 ? (
         <PanelEmpty text={t.rightPanel.empty} />
       ) : (
-        <ul className="space-y-1.5">
-          {taskList.map((task) => (
-            <SubagentTaskItem key={task.id} task={task} />
-          ))}
-        </ul>
+        <div className="space-y-2">
+          <div className="flex flex-wrap items-center gap-1.5 text-[11px]">
+            {statusCounts.running > 0 && (
+              <StatusChip
+                className="bg-blue-500/10 text-blue-600"
+                count={statusCounts.running}
+                label="运行中"
+              />
+            )}
+            {statusCounts.completed > 0 && (
+              <StatusChip
+                className="bg-emerald-500/10 text-emerald-600"
+                count={statusCounts.completed}
+                label="已完成"
+              />
+            )}
+            {statusCounts.failed > 0 && (
+              <StatusChip
+                className="bg-rose-500/10 text-rose-500"
+                count={statusCounts.failed}
+                label="失败"
+              />
+            )}
+            {statusCounts.totalTokens > 0 && (
+              <span className="text-muted-foreground ml-auto font-mono">
+                {statusCounts.totalTokens.toLocaleString()} tokens
+              </span>
+            )}
+          </div>
+          <ul className="space-y-1.5">
+            {taskList.map((task) => (
+              <SubagentTaskItem key={task.id} task={task} />
+            ))}
+          </ul>
+        </div>
       )}
     </PanelSection>
+  );
+}
+
+function StatusChip({
+  count,
+  label,
+  className,
+}: {
+  count: number;
+  label: string;
+  className?: string;
+}) {
+  return (
+    <span className={cn("rounded-full px-1.5 py-0.5", className)}>
+      {label} {count}
+    </span>
   );
 }
 

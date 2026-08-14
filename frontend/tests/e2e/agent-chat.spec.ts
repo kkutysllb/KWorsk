@@ -11,13 +11,13 @@ const MOCK_AGENTS = [
 ];
 
 test.describe("Agent chat", () => {
-  test("agents gallery page redirects to main chat", async ({ page }) => {
+  test("retired agents gallery route is fully removed", async ({ page }) => {
     mockLangGraphAPI(page, { agents: MOCK_AGENTS });
 
-    await page.goto("/workspace/agents");
-
-    // The gallery page now redirects to the main chat page
-    await expect(page).toHaveURL(/\/workspace\/chats/);
+    // The gallery redirect page has been deleted — the route now 404s
+    // instead of redirecting (the live agent chat route below remains).
+    const response = await page.goto("/workspace/agents");
+    expect(response?.status()).toBe(404);
   });
 
   test("agent chat page loads with input box", async ({ page }) => {
