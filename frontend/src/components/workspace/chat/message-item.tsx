@@ -3,16 +3,11 @@
 import type { Message } from "@langchain/langgraph-sdk";
 import { memo, useMemo } from "react";
 
-import { tryExtractInlineHumanInputForm } from "@/core/messages/utils";
 import { parseMessageSegments, parseUserPrompt } from "@/core/messages/segments";
 import { cn } from "@/lib/utils";
 
-import { ProseContent } from "./segments/prose-content";
-import { ReasoningBlock } from "./segments/reasoning-block";
-import { ToolActivity } from "./segments/tool-activity";
-import { FilesCard } from "./segments/files-card";
+import { SegmentList } from "./segments/segment-list";
 import { UserPrompt } from "./segments/user-prompt";
-import { HumanInputCard } from "../messages/human-input-card";
 
 interface MessageItemProps {
   message: Message;
@@ -28,9 +23,9 @@ interface MessageItemProps {
  * MessageItem — the single-message shell (Layer 1).
  *
  * Human messages render as a {@link UserPrompt}; assistant messages are
- * decomposed by {@link parseMessageSegments} into ordered blocks
- * (reasoning → tool activity → prose → files), each delegated to a small
- * segment component.
+ * decomposed by {@link parseMessageSegments} into segments in execution
+ * order (reasoning, then prose and tool activity interleaved as the model
+ * produced them) and rendered via {@link SegmentList}.
  */
 export const MessageItem = memo(
   function MessageItem({
@@ -42,6 +37,16 @@ export const MessageItem = memo(
     className,
   }: MessageItemProps) {
     const isHuman = message.type === "human";
+
+    // Memoize segment parsing — during SSE streaming, the parent re-renders
+    // on every token. Without this, parseMessageSegments re-parses every
+    // message in the list each tick (O(n²) with contextMessages scanning
+    // for tool results), which freezes the UI on long conversations.
+    const segments = useMemo(
+      () =>
+        isHuman ? [] : parseMessageSegments(message, contextMessages),
+      [isHuman, message, contextMessages],
+    );
 
     if (isHuman) {
       const prompt = parseUserPrompt(message);
@@ -59,69 +64,14 @@ export const MessageItem = memo(
       );
     }
 
-    // Memoize segment parsing — during SSE streaming, the parent re-renders
-    // on every token. Without this, parseMessageSegments re-parses every
-    // message in the list each tick (O(n²) with contextMessages scanning
-    // for tool results), which freezes the UI on long conversations.
-    const segments = useMemo(
-      () => parseMessageSegments(message, contextMessages),
-      [message, contextMessages],
-    );
-
     return (
       <div className={cn("group/conversation-message flex w-full", className)}>
         <div className="flex w-full flex-col gap-3.5">
-          {segments.map((segment, index) => {
-            switch (segment.kind) {
-              case "reasoning":
-                return (
-                  <ReasoningBlock
-                    key={`reasoning-${index}`}
-                    content={segment.content}
-                    isStreaming={isLoading}
-                  />
-                );
-              case "tool_activity":
-                return (
-                  <ToolActivity
-                    key={`tools-${index}`}
-                    steps={segment.steps}
-                    isLoading={isLoading}
-                  />
-                );
-              case "prose": {
-                // If the assistant wrote a structured clarification as
-                // plain markdown instead of calling ask_clarification,
-                // render it as an interactive form card.
-                const inlineForm = tryExtractInlineHumanInputForm(
-                  segment.content,
-                );
-                if (inlineForm) {
-                  return (
-                    <HumanInputCard
-                      key={`form-${index}`}
-                      request={inlineForm}
-                    />
-                  );
-                }
-                return (
-                  <ProseContent
-                    key={`prose-${index}`}
-                    content={segment.content}
-                    isLoading={isLoading}
-                  />
-                );
-              }
-              case "files":
-                return (
-                  <FilesCard
-                    key={`files-${index}`}
-                    files={segment.files}
-                    threadId={threadId}
-                  />
-                );
-            }
-          })}
+          <SegmentList
+            segments={segments}
+            threadId={threadId}
+            isLoading={isLoading}
+          />
         </div>
       </div>
     );

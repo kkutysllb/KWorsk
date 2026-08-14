@@ -25,6 +25,7 @@ test("ReasoningBlock shows streaming label while streaming", () => {
   );
 
   expect(html).toContain("思考中");
-  // Streaming starts expanded, so the body is rendered.
-  expect(html).toContain("streaming thoughts");
+  // Collapsed by default even while streaming — the user expands manually.
+  expect(html).not.toContain("streaming thoughts");
+  expect(html).toContain("aria-expanded=\"false\"");
 });

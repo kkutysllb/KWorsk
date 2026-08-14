@@ -26,6 +26,7 @@ import {
   buildInitialHumanInputFormValues,
   createHumanInputOptionResponse,
   createHumanInputTextResponse,
+  formatHumanInputAnsweredValue,
   readHumanInputFormValue,
   type HumanInputField,
   type HumanInputFormValue,
@@ -341,7 +342,9 @@ export function HumanInputCard({
         </p>
       ) : answeredResponse ? (
         <p className="text-muted-foreground text-sm" aria-live="polite">
-          {t.humanInput.answeredValue(answeredResponse.value)}
+          {t.humanInput.answeredValue(
+            formatHumanInputAnsweredValue(request, answeredResponse),
+          )}
         </p>
       ) : (
         <span />
@@ -559,7 +562,9 @@ export function HumanInputCard({
                     className="text-muted-foreground text-sm"
                     aria-live="polite"
                   >
-                    {t.humanInput.answeredValue(answeredResponse.value)}
+                    {t.humanInput.answeredValue(
+                      formatHumanInputAnsweredValue(request, answeredResponse),
+                    )}
                   </p>
                 ) : (
                   <span />
@@ -581,7 +586,9 @@ export function HumanInputCard({
 
           {!allowText && !isForm && answeredResponse ? (
             <p className="text-muted-foreground text-sm" aria-live="polite">
-              {t.humanInput.answeredValue(answeredResponse.value)}
+              {t.humanInput.answeredValue(
+                formatHumanInputAnsweredValue(request, answeredResponse),
+              )}
             </p>
           ) : null}
         </div>

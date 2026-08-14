@@ -550,7 +550,7 @@ export function buildHumanInputFormSummary(
 export function buildHumanInputFormSubmissionValue(
   request: HumanInputRequest,
   values: Record<string, HumanInputFormValue>,
-) {
+): string {
   // The readable summary alone is ambiguous ("a: x; B: y" could come from
   // several field mappings), so the submitted value appends the full record
   // as one JSON block keyed by stable field names — labels/names may contain
@@ -564,6 +564,39 @@ export function buildHumanInputFormSubmissionValue(
     record[field.name] = value!;
   }
   return `${buildHumanInputFormSummary(request, values)} [values: ${JSON.stringify(record)}]`;
+}
+
+const FORM_VALUES_TRAILER = /\s*\[values:\s*\{[^{}]*\}\s*\]\s*$/s;
+
+/**
+ * Strip the machine-readable `[values: {...}]` trailer that
+ * {@link buildHumanInputFormSubmissionValue} appends to form submissions,
+ * leaving only the human-readable summary. Shared by the chat rendering
+ * (user bubble) and the clarification card (answered display) so the two
+ * never drift.
+ */
+export function stripHumanInputFormValuesTrailer(text: string): string {
+  return text.replace(FORM_VALUES_TRAILER, "").trimEnd();
+}
+
+/**
+ * Display text for an answered clarification: option responses show the
+ * option's user-facing label (the user clicked a label, not a value), and
+ * form/text responses show the readable summary without the
+ * machine-readable `[values: …]` trailer.
+ */
+export function formatHumanInputAnsweredValue(
+  request: HumanInputRequest,
+  response: HumanInputResponse,
+): string {
+  if (response.response_kind === "option") {
+    const option = (request.options ?? []).find(
+      (entry) =>
+        entry.id === response.option_id || entry.value === response.value,
+    );
+    return option?.label ?? response.value;
+  }
+  return stripHumanInputFormValuesTrailer(response.value);
 }
 
 export function createHumanInputTextResponse(

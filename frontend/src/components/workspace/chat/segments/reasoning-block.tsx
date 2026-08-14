@@ -1,18 +1,22 @@
 "use client";
 
 import { BrainIcon, ChevronRightIcon } from "lucide-react";
-import { useEffect, useState } from "react";
+import { useState } from "react";
 
+import { Shimmer } from "@/components/ai-elements/shimmer";
 import { ClipboardSafeStreamdown } from "@/components/ai-elements/streamdown";
 import { reasoningPlugins } from "@/core/streamdown/plugins";
 import { cn } from "@/lib/utils";
 
-import { Shimmer } from "@/components/ai-elements/shimmer";
 
 /**
  * ReasoningBlock — collapsible "thinking" segment.
  * Left accent border (emerald when done / blue while streaming),
  * inline summary chip, italic muted content.
+ *
+ * Always collapsed by default — during execution and after completion —
+ * so thinking never interrupts the reading flow; the user expands it
+ * manually.
  */
 export function ReasoningBlock({
   content,
@@ -23,20 +27,7 @@ export function ReasoningBlock({
   isStreaming?: boolean;
   className?: string;
 }) {
-  const [expanded, setExpanded] = useState(isStreaming);
-  const [autoClosed, setAutoClosed] = useState(false);
-
-  // Auto-collapse once streaming finishes (single time), so long thinking
-  // blocks don't dominate the message after the answer arrives.
-  useEffect(() => {
-    if (!isStreaming && expanded && !autoClosed) {
-      const timer = setTimeout(() => {
-        setExpanded(false);
-        setAutoClosed(true);
-      }, 1000);
-      return () => clearTimeout(timer);
-    }
-  }, [isStreaming, expanded, autoClosed]);
+  const [expanded, setExpanded] = useState(false);
 
   return (
     <div

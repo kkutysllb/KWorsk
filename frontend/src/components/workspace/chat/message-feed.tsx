@@ -1,6 +1,6 @@
 "use client";
 
-import type { BaseStream } from "@langchain/langgraph-sdk";
+import type { BaseStream, Message } from "@langchain/langgraph-sdk";
 import { ChevronDownIcon, ChevronUpIcon, Loader2Icon } from "lucide-react";
 import { useCallback, useEffect, useMemo, useRef } from "react";
 import {
@@ -14,9 +14,11 @@ import {
 import { Button } from "@/components/ui/button";
 import { useI18n } from "@/core/i18n/hooks";
 import {
+  deriveHumanInputThreadState,
   extractHumanInputRequest,
   type HumanInputResponse,
 } from "@/core/messages/human-input";
+import { parseAssistantSegments } from "@/core/messages/segments";
 import {
   extractContentFromMessage,
   extractPresentFilesFromMessage,
@@ -42,6 +44,7 @@ import { SubtaskCard } from "../messages/subtask-card";
 import { MessageItem } from "./message-item";
 import { NeuralWaveSpinner } from "./segments/neural-wave-spinner";
 import { ReportCard } from "./segments/report-card";
+import { SegmentList } from "./segments/segment-list";
 
 export const MESSAGE_FEED_DEFAULT_PADDING_BOTTOM = 160;
 export const MESSAGE_FEED_FOLLOWUPS_EXTRA_PADDING_BOTTOM = 80;
@@ -100,6 +103,15 @@ export function MessageFeed({
     ? messages[messages.length - 1]?.id
     : undefined;
 
+  // Clarification answers ride on the user's reply messages as
+  // additional_kwargs.human_input_response (including the optimistic copy
+  // sent right after submit), so the card can show the user's actual
+  // choices instead of the untouched default form.
+  const answeredResponses = useMemo(
+    () => deriveHumanInputThreadState(messages).answeredResponses,
+    [messages],
+  );
+
   // Populate subtask context from AI messages that contain `task` tool
   // calls.  This MUST be in useEffect — calling updateSubtask (which calls
   // setTasks on the SubtasksProvider) during render causes an infinite
@@ -154,7 +166,7 @@ export function MessageFeed({
               // Only render AI messages as primary content. Orphan tool
               // messages that were pushed into this group by the fallback
               // in groupMessages are skipped — their results are surfaced
-              // inside ToolActivity cards via findToolCallResult.
+              // inside ToolGroup entries via findToolCallResult.
               return group.messages
                 .filter((msg) => msg.type === "ai")
                 .map((msg) => (
@@ -171,25 +183,23 @@ export function MessageFeed({
                 ));
             }
             if (group.type === "assistant:processing") {
-              // Intermediate AI messages — reasoning blocks and tool
-              // activity — rendered via the same segment model as final
-              // answers. Tool-result messages are skipped here because
-              // their content is surfaced inside the ToolActivity card
+              // Intermediate AI messages — reasoning, prose chunks and tool
+              // calls — parsed into ONE execution-order segment stream so
+              // consecutive tool calls across messages merge into a single
+              // ToolGroup row per prose gap. Tool-result messages are
+              // skipped because their content is resolved into the steps
               // via findToolCallResult(contextMessages).
-              return group.messages
-                .filter((msg) => msg.type === "ai")
-                .map((msg) => (
-                  <MessageItem
-                    key={`${group.id}/${msg.id}`}
-                    threadId={threadId}
-                    message={msg}
-                    contextMessages={messages}
-                    isLoading={
-                      msg.id != null && msg.id === streamingMessageId
-                    }
-                    onEditMessage={onEditMessage}
-                  />
-                ));
+              return (
+                <ProcessingFlow
+                  key={group.id}
+                  groupMessages={group.messages}
+                  contextMessages={messages}
+                  threadId={threadId}
+                  isLoading={group.messages.some(
+                    (msg) => msg.id != null && msg.id === streamingMessageId,
+                  )}
+                />
+              );
             }
             if (group.type === "assistant:clarification") {
               const message = group.messages[0];
@@ -204,6 +214,9 @@ export function MessageFeed({
                     <HumanInputCard
                       request={request}
                       onSubmit={onHumanInputSubmit}
+                      answeredResponse={
+                        answeredResponses.get(request.request_id) ?? null
+                      }
                     />
                   </div>
                 );
@@ -214,6 +227,7 @@ export function MessageFeed({
                     <MarkdownContent
                       content={extractContentFromMessage(message)}
                       isLoading={thread.isLoading}
+                      className="streamdown-tight"
                     />
                   </div>
                 );
@@ -241,7 +255,7 @@ export function MessageFeed({
                     <MarkdownContent
                       content={extractContentFromMessage(group.messages[0])}
                       isLoading={thread.isLoading}
-                      className="mb-4"
+                      className="streamdown-tight mb-4"
                     />
                   )}
                   {htmlReports.length > 0 && (
@@ -316,6 +330,39 @@ export function MessageFeed({
           actual scrolling element is internal to the library). */}
       <ScrollToBottomButton />
     </Conversation>
+  );
+}
+
+/**
+ * ProcessingFlow — renders one `assistant:processing` group as a single
+ * execution-order segment stream. Tool calls that are adjacent across the
+ * group's AI messages (no prose between them) merge into one ToolGroup,
+ * so each prose gap shows exactly one collapsible tool summary row.
+ */
+function ProcessingFlow({
+  groupMessages,
+  contextMessages,
+  threadId,
+  isLoading,
+}: {
+  groupMessages: Message[];
+  contextMessages: Message[];
+  threadId: string;
+  isLoading: boolean;
+}) {
+  const segments = useMemo(
+    () => parseAssistantSegments(groupMessages, contextMessages),
+    [groupMessages, contextMessages],
+  );
+
+  return (
+    <div className="group/conversation-message flex w-full flex-col gap-3.5">
+      <SegmentList
+        segments={segments}
+        threadId={threadId}
+        isLoading={isLoading}
+      />
+    </div>
   );
 }
 
