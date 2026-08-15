@@ -145,6 +145,96 @@ function replaceOrAppendDesktopDatabase(source: string): string {
   return `${source.slice(0, range.start)}${migratedSection}${source.slice(range.end)}`;
 }
 
+/**
+ * The community browser-automation tool block exactly as it shipped in the
+ * embedded config through v1.0.5. Used as a pristine-marker for the
+ * conditional swap to the native browser tools: the block is only replaced
+ * when it matches byte-for-byte — any user edit (added options, removed
+ * tools, altered comments) makes the marker miss and the config is left
+ * untouched.
+ */
+const PRISTINE_COMMUNITY_BROWSER_BLOCK = `\
+  # 浏览器自动化（已安装 playwright + Chromium，headless 模式运行）
+  # 浏览器会话驻留在单 worker 内存中，保持 GATEWAY_WORKERS=1。
+  - name: browser_navigate
+    group: browser
+    use: qilin.community.browser_automation.tools:browser_navigate_tool
+    headless: true
+    timeout_ms: 30000
+    viewport_width: 1280
+    viewport_height: 720
+  - name: browser_snapshot
+    group: browser
+    use: qilin.community.browser_automation.tools:browser_snapshot_tool
+  - name: browser_click
+    group: browser
+    use: qilin.community.browser_automation.tools:browser_click_tool
+  - name: browser_type
+    group: browser
+    use: qilin.community.browser_automation.tools:browser_type_tool
+  - name: browser_get_text
+    group: browser
+    use: qilin.community.browser_automation.tools:browser_get_text_tool
+    max_chars: 8000
+  - name: browser_back
+    group: browser
+    use: qilin.community.browser_automation.tools:browser_back_tool
+  - name: browser_screenshot
+    group: browser
+    use: qilin.community.browser_automation.tools:browser_screenshot_tool
+  - name: browser_close
+    group: browser
+    use: qilin.community.browser_automation.tools:browser_close_tool\
+`;
+
+/** The native browser tool block this migration upgrades pristine installs to. */
+const NATIVE_BROWSER_TOOLS_BLOCK = `\
+  # 原生浏览器工具（共享无头 Chromium，Playwright）。一次性调用：每次带 URL
+  # 执行并返回结果，不在调用间保持交互会话。
+  #   browser_navigate   → 页面标题 + HTTP 状态 + 最终 URL
+  #   browser_read_page  → 页面可见正文（超过 max_chars 截断）
+  #   browser_screenshot → PNG 存入线程输出目录，返回路径
+  # 启动参数（headless/超时/视口）以 browser_navigate 为准，三个工具共享。
+  # Playwright 未安装时工具保持注册并返回明确的安装指引。
+  # 如需社区版有状态浏览器套件（snapshot/click/type 循环），注释掉下面三条，
+  # 改用 qilin.community.browser_automation.tools:* 系列（同名工具不可并存）。
+  - name: browser_navigate
+    group: browser
+    use: qilin.tools.builtins.browser_tools:browser_navigate_tool
+    headless: true
+    timeout_ms: 30000
+    network_idle_timeout_ms: 5000
+    viewport_width: 1280
+    viewport_height: 720
+    # allow_private_addresses: false  # SSRF 防护默认开启，保持 false
+  - name: browser_read_page
+    group: browser
+    use: qilin.tools.builtins.browser_tools:browser_read_page_tool
+    max_chars: 20000
+  - name: browser_screenshot
+    group: browser
+    use: qilin.tools.builtins.browser_tools:browser_screenshot_tool\
+`;
+
+/**
+ * Swap the pristine community browser-automation block for the native
+ * browser tools. Byte-exact marker matching keeps user-customized blocks
+ * (and configs that never had the community suite) untouched.
+ */
+function replacePristineCommunityBrowserTools(source: string): string {
+  if (!source.includes(PRISTINE_COMMUNITY_BROWSER_BLOCK)) {
+    return source;
+  }
+  return source.replace(
+    PRISTINE_COMMUNITY_BROWSER_BLOCK,
+    NATIVE_BROWSER_TOOLS_BLOCK,
+  );
+}
+
 export function migrateDesktopConfigYaml(source: string): string {
-  return replaceOrAppendAgentsApi(replaceOrAppendDesktopDatabase(source));
+  return replaceOrAppendAgentsApi(
+    replaceOrAppendDesktopDatabase(
+      replacePristineCommunityBrowserTools(source),
+    ),
+  );
 }
