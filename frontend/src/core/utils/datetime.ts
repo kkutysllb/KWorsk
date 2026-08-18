@@ -1,10 +1,17 @@
 import {
+  addDays,
+  addMonths,
   format,
   formatDistanceToNow,
+  isSameDay,
   isThisWeek,
   isThisYear,
   isToday,
   isYesterday,
+  startOfDay,
+  startOfMonth,
+  startOfWeek,
+  subDays,
 } from "date-fns";
 import { enUS as dateFnsEnUS, zhCN as dateFnsZhCN } from "date-fns/locale";
 
@@ -79,4 +86,67 @@ export function formatSmartTime(date: Date | string | number, locale?: Locale) {
   return format(parsed, isZh ? "yyyy-MM-dd" : "yyyy/MM/dd", {
     locale: dfLocale,
   });
+}
+
+export type ThreadTimeBucket = "recent3" | "thisWeek" | "thisMonth" | "earlier";
+
+/**
+ * Classify a moment into one of four non-overlapping sidebar buckets.
+ *
+ * Buckets (no overlap, ordered from most recent):
+ *   - recent3   today + yesterday + day before yesterday
+ *   - thisWeek  this ISO week (Mon-based) excluding the recent3 window
+ *   - thisMonth this calendar month excluding thisWeek
+ *   - earlier   everything else
+ *
+ * Deterministic via the explicit `now` parameter. Falls back to "earlier"
+ * for invalid input so the sidebar never crashes.
+ *
+ * Implementation note: thisWeek / thisMonth boundaries are computed
+ * directly from `now` (rather than via date-fns' `isThisWeek` /
+ * `isThisMonth`, which read the system clock) so the explicit `now`
+ * argument truly drives the classification.
+ */
+export function bucketOfThread(
+  date: Date | string | number,
+  now: Date = new Date(),
+  weekStartsOn: 0 | 1 | 2 | 3 | 4 | 5 | 6 = 1,
+): ThreadTimeBucket {
+  const parsed = date instanceof Date ? date : new Date(date);
+  if (Number.isNaN(parsed.getTime())) {
+    return "earlier";
+  }
+
+  // recent3: today, yesterday, day before yesterday (relative to `now`).
+  const today = startOfDay(now);
+  const dayMinus1 = subDays(today, 1);
+  const dayMinus2 = subDays(today, 2);
+  const parsedDay = startOfDay(parsed);
+  if (
+    isSameDay(parsedDay, today) ||
+    isSameDay(parsedDay, dayMinus1) ||
+    isSameDay(parsedDay, dayMinus2)
+  ) {
+    return "recent3";
+  }
+
+  // thisWeek: parsed falls in [startOfWeek(now), nextWeekStart), based on `now`.
+  const weekStart = startOfWeek(now, { weekStartsOn });
+  const nextWeekStart = addDays(weekStart, 7);
+  const parsedTime = parsed.getTime();
+  if (parsedTime >= weekStart.getTime() && parsedTime < nextWeekStart.getTime()) {
+    return "thisWeek";
+  }
+
+  // thisMonth: parsed falls in [startOfMonth(now), nextMonthStart).
+  const monthStart = startOfMonth(now);
+  const nextMonthStart = addMonths(monthStart, 1);
+  if (
+    parsedTime >= monthStart.getTime() &&
+    parsedTime < nextMonthStart.getTime()
+  ) {
+    return "thisMonth";
+  }
+
+  return "earlier";
 }
