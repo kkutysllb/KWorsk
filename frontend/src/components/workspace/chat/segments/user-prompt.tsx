@@ -11,11 +11,43 @@ import { cn } from "@/lib/utils";
 import { FilesCard } from "./files-card";
 
 /**
+ * Inline image thumbnails for content `image_url` blocks (data:/https:
+ * URLs only — parseUserPrompt never lifts other schemes into `images`).
+ * Mirrors the FilesCard image chip style: fixed-height, click to open raw.
+ */
+function InlineImageThumbnails({ images }: { images: string[] }) {
+  if (images.length === 0) return null;
+  return (
+    <div className="flex justify-end">
+      <div className="flex flex-wrap justify-end gap-2">
+        {images.map((url, index) => (
+          <a
+            key={`${url.slice(0, 32)}-${index}`}
+            href={url}
+            target="_blank"
+            rel="noopener noreferrer"
+            className="group border-border/40 relative block overflow-hidden rounded-lg border"
+          >
+            <img
+              src={url}
+              alt={`image-${index + 1}`}
+              className="h-32 w-auto max-w-60 object-cover transition-transform group-hover:scale-105"
+            />
+          </a>
+        ))}
+      </div>
+    </div>
+  );
+}
+
+/**
  * UserPrompt — the user's message.
  * Transparent right-aligned text inside a slim border frame, with a
  * hover toolbar (copy / edit). Edit mode swaps the text for a textarea
  * with save/cancel; saving calls `onEditMessage` (optimistic local
- * update included) for upper layers to replay the turn.
+ * update included) for upper layers to replay the turn. Uploads render
+ * as file-card thumbnails above the bubble; image-only messages skip
+ * the text bubble entirely.
  */
 export function UserPrompt({
   prompt,
@@ -68,6 +100,8 @@ export function UserPrompt({
     setEditText("");
   }, []);
 
+  const hasText = displayText.trim().length > 0;
+
   return (
     <div className={cn("ml-auto flex w-full max-w-[85%] flex-col gap-1.5", className)}>
       {prompt.files.length > 0 && (
@@ -75,6 +109,8 @@ export function UserPrompt({
           <FilesCard files={prompt.files} threadId={threadId} />
         </div>
       )}
+
+      <InlineImageThumbnails images={prompt.images} />
 
       {editing ? (
         <div className="flex w-full flex-col gap-2">
@@ -108,15 +144,17 @@ export function UserPrompt({
         </div>
       ) : (
         <div className="flex flex-col items-end gap-1">
-          <article
-            className="text-foreground rounded-2xl px-3.5 py-2.5 text-right whitespace-pre-wrap leading-relaxed"
-            style={{
-              background:
-                "linear-gradient(135deg, hsl(var(--primary)/0.12), hsl(var(--primary)/0.06))",
-            }}
-          >
-            {displayText}
-          </article>
+          {hasText && (
+            <article
+              className="text-foreground rounded-2xl px-3.5 py-2.5 text-right whitespace-pre-wrap leading-relaxed"
+              style={{
+                background:
+                  "linear-gradient(135deg, hsl(var(--primary)/0.12), hsl(var(--primary)/0.06))",
+              }}
+            >
+              {displayText}
+            </article>
+          )}
           <div className="flex items-center gap-0.5 opacity-0 transition-opacity group-hover/conversation-message:opacity-100">
             <Button
               size="icon-sm"

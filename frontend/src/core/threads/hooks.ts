@@ -721,12 +721,16 @@ export function useThreadStream({
       // Capture current count before showing optimistic messages
       prevMsgCountRef.current = thread.messages.length;
 
-      // Build optimistic files list with uploading status
+      // Build optimistic files list with uploading status. The local URL
+      // (Data/blob) lets the bubble render an instant image thumbnail while
+      // the upload request is still in flight.
       const optimisticFiles: FileInMessage[] = (message.files ?? []).map(
         (f) => ({
           filename: f.filename ?? "",
           size: 0,
           status: "uploading" as const,
+          localUrl: f.url,
+          mediaType: f.mediaType,
         }),
       );
 
@@ -790,13 +794,23 @@ export function useThreadStream({
               const uploadResponse = await uploadFiles(threadId, files);
               uploadedFileInfo = uploadResponse.files;
 
-              // Update optimistic human message with uploaded status + paths
+              // Update optimistic human message with uploaded status + paths.
+              // Store the sandbox virtual path — the artifacts API rejects
+              // host-absolute paths with 400, which killed the image
+              // thumbnails in the user bubble. Keep the local preview URL so
+              // the thumbnail stays visible until the authenticated artifact
+              // URL resolves.
+              const localPreviewByFilename = new Map(
+                optimisticFiles.map((f) => [f.filename, f] as const),
+              );
               const uploadedFiles: FileInMessage[] = uploadedFileInfo.map(
                 (info) => ({
                   filename: info.filename,
                   size: info.size,
-                  path: info.path,
+                  path: info.virtual_path ?? info.path,
                   status: "uploaded" as const,
+                  localUrl: localPreviewByFilename.get(info.filename)?.localUrl,
+                  mediaType: localPreviewByFilename.get(info.filename)?.mediaType,
                 }),
               );
               setOptimisticMessages((messages) => {
@@ -826,12 +840,14 @@ export function useThreadStream({
           }
         }
 
-        // Build files metadata for submission (included in additional_kwargs)
+        // Build files metadata for submission (included in additional_kwargs).
+        // Virtual paths keep the persisted history renderable via the
+        // artifacts API after replay.
         const filesForSubmit: FileInMessage[] = uploadedFileInfo.map(
           (info) => ({
             filename: info.filename,
             size: info.size,
-            path: info.path,
+            path: info.virtual_path ?? info.path,
             status: "uploaded" as const,
           }),
         );

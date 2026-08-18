@@ -4,6 +4,7 @@ import { describe, expect, test } from "vitest";
 import {
   parseAssistantSegments,
   parseMessageSegments,
+  parseUserPrompt,
 } from "@/core/messages/segments";
 
 type AIMessageLike = Partial<Omit<AIMessage, "type">> & { id: string };
@@ -182,5 +183,104 @@ describe("parseAssistantSegments — cross-message ToolGroup aggregation", () =>
 
     const segments = parseAssistantSegments([ai1, toolMsg]);
     expect(segments.map((s) => s.kind)).toEqual(["prose", "tool_activity"]);
+  });
+});
+
+describe("parseUserPrompt — screenshot / upload bubble sanitization", () => {
+  const PNG_DATA_URL = "data:image/png;base64,iVBORw0KGgoAAAANSUhEUg==";
+
+  function humanMessage(
+    partial: Partial<Message> & { content: unknown },
+  ): Message {
+    return { type: "human", id: "h1", ...partial } as unknown as Message;
+  }
+
+  test("strips the <current_uploads> block UploadsMiddleware prepended to the persisted message", () => {
+    // Mirrors UploadsMiddleware: a files text block is prepended before the
+    // user's own text blocks, then the whole message streams back via values.
+    const message = humanMessage({
+      content: [
+        {
+          type: "text",
+          text: "<current_uploads>\nThe following files were uploaded in this message:\n\n- image.png (343.8 KB)\n  Path: /mnt/user-data/uploads/image.png\n  Use `grep` to search for keywords (e.g. `grep(pattern='keyword', path='/mnt/user-data/uploads/')`).\n\n</current_uploads>\n\n",
+        },
+        { type: "text", text: "各新闻分布面板是空白" },
+      ],
+      additional_kwargs: {
+        files: [
+          {
+            filename: "image.png",
+            size: 351641,
+            path: "/data/threads/t1/uploads/image.png",
+            status: "uploaded",
+          },
+        ],
+      },
+    });
+
+    const prompt = parseUserPrompt(message);
+
+    expect(prompt.content).toBe("各新闻分布面板是空白");
+    expect(prompt.files).toHaveLength(1);
+    expect(prompt.images).toEqual([]);
+  });
+
+  test("strips <current_uploads> from string content too", () => {
+    const message = humanMessage({
+      content:
+        "<current_uploads>\n(empty)\n\n</current_uploads>\n\n各新闻分布面板是空白",
+    });
+
+    const prompt = parseUserPrompt(message);
+
+    expect(prompt.content).toBe("各新闻分布面板是空白");
+  });
+
+  test("image_url blocks become thumbnail entries instead of base64 markdown text", () => {
+    const message = humanMessage({
+      content: [
+        { type: "text", text: "看看这张截图" },
+        { type: "image_url", image_url: { url: PNG_DATA_URL } },
+      ],
+    });
+
+    const prompt = parseUserPrompt(message);
+
+    expect(prompt.content).toBe("看看这张截图");
+    expect(prompt.images).toEqual([PNG_DATA_URL]);
+  });
+
+  test("https image URLs are lifted out while other schemes stay as text", () => {
+    const message = humanMessage({
+      content: [
+        {
+          type: "text",
+          text: "看看这张截图\n![image](javascript:alert(1))",
+        },
+        { type: "image_url", image_url: { url: "https://example.com/a.png" } },
+      ],
+    });
+
+    const prompt = parseUserPrompt(message);
+
+    expect(prompt.content).toContain("javascript:alert(1)");
+    expect(prompt.images).toEqual(["https://example.com/a.png"]);
+  });
+
+  test("image-only message yields empty text so the bubble is skipped", () => {
+    const message = humanMessage({
+      content: [
+        {
+          type: "text",
+          text: "<current_uploads>\n- image.png\n</current_uploads>\n\n",
+        },
+        { type: "image_url", image_url: { url: PNG_DATA_URL } },
+      ],
+    });
+
+    const prompt = parseUserPrompt(message);
+
+    expect(prompt.content).toBe("");
+    expect(prompt.images).toEqual([PNG_DATA_URL]);
   });
 });

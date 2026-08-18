@@ -679,6 +679,10 @@ export interface FileInMessage {
   size: number; // bytes
   path?: string; // virtual path, may not be set during upload
   status?: "uploading" | "uploaded";
+  /** Local Data/blob URL of the in-flight upload — instant thumbnail while the request is in progress. */
+  localUrl?: string;
+  /** IANA media type (e.g. image/png), available from the optimistic stage. */
+  mediaType?: string;
 }
 
 /**

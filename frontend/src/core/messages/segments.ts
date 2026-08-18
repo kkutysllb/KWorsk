@@ -6,6 +6,7 @@ import {
   extractReasoningContentFromMessage,
   findToolCallResult,
   stripInternalContent,
+  stripUploadedFilesTag,
   type FileInMessage,
 } from "./utils";
 
@@ -45,6 +46,8 @@ export type UserPromptSegment = {
   kind: "user";
   content: string;
   files: FileInMessage[];
+  /** Inline image URLs (data:/https:) carried by content `image_url` blocks, rendered as thumbnails instead of markdown text. */
+  images: string[];
 };
 
 /** Tools whose results are surfaced elsewhere (subagent cards, artifacts). */
@@ -249,20 +252,42 @@ export function parseAssistantSegments(
 }
 
 /**
+ * `![image](...)` markdown produced by {@link extractContentFromMessage}'s
+ * `image_url` branch. Only data:image base64 and http(s) URLs are lifted out
+ * for thumbnail rendering; any other scheme stays as plain text so a crafted
+ * URL can never reach an `<img src>`.
+ */
+const INLINE_IMAGE_MD_RE =
+  /!\[image\]\((data:image\/[a-z0-9.+-]+;base64,[A-Za-z0-9+/=]+|https?:\/\/[^\s)]+)\)/g;
+
+/**
  * Decompose a human message into a single user-prompt segment.
  *
  * Form submissions carry a trailing `[values: {...}]` JSON block (see
  * {@link buildHumanInputFormSubmissionValue}); the rendered bubble shows
  * only the readable summary above it.
+ *
+ * UploadsMiddleware prepends a `<current_uploads>` context block to the
+ * checkpoint-persisted human message before it streams back, so the same
+ * middleware tags stripped from AI prose are removed here too — the bubble
+ * must show only what the user typed, with uploads rendered as file cards.
+ * Content `image_url` blocks surface as `images` thumbnails rather than a
+ * wall of base64 markdown text.
  */
 export function parseUserPrompt(message: Message): UserPromptSegment {
   const raw =
     extractContentFromMessage(message) ??
     extractReasoningContentFromMessage(message) ??
     "";
-  const content = stripHumanInputFormValuesTrailer(raw);
+  const sanitized = stripUploadedFilesTag(raw);
+  const images: string[] = [];
+  const withoutImages = sanitized.replace(INLINE_IMAGE_MD_RE, (_match, url: string) => {
+    images.push(url);
+    return "";
+  });
+  const content = stripHumanInputFormValuesTrailer(withoutImages);
   const files = (message.additional_kwargs?.files as
     | FileInMessage[]
     | undefined) ?? [];
-  return { kind: "user", content, files };
+  return { kind: "user", content, files, images };
 }

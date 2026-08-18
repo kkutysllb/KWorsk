@@ -44,6 +44,25 @@ export function resolveArtifactURL(absolutePath: string, threadId: string) {
 }
 
 /**
+ * Normalize a `FileInMessage.path` (an uploaded attachment) to the sandbox
+ * virtual form the artifacts API accepts (`/mnt/user-data/uploads/<name>`).
+ *
+ * `resolve_virtual_path` on the backend rejects anything that does not start
+ * with the `mnt/user-data` segment boundary (HTTP 400). New submissions store
+ * the backend-provided `virtual_path` directly, but messages persisted before
+ * that carry the host-absolute upload path — and uploads always live in the
+ * thread's uploads dir, so the virtual path can be rebuilt from the filename.
+ */
+export function uploadArtifactPath(
+  path: string | undefined,
+  filename: string,
+): string {
+  if (path?.startsWith("/mnt/user-data/")) return path;
+  const safeName = filename.split("/").pop() ?? filename;
+  return `/mnt/user-data/uploads/${safeName}`;
+}
+
+/**
  * Determine whether a string is an artifact path that should be routed through
  * the artifacts API (as opposed to an external URL).
  *

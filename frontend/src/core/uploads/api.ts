@@ -9,6 +9,8 @@ export interface UploadedFileInfo {
   filename: string;
   size: number;
   path: string;
+  /** Sandbox virtual path (e.g. /mnt/user-data/uploads/a.png) — the form the artifacts API accepts. */
+  virtual_path?: string;
   artifact_url: string;
   extension?: string;
   modified?: number;
