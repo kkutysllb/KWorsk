@@ -1,5 +1,15 @@
 # Changelog
 
+## v1.0.7 - 2026-08-18
+
+Compare: `v1.0.6...v1.0.7`
+
+- 忽略上传图片文档 (b44b974)
+- feat(workspace): group sidebar history by recent3/week/month/earlier (4dd891b)
+- feat(i18n): add sidebar history bucket labels (a6bcef2)
+- feat(datetime): add bucketOfThread sidebar grouping helper (7d89430)
+- 完成附件上传前端样式修改 (cdf37df)
+
 ## v1.0.6 - 2026-08-15
 
 Compare: `v1.0.5...v1.0.6`
