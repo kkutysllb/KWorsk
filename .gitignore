@@ -198,3 +198,4 @@ frontend/playwright-report/*.worktrees/
 # ═══════════════════════════════════════
 .workbuddy/
 .release-logs/
+.drops/
