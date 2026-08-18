@@ -1,4 +1,4 @@
-﻿import {
+import {
   CompassIcon,
   GraduationCapIcon,
   ImageIcon,
@@ -193,6 +193,10 @@ export const zhCN: Translations = {
     newChat: "新任务",
     chats: "任务",
     recentChats: "历史任务",
+    recent3: "近三天",
+    thisWeek: "本周",
+    thisMonth: "本月",
+    earlier: "更早",
     demoChats: "演示任务",
     agents: "智能体",
     models: "模型管理",

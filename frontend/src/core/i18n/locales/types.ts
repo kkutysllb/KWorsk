@@ -139,6 +139,10 @@ export interface Translations {
   // Sidebar
   sidebar: {
     recentChats: string;
+    recent3: string;
+    thisWeek: string;
+    thisMonth: string;
+    earlier: string;
     newChat: string;
     chats: string;
     demoChats: string;
