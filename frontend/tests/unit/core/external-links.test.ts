@@ -32,7 +32,6 @@ function setDesktopBridge(bridge?: Partial<DesktopBridge>) {
       onCheckUpdateRequest: vi.fn(() => unsubscribe),
       onUpdateDownloading: vi.fn(() => unsubscribe),
       onUpdateReady: vi.fn(() => unsubscribe),
-      getStartupInfo: vi.fn(),
       getSkillModels: vi.fn(),
       setSkillModels: vi.fn(),
       ...bridge,

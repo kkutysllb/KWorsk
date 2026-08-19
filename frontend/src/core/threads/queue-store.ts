@@ -147,7 +147,6 @@ function saveToStorageImmediate(threadId: string) {
         }
       }
     }
-    console.warn("queue-store: saveToStorage failed", e);
   }
 }
 

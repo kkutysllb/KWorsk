@@ -75,33 +75,17 @@ export function useQueueCoordinator(
 
   const injectNow = useCallback(
     async (msg: QueuedMessage) => {
-      // 🔍 诊断日志：定位"立即注入无效"的断点
-      console.log("[injectNow] called", {
-        msgId: msg.id,
-        contentPreview: msg.content.slice(0, 30),
-        threadId,
-        currentRunId,
-      });
       if (!currentRunId) {
-        console.warn(
-          "[injectNow] ABORT: currentRunId is null — onCreated 没有正确设置 run_id，或组件拿到的 currentRunId 是旧值",
-          { threadId },
-        );
         return;
       }
       storeUpdateStatus(threadId, msg.id, "injecting");
       try {
-        console.log("[injectNow] calling injectMessage API", {
-          threadId,
-          runId: currentRunId,
-        });
         const resp = await injectMessage(threadId, currentRunId, {
           content: msg.content,
           attachments: msg.attachments,
           messageId: msg.id,
           queuedAt: msg.queuedAt,
         });
-        console.log("[injectNow] API success", resp);
         storeUpdateStatus(threadId, msg.id, "injected");
       } catch (e) {
         console.error("[injectNow] API failed", e);

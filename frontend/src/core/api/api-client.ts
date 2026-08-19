@@ -49,7 +49,6 @@ function injectDesktopAuthorization(init: RequestInit): RequestInit {
 
   const token = getDesktopSessionToken();
   if (!token) {
-    console.warn("[DIAG:api-client] isDesktop=true but no session token in localStorage");
     return init;
   }
 
@@ -171,7 +170,6 @@ export const clearReconnect = clearReconnectRun;
 
 function createCompatibleClient(isMock?: boolean): LangGraphClient {
   const apiUrl = getLangGraphBaseURL(isMock);
-  console.log(`Creating API client with base URL: ${apiUrl}`);
   const client = new LangGraphClient({
     apiUrl,
     onRequest: prepareLangGraphRequest,

@@ -118,9 +118,6 @@ function LoginPageInner() {
           }
         : { "Content-Type": "application/json", ...desktopHeaders };
 
-      // DIAG: trace the desktop auth request construction
-      console.log("[DIAG:login] isDesktop=", isDesktop(), "baseUrl=", getBackendBaseURL(), "endpoint=", endpoint, "desktopHeaders=", JSON.stringify(desktopHeaders));
-
       const res = await fetch(`${getBackendBaseURL()}${endpoint}`, {
         method: "POST",
         headers,
@@ -128,23 +125,17 @@ function LoginPageInner() {
         credentials: "include", // Important: include HttpOnly cookie
       });
 
-      console.log("[DIAG:login] response status=", res.status, "ok=", res.ok);
-
       if (!res.ok) {
         const data = await res.json();
-        console.log("[DIAG:login] error response body=", JSON.stringify(data));
         const authError = parseAuthError(data);
         setError(authError.message);
         return;
       }
 
       const data = (await res.json()) as LoginResponse;
-      console.log("[DIAG:login] success body has access_token=", !!data.access_token, "needs_setup=", data.needs_setup);
       if (isDesktop() && data.access_token) {
         setDesktopSessionToken(data.access_token);
-        console.log("[DIAG:login] desktop session token stored");
       } else {
-        console.log("[DIAG:login] desktop token NOT stored: isDesktop=", isDesktop(), "hasToken=", !!data.access_token);
       }
 
       // Both login and register set a cookie — redirect to workspace

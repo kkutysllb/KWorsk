@@ -41,12 +41,7 @@ export async function promptInputFilePartToFile(
     return new File([blob], filePart.filename, {
       type: filePart.mediaType || blob.type,
     });
-  } catch (error) {
-    console.warn("promptInputFilePartToFile: fetch fallback failed", {
-      error,
-      url: filePart.url,
-      filename: filePart.filename,
-    });
+  } catch {
     return null;
   }
 }

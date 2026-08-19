@@ -56,7 +56,6 @@ export async function checkForUpdates(): Promise<UpdateInfo | null> {
   try {
     return await window.kworksDesktop!.checkForUpdates();
   } catch (e) {
-    console.warn("[desktop] checkForUpdates failed:", e);
     return null;
   }
 }
@@ -67,7 +66,6 @@ export async function installUpdate(): Promise<boolean> {
   try {
     return await window.kworksDesktop!.installUpdate();
   } catch (e) {
-    console.warn("[desktop] installUpdate failed:", e);
     return false;
   }
 }
@@ -87,7 +85,6 @@ export function onUpdateDownloading(
   try {
     return window.kworksDesktop!.onUpdateDownloading(handler);
   } catch (e) {
-    console.warn("[desktop] onUpdateDownloading subscribe failed:", e);
     return noop;
   }
 }
@@ -107,7 +104,6 @@ export function onUpdateReady(
   try {
     return window.kworksDesktop!.onUpdateReady(handler);
   } catch (e) {
-    console.warn("[desktop] onUpdateReady subscribe failed:", e);
     return noop;
   }
 }

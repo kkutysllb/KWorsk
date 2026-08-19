@@ -91,15 +91,6 @@ export async function fetch(
     mergedHeaders.set("Authorization", `Bearer ${desktopToken}`);
   }
 
-  // DIAG: trace Authorization header injection for desktop API calls
-  if (typeof url === "string" && url.includes("/api/")) {
-    console.log(
-      `[DIAG:fetcher] ${init?.method ?? "GET"} ${url}`,
-      `isDesktop=${isDesktop()} desktopManaged=${isDesktopBackendManagedMode()} port=${typeof window !== "undefined" ? window.location.port : "<ssr>"}`,
-      `tokenPresent=${!!desktopToken} authzHeader=${!!mergedHeaders.get("Authorization")}`,
-    );
-  }
-
   const res = await globalThis.fetch(url, {
     ...init,
     headers: mergedHeaders,

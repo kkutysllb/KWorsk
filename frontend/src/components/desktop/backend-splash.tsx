@@ -5,9 +5,7 @@ import { useEffect, useState } from "react";
 import { isDesktopBackendManagedMode } from "@/core/config";
 import {
   getBackendStatus,
-  getStartupInfo,
   type BackendStatus,
-  type StartupDiagnostics,
 } from "@/core/desktop";
 
 export function shouldShowBackendSplash(
@@ -35,38 +33,27 @@ const STATUS_LABELS: Record<string, string> = {
 /**
  * Startup splash panel shown while the desktop shell initializes its services.
  *
- * Displays three sections:
- * 1. Service status — live state of each managed service (Gateway, etc.)
- * 2. Environment check — repo root, .env presence, uv binary, resolved ports
- * 3. Environment variables — keys loaded from .env (secrets redacted)
- *
- * Auto-dismisses 1.5s after all services reach "running". The panel can be
- * manually expanded/collapsed to inspect details.
+ * Displays a single "service status" section that reflects the gateway's
+ * current state. Auto-dismisses ~1s after the gateway reports "running".
  */
 export function BackendSplashScreen() {
   const [status, setStatus] = useState<BackendStatus | null>(null);
-  const [diagnostics, setDiagnostics] = useState<StartupDiagnostics | null>(null);
   const [dots, setDots] = useState(0);
-  const [expanded, setExpanded] = useState(false);
   // "loading" → services still starting; "fading" → all running, animating
   // out; "hidden" → unmounted.
   const [phase, setPhase] = useState<"loading" | "fading" | "hidden">(
     "loading",
   );
 
-  // Poll backend status + full diagnostics.
+  // Poll backend status.
   useEffect(() => {
     if (!isDesktopBackendManagedMode()) return;
 
     let cancelled = false;
     const check = async () => {
-      const [s, d] = await Promise.all([
-        getBackendStatus(),
-        getStartupInfo(),
-      ]);
+      const s = await getBackendStatus();
       if (cancelled) return;
       setStatus(s);
-      if (d) setDiagnostics(d);
     };
 
     void check();
@@ -77,17 +64,7 @@ export function BackendSplashScreen() {
     };
   }, []);
 
-  // Auto-expand when there's an error so the user sees what went wrong.
-  useEffect(() => {
-    if (diagnostics?.services.some((s) => s.status === "error")) {
-      setExpanded(true);
-    }
-  }, [diagnostics]);
-
   // When the backend reports "running", begin the fade-out sequence.
-  // We check `status` (single gateway state) rather than waiting for the
-  // full diagnostics payload, so the transition fires as soon as the
-  // gateway is ready — even if diagnostics hasn't arrived yet.
   useEffect(() => {
     if (phase !== "loading") return;
     // Gateway is the only managed service, so its status is the signal.
@@ -117,10 +94,9 @@ export function BackendSplashScreen() {
   // effect above). This avoids a race where the panel flickers off
   // before the fade-out animation starts.
 
-  const services = diagnostics?.services ?? [];
-  const envCheck = diagnostics?.env_check;
-  const envVars = diagnostics?.env_vars ?? [];
-  const hasError = services.some((s) => s.status === "error");
+  const hasError = status?.status === "error";
+  const svcStatus = status?.status ?? "stopped";
+  const svcPort = status?.port;
 
   return (
     <div className="fixed inset-0 z-[100] flex items-center justify-center bg-background/95 backdrop-blur-sm">
@@ -152,7 +128,7 @@ export function BackendSplashScreen() {
               {hasError ? "启动遇到问题" : `正在启动 KWorks${".".repeat(dots)}`}
             </h2>
             <p className="mt-0.5 text-sm text-muted-foreground">
-              {hasError ? "请检查下方的服务状态与环境信息" : "正在初始化后端服务"}
+              {hasError ? "请检查下方的服务状态" : "正在初始化后端服务"}
             </p>
           </div>
         </div>
@@ -168,134 +144,37 @@ export function BackendSplashScreen() {
             )}
           </div>
           <div className="flex flex-col gap-2">
-            {services.length === 0 && (
-              <p className="text-sm text-muted-foreground">正在获取状态…</p>
-            )}
-            {services.map((svc) => (
-              <div
-                key={svc.name}
-                className="flex items-center justify-between gap-3 rounded-lg bg-background/40 px-3 py-2"
-              >
-                <div className="flex min-w-0 flex-col gap-0.5">
-                  <div className="flex items-center gap-2">
-                    <span className="text-sm font-medium text-foreground">
-                      {svc.name}
-                    </span>
+            <div
+              key="gateway"
+              className="flex items-center justify-between gap-3 rounded-lg bg-background/40 px-3 py-2"
+            >
+              <div className="flex min-w-0 flex-col gap-0.5">
+                <div className="flex items-center gap-2">
+                  <span className="text-sm font-medium text-foreground">
+                    Gateway
+                  </span>
+                  {svcPort != null && (
                     <span className="text-xs text-muted-foreground">
-                      :{svc.port}
-                    </span>
-                    {svc.pid != null && (
-                      <span className="text-xs text-muted-foreground">
-                        PID {svc.pid}
-                      </span>
-                    )}
-                  </div>
-                  {svc.error && (
-                    <span className="truncate text-xs text-red-400">
-                      {svc.error}
+                      :{svcPort}
                     </span>
                   )}
                 </div>
-                <span
-                  className={`shrink-0 rounded-full px-2 py-0.5 text-xs font-medium ring-1 ${
-                    STATUS_STYLES[svc.status] ?? STATUS_STYLES.stopped
-                  } ${svc.status === "starting" ? "animate-pulse" : ""}`}
-                >
-                  {STATUS_LABELS[svc.status] ?? svc.status}
-                </span>
+                {status?.error && (
+                  <span className="truncate text-xs text-red-400">
+                    {status.error}
+                  </span>
+                )}
               </div>
-            ))}
+              <span
+                className={`shrink-0 rounded-full px-2 py-0.5 text-xs font-medium ring-1 ${
+                  STATUS_STYLES[svcStatus] ?? STATUS_STYLES.stopped
+                } ${svcStatus === "starting" ? "animate-pulse" : ""}`}
+              >
+                {STATUS_LABELS[svcStatus] ?? svcStatus}
+              </span>
+            </div>
           </div>
         </div>
-
-        {/* Expand/collapse toggle for detailed sections */}
-        <button
-          onClick={() => setExpanded((v) => !v)}
-          className="flex items-center justify-center gap-1 rounded-lg border border-border/40 py-2 text-xs font-medium text-muted-foreground transition-colors hover:bg-muted/30"
-        >
-          {expanded ? "收起详细信息" : "展开环境信息"}
-          <svg
-            className={`h-3 w-3 transition-transform ${expanded ? "rotate-180" : ""}`}
-            fill="none"
-            viewBox="0 0 24 24"
-            stroke="currentColor"
-            strokeWidth={2}
-          >
-            <path strokeLinecap="round" strokeLinejoin="round" d="M19 9l-7 7-7-7" />
-          </svg>
-        </button>
-
-        {/* Sections 2 & 3: collapsible */}
-        {expanded && envCheck && (
-          <div className="flex flex-col gap-4">
-            {/* Section 2: Environment check */}
-            <div className="rounded-xl border border-border/50 bg-card/30 p-4">
-              <h3 className="mb-3 text-xs font-semibold uppercase tracking-wider text-muted-foreground">
-                环境检查
-              </h3>
-              <div className="flex flex-col gap-2 text-xs">
-                <EnvRow
-                  label="运行模式"
-                  value={envCheck.is_dev ? "开发模式" : "生产模式"}
-                />
-                <EnvRow
-                  label="仓库根目录"
-                  value={envCheck.repo_root}
-                  ok
-                />
-                <EnvRow
-                  label=".env 配置文件"
-                  value={envCheck.env_file}
-                  ok={envCheck.env_file_exists}
-                  warn={!envCheck.env_file_exists}
-                />
-                <EnvRow
-                  label="Gateway 端口"
-                  value={String(envCheck.gateway_port)}
-                  ok
-                />
-                <EnvRow
-                  label="Frontend 端口"
-                  value={String(envCheck.frontend_port)}
-                  ok
-                />
-                <EnvRow
-                  label="uv 解释器"
-                  value={envCheck.uv_binary}
-                  ok={envCheck.uv_binary_exists}
-                  warn={!envCheck.uv_binary_exists}
-                />
-              </div>
-            </div>
-
-            {/* Section 3: Environment variables */}
-            {envVars.length > 0 && (
-              <div className="rounded-xl border border-border/50 bg-card/30 p-4">
-                <h3 className="mb-3 text-xs font-semibold uppercase tracking-wider text-muted-foreground">
-                  已加载环境变量 ({envVars.length})
-                </h3>
-                <div className="flex max-h-40 flex-col gap-1 overflow-y-auto font-mono text-xs">
-                  {envVars.map((v) => (
-                    <div
-                      key={v.key}
-                      className="flex items-start gap-2 rounded px-2 py-0.5 hover:bg-background/30"
-                    >
-                      <span className="shrink-0 text-cyan-400">{v.key}</span>
-                      <span className="text-muted-foreground">=</span>
-                      <span
-                        className={`min-w-0 break-all ${
-                          v.value === "***" ? "text-amber-400" : "text-zinc-300"
-                        }`}
-                      >
-                        {v.value}
-                      </span>
-                    </div>
-                  ))}
-                </div>
-              </div>
-            )}
-          </div>
-        )}
       </div>
     </div>
   );
@@ -318,31 +197,5 @@ function FadingOverlay({ onDone }: { onDone: () => void }) {
       style={{ opacity }}
       onTransitionEnd={onDone}
     />
-  );
-}
-
-/** A single row in the environment-check section. */
-function EnvRow({
-  label,
-  value,
-  ok,
-  warn,
-}: {
-  label: string;
-  value: string;
-  ok?: boolean;
-  warn?: boolean;
-}) {
-  const icon = ok ? (
-    <span className="shrink-0 text-emerald-400">✓</span>
-  ) : warn ? (
-    <span className="shrink-0 text-amber-400">⚠</span>
-  ) : null;
-  return (
-    <div className="flex items-start gap-2">
-      {icon}
-      <span className="w-24 shrink-0 text-muted-foreground">{label}</span>
-      <span className="min-w-0 break-all text-zinc-300">{value}</span>
-    </div>
   );
 }

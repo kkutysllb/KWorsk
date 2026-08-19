@@ -114,9 +114,8 @@ export function useAuthenticatedArtifactObjectUrl(
         objectUrl = nextUrl;
         setResolvedUrl(nextUrl);
       })
-      .catch((error: unknown) => {
+      .catch(() => {
         if (!cancelled) {
-          console.warn("[artifacts] failed to create authenticated URL:", error);
           setResolvedUrl(undefined);
         }
       });

@@ -64,23 +64,16 @@ export function AuthProvider({ children, initialUser }: AuthProviderProps) {
         ? { Authorization: `Bearer ${desktopToken}` }
         : undefined;
 
-      // DIAG: trace the /auth/me request
-      console.log("[DIAG:refreshUser] desktopTokenPresent=", !!desktopToken, "hasAuthHeader=", !!headers, "baseUrl=", getBackendBaseURL());
-
       const res = await fetch(`${getBackendBaseURL()}/api/v1/auth/me`, {
         headers,
         credentials: "include",
       });
 
-      console.log("[DIAG:refreshUser] /auth/me status=", res.status);
-
       if (res.ok) {
         const data = await res.json();
-        console.log("[DIAG:refreshUser] user fetched:", data?.email);
         setUser(data);
       } else if (res.status === 401) {
         // Session expired or invalid
-        console.log("[DIAG:refreshUser] 401 — clearing session, pathname=", pathname);
         setUser(null);
         clearDesktopSessionToken();
         // Redirect to login if on a protected route

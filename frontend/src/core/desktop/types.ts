@@ -44,41 +44,6 @@ export interface FileDialogOptions {
   title?: string;
 }
 
-/** Live status of a single managed service (mirrors Rust `ServiceState`). */
-export interface ServiceStateInfo {
-  name: string;
-  status: BackendStatusKind;
-  port: number;
-  pid?: number;
-  error?: string | null;
-}
-
-/** High-level environment check surfaced to the startup splash panel. */
-export interface EnvCheckInfo {
-  repo_root: string;
-  env_file: string;
-  env_file_exists: boolean;
-  gateway_port: number;
-  frontend_port: number;
-  uv_binary: string;
-  uv_binary_exists: boolean;
-  is_dev: boolean;
-}
-
-/** A single environment variable loaded from `.env` (secrets redacted). */
-export interface EnvVarInfo {
-  key: string;
-  value: string;
-  source: string;
-}
-
-/** Aggregated diagnostics polled by the startup splash panel. */
-export interface StartupDiagnostics {
-  services: ServiceStateInfo[];
-  env_check: EnvCheckInfo;
-  env_vars: EnvVarInfo[];
-}
-
 export interface PickedFile {
   /** Base name of the file, e.g. `notes.md`. */
   name: string;
@@ -144,9 +109,6 @@ export interface DesktopBridge {
   stopBackend(): Promise<BackendStatus>;
   restartBackend(): Promise<BackendStatus>;
   getBackendLogs(): Promise<string[]>;
-
-  // ── Startup diagnostics ─────────────────────────────────────────────
-  getStartupInfo(): Promise<StartupDiagnostics>;
 
   // ── Native file dialog ────────────────────────────────────────────
   pickFiles(options?: FileDialogOptions): Promise<PickedFile[]>;

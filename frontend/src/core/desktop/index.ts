@@ -15,13 +15,9 @@ export type {
   BackendStatus,
   BackendStatusKind,
   EmbeddedTerminalSession,
-  EnvCheckInfo,
-  EnvVarInfo,
   FileDialogOptions,
   GatewayConfig,
   PickedFile,
-  ServiceStateInfo,
-  StartupDiagnostics,
   UpdateInfo,
 } from "./types";
 
@@ -30,7 +26,6 @@ import type {
   EmbeddedTerminalSession,
   FileDialogOptions,
   PickedFile,
-  StartupDiagnostics,
 } from "./types";
 
 export type OpenProjectTerminalResult = "opened" | "copied" | "failed";
@@ -43,7 +38,6 @@ export async function getBackendStatus(): Promise<BackendStatus | null> {
   try {
     return await window.kworksDesktop!.getBackendStatus();
   } catch (e) {
-    console.warn("[desktop] getBackendStatus failed:", e);
     return null;
   }
 }
@@ -54,7 +48,6 @@ export async function startBackend(): Promise<BackendStatus | null> {
   try {
     return await window.kworksDesktop!.startBackend();
   } catch (e) {
-    console.warn("[desktop] startBackend failed:", e);
     return null;
   }
 }
@@ -65,7 +58,6 @@ export async function stopBackend(): Promise<BackendStatus | null> {
   try {
     return await window.kworksDesktop!.stopBackend();
   } catch (e) {
-    console.warn("[desktop] stopBackend failed:", e);
     return null;
   }
 }
@@ -76,7 +68,6 @@ export async function restartBackend(): Promise<BackendStatus | null> {
   try {
     return await window.kworksDesktop!.restartBackend();
   } catch (e) {
-    console.warn("[desktop] restartBackend failed:", e);
     return null;
   }
 }
@@ -87,21 +78,7 @@ export async function getBackendLogs(): Promise<string[]> {
   try {
     return await window.kworksDesktop!.getBackendLogs();
   } catch (e) {
-    console.warn("[desktop] getBackendLogs failed:", e);
     return [];
-  }
-}
-
-// ── Startup diagnostics ──────────────────────────────────────────────────
-
-/** Get full startup diagnostics for the splash panel (services + env check). */
-export async function getStartupInfo(): Promise<StartupDiagnostics | null> {
-  if (!isDesktop()) return null;
-  try {
-    return await window.kworksDesktop!.getStartupInfo();
-  } catch (e) {
-    console.warn("[desktop] getStartupInfo failed:", e);
-    return null;
   }
 }
 
@@ -129,10 +106,6 @@ export async function openFilePicker(
       return new File([blob], p.name, { type: p.type });
     });
   } catch (e) {
-    console.warn(
-      "[desktop] openFilePicker failed, falling back to browser:",
-      e,
-    );
     return openBrowserFilePicker(options);
   }
 }
@@ -170,7 +143,6 @@ export async function pickDirectory(
   try {
     return await window.kworksDesktop!.pickDirectory(options);
   } catch (e) {
-    console.warn("[desktop] pickDirectory failed:", e);
     return null;
   }
 }
@@ -194,7 +166,8 @@ export async function openFolder(folderPath: string): Promise<void> {
   try {
     await window.kworksDesktop!.openFolder(folderPath);
   } catch (e) {
-    console.warn("[desktop] openFolder failed:", e);
+    // Swallow IPC failure — folder opening is best-effort.
+    void e;
   }
 }
 
@@ -209,7 +182,6 @@ export async function openProjectTerminal(
       await navigator.clipboard.writeText(folderPath);
       return "copied";
     } catch (e) {
-      console.warn("[web] copy project path failed:", e);
       return "failed";
     }
   }
@@ -224,7 +196,6 @@ export async function startEmbeddedTerminal(
   try {
     return await window.kworksDesktop!.startTerminal(folderPath);
   } catch (e) {
-    console.warn("[desktop] startTerminal failed:", e);
     return null;
   }
 }
@@ -238,7 +209,6 @@ export async function writeEmbeddedTerminal(
     await window.kworksDesktop!.writeTerminal(sessionId, data);
     return true;
   } catch (e) {
-    console.warn("[desktop] writeTerminal failed:", e);
     return false;
   }
 }
@@ -253,7 +223,6 @@ export async function resizeEmbeddedTerminal(
     await window.kworksDesktop!.resizeTerminal(sessionId, cols, rows);
     return true;
   } catch (e) {
-    console.warn("[desktop] resizeTerminal failed:", e);
     return false;
   }
 }
@@ -265,7 +234,8 @@ export async function stopEmbeddedTerminal(
   try {
     await window.kworksDesktop!.stopTerminal(sessionId);
   } catch (e) {
-    console.warn("[desktop] stopTerminal failed:", e);
+    // Swallow IPC failure — terminal stop is best-effort.
+    void e;
   }
 }
 
@@ -292,7 +262,6 @@ export async function copyProjectTerminalPath(folderPath: string): Promise<OpenP
     await navigator.clipboard.writeText(folderPath);
     return "copied";
   } catch (e) {
-    console.warn("[web] copy project path failed:", e);
     return "failed";
   }
 }

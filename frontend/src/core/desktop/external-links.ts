@@ -16,6 +16,7 @@ export async function openExternalUrl(url: string): Promise<void> {
   try {
     await window.kworksDesktop!.openExternal(url);
   } catch (e) {
-    console.warn("[desktop] openExternal failed:", e);
+    // Swallow IPC failure — opening external links is best-effort.
+    void e;
   }
 }
