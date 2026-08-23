@@ -81,6 +81,11 @@ interface SkillModelsConfig {
   filePath: string;
 }
 
+interface TitleBarOverlayOptions {
+  color?: string;
+  symbolColor?: string;
+}
+
 // The renderer reads `gatewayPort` synchronously at module load to resolve
 // the gateway base URL. We default it to the standard desktop port (19987);
 // the renderer's `initGatewayPort()` refreshes it asynchronously once the
@@ -89,6 +94,9 @@ const DEFAULT_GATEWAY_PORT = 19987;
 
 contextBridge.exposeInMainWorld("kworksDesktop", {
   gatewayPort: DEFAULT_GATEWAY_PORT,
+
+  /** Platform of the desktop shell (`process.platform`), e.g. "win32". */
+  platform: process.platform,
 
   // ── Backend lifecycle ──────────────────────────────────────────────
   getGatewayConfig: (): Promise<GatewayConfig> =>
@@ -115,6 +123,12 @@ contextBridge.exposeInMainWorld("kworksDesktop", {
     ipcRenderer.invoke("shell:open-external", url),
   openFolder: (folderPath: string): Promise<void> =>
     ipcRenderer.invoke("shell:open-folder", folderPath),
+
+  // ── Window chrome (Windows frameless shell) ─────────────────────
+  // Re-tint the native window-control overlay (minimize / maximize /
+  // close) to match the renderer theme. No-op on other platforms.
+  setTitleBarOverlay: (options: TitleBarOverlayOptions): Promise<void> =>
+    ipcRenderer.invoke("window-controls:set-overlay", options),
   startTerminal: (folderPath: string): Promise<EmbeddedTerminalSession> =>
     ipcRenderer.invoke("terminal:start", folderPath),
   writeTerminal: (sessionId: string, data: string): Promise<void> =>

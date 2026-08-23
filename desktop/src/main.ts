@@ -19,7 +19,7 @@ import {
   nativeTheme,
   type BrowserWindowConstructorOptions,
 } from "electron";
-import { existsSync } from "node:fs";
+import { existsSync, readFileSync } from "node:fs";
 import { readFile } from "node:fs/promises";
 import { dirname, extname, join, resolve } from "node:path";
 import { fileURLToPath } from "node:url";
@@ -100,33 +100,49 @@ function resolveIcon(): Electron.NativeImage | undefined {
 }
 
 function resolveTrayIcon(): Electron.NativeImage | undefined {
-  // Prefer a transparent background icon (K-Book glyph only, no dark rounded
-  // square). On macOS we mark it as a Template Image so the system renders
-  // the alpha channel in the menu-bar foreground colour and adapts to light
-  // / dark menu bars automatically. On Windows / Linux the same PNG keeps
-  // its gold gradient on a transparent background.
-  const candidates = [
-    join(__dirname, "..", "build", "tray-icons", "32x32.png"),
-    join(__dirname, "..", "build", "tray-icons", "16x16.png"),
-    join(__dirname, "..", "build", "tray-icons", "64x64.png"),
-    join(process.resourcesPath, "tray-icons", "32x32.png"),
-    join(process.resourcesPath, "tray-icons", "16x16.png"),
-    join(REPO_ROOT, "desktop", "build", "tray-icons", "32x32.png"),
-    join(REPO_ROOT, "desktop", "build", "tray-icons", "16x16.png"),
-    // Legacy fallback: full-colour brand logo with dark background. Kept
-    // only so existing packaged builds continue to work before new icons
-    // ship. Will be removed once the tray-icons are bundled by electron-builder.
-    join(__dirname, "..", "build", "icons", "16x16.png"),
-    join(__dirname, "..", "build", "icons", "32x32.png"),
+  // Transparent-background K-Book glyph (no dark rounded square). The tray
+  // icon ships in three sizes; we assemble them into one NativeImage with
+  // explicit scale-factor representations so each platform picks the right
+  // resolution instead of scaling a single bitmap down (which made the glyph
+  // look smaller / blurrier in the Windows tray).
+  //
+  // - Windows: the tray cell is 16px at 100% DPI, so 16x16 is the base and
+  //   32x32 / 64x64 are the 2x / 4x (high-DPI) representations.
+  // - macOS: 16x16 base + 32x32 @2x, marked as a Template Image so the system
+  //   renders the alpha channel in the menu-bar foreground colour.
+  // - Linux: 16x16 base + higher-DPI representations.
+  const trayDirs = [
+    join(__dirname, "..", "build", "tray-icons"),
+    join(process.resourcesPath, "tray-icons"),
+    join(REPO_ROOT, "desktop", "build", "tray-icons"),
   ];
-  for (const path of candidates) {
-    if (!existsSync(path)) continue;
-    const image = nativeImage.createFromPath(path);
+
+  for (const dir of trayDirs) {
+    const p16 = join(dir, "16x16.png");
+    const p32 = join(dir, "32x32.png");
+    if (!existsSync(p16) || !existsSync(p32)) continue;
+
+    const image = nativeImage.createFromPath(p16);
+    image.addRepresentation({ scaleFactor: 2, buffer: readFileSync(p32) });
+
+    const p64 = join(dir, "64x64.png");
+    if (existsSync(p64)) {
+      image.addRepresentation({ scaleFactor: 4, buffer: readFileSync(p64) });
+    }
+
     if (process.platform === "darwin") {
       image.setTemplateImage(true);
     }
     return image;
   }
+
+  // Legacy fallback: full-colour brand logo with dark background. Kept only
+  // so existing packaged builds continue to work before new icons ship.
+  for (const size of [16, 32]) {
+    const path = join(__dirname, "..", "build", "icons", `${size}x${size}.png`);
+    if (existsSync(path)) return nativeImage.createFromPath(path);
+  }
+
   return undefined;
 }
 
@@ -135,6 +151,12 @@ function resolveTrayIcon(): Electron.NativeImage | undefined {
 interface AppWindowOptions {
   path?: string;
 }
+
+/**
+ * Height of the Windows frameless title-bar strip. Matches the renderer's
+ * `h-12` workspace topbar so the window-control overlay sits flush with it.
+ */
+const WINDOWS_TITLEBAR_HEIGHT = 48;
 
 function createAppWindow(options: AppWindowOptions = {}): BrowserWindow {
   const windowOptions: BrowserWindowConstructorOptions = {
@@ -149,14 +171,26 @@ function createAppWindow(options: AppWindowOptions = {}): BrowserWindow {
     // Match the landing page's #0a0a0a so the pre-paint background and the
     // post-paint deep hero blend seamlessly under the hidden title bar.
     backgroundColor: "#0a0a0a",
-    // macOS: hide the native title bar text but keep the traffic-light
-    // buttons, insetting them into the page. The landing hero then extends
-    // to the very top of the window, eliminating the visible boundary
-    // between the system title bar and the page. Windows/Linux keep the
-    // default frame (hiddenInset is a macOS-only option).
+    // - macOS: hide the native title bar text but keep the traffic-light
+    //   buttons, insetting them into the page (hiddenInset is macOS-only).
+    // - Windows: frameless (“无痕”) shell — no native title bar and no menu
+    //   bar. Only the window-control overlay (minimize / maximize / close)
+    //   remains, pinned to the top-right corner and tinted to the pre-paint
+    //   background so it blends into the page. The renderer draws its own
+    //   drag regions, and the full menu-bar feature set lives in the tray.
+    // - Linux: keep the default frame (unchanged).
     ...(process.platform === "darwin"
       ? { titleBarStyle: "hiddenInset" as const }
-      : {}),
+      : process.platform === "win32"
+        ? {
+            titleBarStyle: "hidden" as const,
+            titleBarOverlay: {
+              color: "#0a0a0a",
+              symbolColor: "#d4d4d4",
+              height: WINDOWS_TITLEBAR_HEIGHT,
+            },
+          }
+        : {}),
     webPreferences: {
       // Security: keep Node out of the renderer; expose only the typed bridge.
       contextIsolation: true,
@@ -177,6 +211,14 @@ function createAppWindow(options: AppWindowOptions = {}): BrowserWindow {
   const win = new BrowserWindow(windowOptions);
   appWindows.add(win);
   lastActiveWindow = win;
+
+  // Windows frameless shell: never paint the native menu bar — the menu-bar
+  // feature set is surfaced through the tray menu instead. Keeping the
+  // application menu registered preserves its accelerators (Ctrl+Shift+H/A/N
+  // and the edit roles) even though the bar itself is invisible.
+  if (process.platform === "win32") {
+    win.setMenuBarVisibility(false);
+  }
 
   // Capture renderer console output into renderer.log for debugging.
   // This is critical for tracing the desktop auth/login flow which runs
@@ -490,6 +532,96 @@ function buildAppMenu(): Menu {
 
 // ── System tray ──────────────────────────────────────────────────────────
 
+/**
+ * Windows frameless shell: the native menu bar is hidden, so the tray menu
+ * carries the full menu-bar feature set (modes / edit / view / window / help)
+ * as submenus. Role items are routed by Electron to the focused window's
+ * webContents; custom clicks target the most recent app window.
+ */
+function buildWindowsMenuBarTrayItems(): Electron.MenuItemConstructorOptions[] {
+  return [
+    { type: "separator" },
+    {
+      label: "模式",
+      submenu: [
+        item({
+          label: "聊天模式",
+          accelerator: "CommandOrControl+Shift+H",
+          click: () => navigateTo("/workspace/chats/new"),
+        }),
+        item({
+          label: "Agent 模式",
+          accelerator: "CommandOrControl+Shift+A",
+          click: () => navigateTo("/workspace/agents"),
+        }),
+      ],
+    },
+    {
+      label: "编辑",
+      submenu: [
+        item({ role: "undo", label: "撤销" }),
+        item({ role: "redo", label: "重做" }),
+        item({ type: "separator" }),
+        item({ role: "cut", label: "剪切" }),
+        item({ role: "copy", label: "复制" }),
+        item({ role: "paste", label: "粘贴" }),
+        item({ role: "selectAll", label: "全选" }),
+      ],
+    },
+    {
+      label: "视图",
+      submenu: [
+        item({ role: "reload", label: "重新加载" }),
+        item({ role: "forceReload", label: "强制重新加载" }),
+        item({ role: "toggleDevTools", label: "开发者工具" }),
+        item({ type: "separator" }),
+        item({ role: "resetZoom", label: "实际大小" }),
+        item({ role: "zoomIn", label: "放大" }),
+        item({ role: "zoomOut", label: "缩小" }),
+        item({ type: "separator" }),
+        item({ role: "togglefullscreen", label: "全屏" }),
+      ],
+    },
+    {
+      label: "窗口",
+      submenu: [
+        item({ role: "minimize", label: "最小化" }),
+        item({ role: "close", label: "关闭" }),
+        item({ type: "separator" }),
+        item({ label: "显示最近窗口", click: () => showLastActiveWindow() }),
+      ],
+    },
+    {
+      label: "帮助",
+      submenu: [
+        item({
+          label: "检查更新…",
+          click: () => {
+            const win = BrowserWindow.getFocusedWindow() ?? lastActiveWindow;
+            if (win && !win.isDestroyed()) {
+              win.webContents.send("menu:check-update");
+            }
+          },
+        }),
+        item({ type: "separator" }),
+        item({
+          label: "打开用户数据空间",
+          click: () => {
+            void shell.openPath(getKworksHome());
+          },
+        }),
+        item({ type: "separator" }),
+        item({
+          label: "打开日志文件夹",
+          click: () => {
+            void shell.openPath(getLogsDir());
+          },
+        }),
+      ],
+    },
+  ];
+}
+
 function buildTrayMenu(status: BackendStatus): Menu {
   const backendManaged = isBackendAutolaunchEnabled();
   const statusLabel =
@@ -503,9 +635,17 @@ function buildTrayMenu(status: BackendStatus): Menu {
           ? "后端状态：错误"
           : "后端状态：已停止";
 
-  return Menu.buildFromTemplate([
+  const template: Electron.MenuItemConstructorOptions[] = [
     { label: "显示 KWorks", click: () => showLastActiveWindow() },
     { label: "新建聊天窗口", click: () => createNewTaskWindow("/workspace/chats/new") },
+  ];
+
+  // Windows frameless shell: surface the hidden menu bar inside the tray.
+  if (process.platform === "win32") {
+    template.push(...buildWindowsMenuBarTrayItems());
+  }
+
+  template.push(
     { type: "separator" },
     { label: statusLabel, enabled: false },
     {
@@ -520,7 +660,9 @@ function buildTrayMenu(status: BackendStatus): Menu {
       label: "退出 KWorks",
       click: () => quitApp(),
     },
-  ]);
+  );
+
+  return Menu.buildFromTemplate(template);
 }
 
 function createTray(): Tray {

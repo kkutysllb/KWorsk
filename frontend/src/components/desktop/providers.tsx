@@ -2,8 +2,10 @@
 
 import { type ReactNode, useEffect, useState } from "react";
 
+import { WindowsTitlebarOverlaySync } from "@/components/desktop/titlebar-overlay-sync";
 import { UpdateChecker } from "@/components/desktop/update-checker";
 import { ThemeProvider } from "@/components/theme-provider";
+import { MessageAppearanceSync } from "@/components/workspace/message-appearance-sync";
 import { I18nProvider } from "@/core/i18n/context";
 import { DEFAULT_LOCALE } from "@/core/i18n/locale";
 
@@ -41,6 +43,8 @@ export function DesktopProviders({ children }: { children: ReactNode }) {
       <I18nProvider initialLocale={DEFAULT_LOCALE}>
         {children}
         <UpdateChecker />
+        <MessageAppearanceSync />
+        <WindowsTitlebarOverlaySync />
       </I18nProvider>
     </ThemeProvider>
   );

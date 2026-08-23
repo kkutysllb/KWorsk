@@ -227,7 +227,7 @@ export default function AgentChatPage() {
                   isNewThread && "-translate-y-[calc(50vh-96px)]",
                   isNewThread
                     ? "max-w-(--container-width-sm)"
-                    : "max-w-(--container-width-md)",
+                    : "max-w-(--chat-message-width)",
                 )}
               >
                 {isNewThread && (

@@ -1,8 +1,27 @@
 import type { AgentThreadContext } from "../threads";
 
+export type MessageWidth = "narrow" | "medium" | "wide";
+export type MessageFontSize = "small" | "medium" | "large";
+export type MessageLineHeight = "compact" | "comfortable" | "relaxed";
+
+/** 消息正文区域的阅读外观设置（全局，非 per-thread）。 */
+export interface MessageAppearanceSettings {
+  /** 消息正文最大宽度。 */
+  width: MessageWidth;
+  /** 消息正文字体大小。 */
+  fontSize: MessageFontSize;
+  /** 消息正文行间距。 */
+  lineHeight: MessageLineHeight;
+}
+
 export const DEFAULT_LOCAL_SETTINGS: LocalSettings = {
   notification: {
     enabled: true,
+  },
+  appearance: {
+    width: "medium",
+    fontSize: "medium",
+    lineHeight: "comfortable",
   },
   context: {
     model_name: undefined,
@@ -24,6 +43,7 @@ export interface LocalSettings {
   notification: {
     enabled: boolean;
   };
+  appearance: MessageAppearanceSettings;
   context: Omit<
     AgentThreadContext,
     | "thread_id"
@@ -48,6 +68,10 @@ function mergeLocalSettings(settings?: Partial<LocalSettings>): LocalSettings {
     notification: {
       ...DEFAULT_LOCAL_SETTINGS.notification,
       ...settings?.notification,
+    },
+    appearance: {
+      ...DEFAULT_LOCAL_SETTINGS.appearance,
+      ...settings?.appearance,
     },
   };
 }

@@ -70,6 +70,10 @@ export function WorkspaceTopbar() {
       className={cn(
         "sticky top-0 z-20 flex h-12 shrink-0 items-center border-b bg-background/80 backdrop-blur-sm",
         "[-webkit-app-region:drag]",
+        // Windows frameless shell: keep the toolbar buttons and session tag
+        // clear of the native window-control overlay (minimize / maximize /
+        // close) pinned to the top-right. Resolves to 0px everywhere else.
+        "pr-[var(--kworks-titlebar-inset)]",
         collapsed && "pl-[78px]",
       )}
     >

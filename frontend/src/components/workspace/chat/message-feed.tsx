@@ -215,7 +215,7 @@ export function MessageFeed({
 
   return (
     <Conversation className={cn("relative flex size-full flex-col", className)}>
-      <ConversationContent className="mx-auto w-full max-w-(--container-width-md) gap-5 pt-6">
+      <ConversationContent className="mx-auto w-full max-w-(--chat-message-width) gap-5 pt-6">
         <LoadMoreHistoryIndicator
           isLoading={isHistoryLoading}
           hasMore={hasMoreHistory}

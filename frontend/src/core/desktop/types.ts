@@ -86,6 +86,14 @@ export interface SkillModelsConfig {
   filePath: string;
 }
 
+/** Theme re-tint payload for the Windows window-control overlay. */
+export interface TitleBarOverlayOptions {
+  /** Background colour of the overlay strip (any CSS colour). */
+  color?: string;
+  /** Colour of the minimize / maximize / close glyphs. */
+  symbolColor?: string;
+}
+
 /**
  * The bridge exposed on `window.kworksDesktop` by the Electron preload.
  *
@@ -95,6 +103,11 @@ export interface SkillModelsConfig {
 export interface DesktopBridge {
   /** Gateway port the embedded backend listens on. */
   gatewayPort: number;
+  /**
+   * Platform of the desktop shell (`process.platform`, e.g. "win32",
+   * "darwin", "linux"). Absent on shells built before the field existed.
+   */
+  platform?: string;
   /**
    * Frontend dev-server port (only set in Electron dev-mode shells so the
    * renderer can detect dev mode port-independently). Absent on packaged
@@ -117,6 +130,12 @@ export interface DesktopBridge {
   // ── System integration ────────────────────────────────────────────
   openExternal(url: string): Promise<void>;
   openFolder(folderPath: string): Promise<void>;
+  /**
+   * Re-tint the native Windows window-control overlay so it follows the
+   * renderer theme (frameless shell). No-op on the web and on macOS / Linux.
+   * Optional: absent on older shells without the frameless chrome.
+   */
+  setTitleBarOverlay?(options: TitleBarOverlayOptions): Promise<void>;
   startTerminal(folderPath: string): Promise<EmbeddedTerminalSession>;
   writeTerminal(sessionId: string, data: string): Promise<void>;
   resizeTerminal(sessionId: string, cols: number, rows: number): Promise<void>;

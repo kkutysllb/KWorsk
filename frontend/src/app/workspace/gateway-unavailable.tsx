@@ -26,6 +26,9 @@ export function GatewayUnavailable() {
 
   return (
     <div className="flex h-screen flex-col items-center justify-center gap-4">
+      {/* Windows frameless shell: seamless drag strip where the native title
+          bar used to be (hidden on the web and on macOS / Linux). */}
+      <div className="kworks-win-titlebar" aria-hidden="true" />
       <p className="text-muted-foreground">
         Service temporarily unavailable.
       </p>

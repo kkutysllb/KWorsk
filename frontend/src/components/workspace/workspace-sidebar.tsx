@@ -22,7 +22,9 @@ export function WorkspaceSidebar({
   return (
     <>
       <Sidebar variant="sidebar" collapsible="offcanvas" {...props}>
-        <SidebarHeader className="pt-10 pb-0">
+        {/* pt-10 reserves the macOS traffic-light strip; on the Windows
+            frameless shell it collapses to a compact pad (no buttons there). */}
+        <SidebarHeader className="kworks-win-pad-top pt-10 pb-0">
           <WorkspaceHeader />
         </SidebarHeader>
         <SidebarContent>

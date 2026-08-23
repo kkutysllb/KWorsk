@@ -348,6 +348,36 @@ export function registerIpc(): BackendManager {
     await shell.openPath(folderPath);
   });
 
+  // ── Window chrome (Windows frameless shell) ──────────────────────
+  // Re-tint the native window-control overlay (minimize / maximize /
+  // close) so it follows the renderer theme and stays visually seamless.
+  // No-op on macOS / Linux and on windows without an overlay.
+  ipcMain.handle(
+    "window-controls:set-overlay",
+    async (_evt, options: { color?: string; symbolColor?: string }) => {
+      if (process.platform !== "win32") return;
+      const overlay: Electron.TitleBarOverlay = {};
+      if (typeof options?.color === "string" && options.color) {
+        overlay.color = options.color;
+      }
+      if (typeof options?.symbolColor === "string" && options.symbolColor) {
+        overlay.symbolColor = options.symbolColor;
+      }
+      if (Object.keys(overlay).length === 0) return;
+      for (const win of BrowserWindow.getAllWindows()) {
+        if (win.isDestroyed()) continue;
+        try {
+          win.setTitleBarOverlay(overlay);
+        } catch {
+          // Unparseable colour on this window (e.g. a modern CSS colour
+          // function Electron cannot parse): keep the current tint instead
+          // of failing the whole invoke. The renderer normalizes colours
+          // to sRGB before sending, but stay defensive for other callers.
+        }
+      }
+    },
+  );
+
   // ── Embedded project terminal ──────────────────────────────────────
   ipcMain.handle(
     "terminal:start",

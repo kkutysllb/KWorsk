@@ -199,3 +199,4 @@ frontend/playwright-report/*.worktrees/
 .workbuddy/
 .release-logs/
 .drops/
+.dsh-vision-router/

@@ -609,6 +609,21 @@ export interface Translations {
       darkDescription: string;
       languageTitle: string;
       languageDescription: string;
+      messageWidthTitle: string;
+      messageWidthDescription: string;
+      messageWidthNarrow: string;
+      messageWidthMedium: string;
+      messageWidthWide: string;
+      messageFontSizeTitle: string;
+      messageFontSizeDescription: string;
+      messageFontSizeSmall: string;
+      messageFontSizeMedium: string;
+      messageFontSizeLarge: string;
+      messageLineHeightTitle: string;
+      messageLineHeightDescription: string;
+      messageLineHeightCompact: string;
+      messageLineHeightComfortable: string;
+      messageLineHeightRelaxed: string;
     };
     mcpSettings: {
       title: string;

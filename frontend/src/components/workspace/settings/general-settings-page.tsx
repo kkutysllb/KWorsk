@@ -26,6 +26,7 @@ import { type LoginResponse, parseAuthError } from "@/core/auth/types";
 import { getBackendBaseURL, isDesktop } from "@/core/config";
 import { enUS, isLocale, zhCN, type Locale } from "@/core/i18n";
 import { useI18n } from "@/core/i18n/hooks";
+import { useLocalSettings } from "@/core/settings";
 
 import { CronForm } from "./config/settings-forms/cron-form";
 import { LogLevelForm } from "./config/settings-forms/log-level-form";
@@ -84,6 +85,7 @@ export function GeneralSettingsPage() {
   const { theme, setTheme } = useTheme();
   const { locale, changeLocale } = useI18n();
   const currentTheme = (theme ?? "system") as "system" | "light" | "dark";
+  const [localSettings, setLocalSettings] = useLocalSettings();
 
   const [currentPassword, setCurrentPassword] = useState("");
   const [newPassword, setNewPassword] = useState("");
@@ -299,6 +301,94 @@ export function GeneralSettingsPage() {
                   {item.label}
                 </SelectItem>
               ))}
+            </SelectContent>
+          </Select>
+        </SettingsRow>
+        <SettingsRow
+          label={t.settings.appearance.messageWidthTitle}
+          description={t.settings.appearance.messageWidthDescription}
+        >
+          <Select
+            value={localSettings.appearance.width}
+            onValueChange={(value) => {
+              if (value === "narrow" || value === "medium" || value === "wide") {
+                setLocalSettings("appearance", { width: value });
+              }
+            }}
+          >
+            <SelectTrigger className="h-8 w-[160px]">
+              <SelectValue />
+            </SelectTrigger>
+            <SelectContent>
+              <SelectItem value="narrow">
+                {t.settings.appearance.messageWidthNarrow}
+              </SelectItem>
+              <SelectItem value="medium">
+                {t.settings.appearance.messageWidthMedium}
+              </SelectItem>
+              <SelectItem value="wide">
+                {t.settings.appearance.messageWidthWide}
+              </SelectItem>
+            </SelectContent>
+          </Select>
+        </SettingsRow>
+        <SettingsRow
+          label={t.settings.appearance.messageFontSizeTitle}
+          description={t.settings.appearance.messageFontSizeDescription}
+        >
+          <Select
+            value={localSettings.appearance.fontSize}
+            onValueChange={(value) => {
+              if (value === "small" || value === "medium" || value === "large") {
+                setLocalSettings("appearance", { fontSize: value });
+              }
+            }}
+          >
+            <SelectTrigger className="h-8 w-[160px]">
+              <SelectValue />
+            </SelectTrigger>
+            <SelectContent>
+              <SelectItem value="small">
+                {t.settings.appearance.messageFontSizeSmall}
+              </SelectItem>
+              <SelectItem value="medium">
+                {t.settings.appearance.messageFontSizeMedium}
+              </SelectItem>
+              <SelectItem value="large">
+                {t.settings.appearance.messageFontSizeLarge}
+              </SelectItem>
+            </SelectContent>
+          </Select>
+        </SettingsRow>
+        <SettingsRow
+          label={t.settings.appearance.messageLineHeightTitle}
+          description={t.settings.appearance.messageLineHeightDescription}
+        >
+          <Select
+            value={localSettings.appearance.lineHeight}
+            onValueChange={(value) => {
+              if (
+                value === "compact" ||
+                value === "comfortable" ||
+                value === "relaxed"
+              ) {
+                setLocalSettings("appearance", { lineHeight: value });
+              }
+            }}
+          >
+            <SelectTrigger className="h-8 w-[160px]">
+              <SelectValue />
+            </SelectTrigger>
+            <SelectContent>
+              <SelectItem value="compact">
+                {t.settings.appearance.messageLineHeightCompact}
+              </SelectItem>
+              <SelectItem value="comfortable">
+                {t.settings.appearance.messageLineHeightComfortable}
+              </SelectItem>
+              <SelectItem value="relaxed">
+                {t.settings.appearance.messageLineHeightRelaxed}
+              </SelectItem>
             </SelectContent>
           </Select>
         </SettingsRow>

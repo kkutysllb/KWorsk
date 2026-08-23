@@ -6,4 +6,10 @@ export {
   applyThreadWorkspacePathOverride,
   getRecentWorkspacePaths,
 } from "./local";
-export type { LocalSettings } from "./local";
+export type {
+  LocalSettings,
+  MessageAppearanceSettings,
+  MessageFontSize,
+  MessageLineHeight,
+  MessageWidth,
+} from "./local";

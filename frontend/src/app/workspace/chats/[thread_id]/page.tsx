@@ -206,7 +206,7 @@ export default function ChatPage() {
             )}
             {/* Input box: anchored to the bottom on both new and existing threads */}
             <div className="flex shrink-0 justify-center px-4 pb-4">
-              <div className="relative w-full max-w-(--container-width-md)">
+              <div className="relative w-full max-w-(--chat-message-width)">
                 {mountedRef.current ? (
                   <InputBox
                     className="bg-background/5 w-full"

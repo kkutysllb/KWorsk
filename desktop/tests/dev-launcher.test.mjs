@@ -59,3 +59,33 @@ test("desktop dev launcher uses isolated empty extensions config", () => {
   assert.match(devLauncherSource, /QILIN_EXTENSIONS_CONFIG_PATH/);
   assert.match(devLauncherSource, /extensions_config\.json/);
 });
+
+test("desktop dev launcher self-heals when uv is missing from PATH", () => {
+  // IDE terminals on Windows inherit a stale PATH after uv installs, which
+  // used to kill the gateway with "'uv' is not recognized". The launcher
+  // must probe well-known install locations (pip --user, astral, cargo,
+  // winget) instead of relying on PATH alone.
+  assert.match(devLauncherSource, /function findUvOnPath\(\)/);
+  assert.match(devLauncherSource, /function findUvInKnownLocations\(\)/);
+  assert.match(devLauncherSource, /function getUvCommand\(\)/);
+  assert.match(devLauncherSource, /start\(\s*getUvCommand\(\),/);
+  // `uv run` must carry the gateway + browser extras (matching CI), otherwise
+  // a fresh clone cannot boot the gateway at all (bare `uv run` skips extras).
+  assert.match(devLauncherSource, /"run", "--extra", "gateway", "--extra", "browser", "python", "-m", "uvicorn"/);
+});
+
+test("desktop dev launcher kills the whole child tree on Windows", () => {
+  // Windows has no process groups: the POSIX negative-PID group kill throws
+  // there, so teardown used to silently kill nothing — orphaned next-server /
+  // uvicorn processes survived Ctrl+C, held ports 18569/19987 and failed the
+  // next start with EADDRINUSE. taskkill /T is the Windows equivalent of a
+  // group kill.
+  assert.match(devLauncherSource, /function killChildTree\(/);
+  assert.match(devLauncherSource, /"taskkill", \["\/pid", String\(child\.pid\), "\/T", "\/F"\]/);
+  // taskkill /T plus a child.kill() fallback — the combination verified to
+  // leave zero orphans across repeated 3-level-tree runs.
+  assert.match(devLauncherSource, /child\.kill\(\);/);
+  // Every teardown path (graceful + 3s force-kill) must go through it.
+  assert.match(devLauncherSource, /killChildTree\(child, signal\)/);
+  assert.match(devLauncherSource, /killChildTree\(child, "SIGKILL"\)/);
+});

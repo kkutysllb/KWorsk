@@ -20,13 +20,15 @@
     </linearGradient>
   </defs>
 
-  <!-- K-Book: plump rounded strokes (thickened for small sizes, shrunk to
-       ~60% of the canvas with comfortable breathing room around the glyph) -->
+  <!-- K-Book: plump rounded strokes (thickened for small sizes). The glyph
+       fills ~69% of the canvas width / ~76% of the height so it stays legible
+       at the Windows tray's 16px cell; the remaining margin is the breathing
+       room macOS needs for its menu-bar template image. -->
   <g
     stroke="url(#trayGold)"
     stroke-linecap="round"
     fill="none"
-    transform="translate(256 256) scale(0.62) translate(-290.5 -276.5)"
+    transform="translate(256 256) scale(1.0) translate(-290.5 -276.5)"
   >
     <!-- Spine (book spine = vertical bar of K) -->
     <line x1="168" y1="136" x2="168" y2="380" stroke-width="110"/>

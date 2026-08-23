@@ -68,7 +68,12 @@ function appendDevExitLog(line) {
 
 function start(cmd, args, opts = {}) {
   const { onExit, onStdout, onStderr, detached, ...spawnOpts } = opts;
-  const child = spawn(cmd, args, {
+  const child = spawn(
+    // Quote absolute paths containing spaces so cmd.exe (shell: true on
+    // Windows) parses the program path correctly.
+    process.platform === "win32" && /\s/.test(cmd) ? `"${cmd}"` : cmd,
+    args,
+    {
     stdio: onStdout || onStderr ? ["inherit", "pipe", "pipe"] : "inherit",
     shell: process.platform === "win32",
     // POSIX: put each child in its own process group so teardown can kill the
@@ -129,6 +134,50 @@ function scheduleGatewayRestart() {
   }, 1200);
 }
 
+// ── Child teardown ───────────────────────────────────────────────────────
+// Windows has no process groups, so the POSIX negative-PID group kill below
+// throws there and teardown silently kills nothing — grandchildren (pnpm exec
+// → next dev → next-server, uv run → uvicorn) survive as orphans, holding
+// ports 18569/19987 and failing the next `pnpm run dev` with EADDRINUSE.
+// taskkill /T walks and terminates the whole descendant tree: the Windows
+// equivalent of a group kill. Stale .next/dev/lock files are fine — Next.js
+// detects that the lock-holding PID is gone and takes over.
+function killChildTree(child, signal) {
+  if (process.platform === "win32") {
+    try {
+      spawnSync("taskkill", ["/pid", String(child.pid), "/T", "/F"], {
+        stdio: "ignore",
+        windowsHide: true,
+      });
+    } catch {
+      /* already dead */
+    }
+    // Belt and braces: a raced /T snapshot can theoretically miss a child
+    // that forked during enumeration, so also terminate the direct child
+    // itself (verified end-to-end: 3-level trees leave zero orphans).
+    try {
+      child.kill();
+    } catch {
+      /* already dead */
+    }
+    return;
+  }
+  try {
+    // Kill the entire process group (negative PID). Each child was started
+    // with detached: true, so it is the leader of its own group; the signal
+    // propagates to all descendants (e.g. pnpm exec → next dev → next-server,
+    // or uv run → uvicorn), preventing the orphan-process port/lock leaks
+    // we hit on plain Ctrl+C.
+    process.kill(-child.pid, signal);
+  } catch (e) {
+    if (e && e.code === "EPERM") {
+      // Different session (rare on macOS); fall back to PID-only kill.
+      try { process.kill(child.pid, signal); } catch { /* already dead */ }
+    }
+    /* ESRCH or already dead — ignore */
+  }
+}
+
 function teardown(signal = "SIGTERM") {
   if (shuttingDown) return;
   shuttingDown = true;
@@ -145,33 +194,18 @@ function teardown(signal = "SIGTERM") {
     gatewayRestartTimer = null;
   }
   for (const child of [...children].reverse()) {
-    try {
-      // Kill the entire process group (negative PID). Each child was started
-      // with detached: true, so it is the leader of its own group; the signal
-      // propagates to all descendants (e.g. pnpm exec → next dev → next-server,
-      // or uv run → uvicorn), preventing the orphan-process port/lock leaks
-      // we hit on plain Ctrl+C.
-      process.kill(-child.pid, signal);
-    } catch (e) {
-      if (e && e.code === "EPERM") {
-        // Different session (rare on macOS); fall back to PID-only kill.
-        try { process.kill(child.pid, signal); } catch { /* already dead */ }
-      }
-      /* ESRCH or already dead — ignore */
-    }
+    killChildTree(child, signal);
   }
   // Graceful exit: give children 5s to clean up (delete .next/dev/lock, close
   // webpack watcher, release ports, etc.). Next.js dev server needs 3-5s to
   // release its lockfile; anything shorter leaves a stale "Unable to acquire
   // lock" state on the next `pnpm run dev`. Escalate to SIGKILL for any
-  // stubborn survivors after 3s.
+  // stubborn survivors after 3s. (On Windows killChildTree already force-
+  // kills the tree synchronously; re-running it here is a harmless no-op for
+  // dead PIDs.)
   const forceKillTimer = setTimeout(() => {
     for (const child of [...children]) {
-      try {
-        process.kill(-child.pid, "SIGKILL");
-      } catch {
-        /* already dead */
-      }
+      killChildTree(child, "SIGKILL");
     }
   }, 3000);
   setTimeout(() => {
@@ -290,6 +324,77 @@ function parseEnvFile(content) {
   return out;
 }
 
+// ── uv executable resolution ────────────────────────────────────────────
+// Windows terminals frequently miss uv until fully restarted: registry PATH
+// edits only reach NEW processes, and IDE-integrated terminals inherit the
+// (stale) parent env, which used to kill the gateway with "'uv' 不是内部或
+// 外部命令". Probe well-known install locations as a fallback so `pnpm run
+// dev` is self-healing in any shell. POSIX gets the same treatment for the
+// astral-installer (~/.local/bin) and cargo (~/.cargo/bin) layouts.
+function findUvOnPath() {
+  const probe = spawnSync(
+    process.platform === "win32" ? "where" : "which",
+    ["uv"],
+    { encoding: "utf8", windowsHide: true },
+  );
+  if (probe.status === 0) {
+    const first = String(probe.stdout ?? "")
+      .split(/\r?\n/)[0]
+      ?.trim();
+    if (first) return first;
+  }
+  return null;
+}
+
+function findUvInKnownLocations() {
+  const home = process.env.USERPROFILE ?? process.env.HOME ?? "";
+  if (!home) return null;
+  const localAppData =
+    process.env.LOCALAPPDATA ?? join(home, "AppData", "Local");
+  const roots =
+    process.platform === "win32"
+      ? [
+          // pip --user: %APPDATA%\Python\Python3XX\Scripts\uv.exe
+          join(process.env.APPDATA ?? join(home, "AppData", "Roaming"), "Python"),
+          // python.org per-user installs
+          join(localAppData, "Programs", "Python"),
+          // astral standalone installer
+          join(home, ".local", "bin"),
+          // cargo install uv
+          join(home, ".cargo", "bin"),
+          // winget shims
+          join(localAppData, "Microsoft", "WinGet", "Links"),
+        ]
+      : [join(home, ".local", "bin"), join(home, ".cargo", "bin")];
+  const exe = process.platform === "win32" ? "uv.exe" : "uv";
+  for (const root of roots) {
+    if (!existsSync(root)) continue;
+    const direct = join(root, exe);
+    if (existsSync(direct)) return direct;
+    // pip layout: root/Python3XX/Scripts/uv.exe
+    try {
+      for (const entry of readdirSync(root)) {
+        if (!/^Python3\d*$/i.test(entry)) continue;
+        const nested = join(root, entry, "Scripts", exe);
+        if (existsSync(nested)) return nested;
+      }
+    } catch {
+      /* unreadable dir — skip */
+    }
+  }
+  return null;
+}
+
+let resolvedUvCommand = null;
+function getUvCommand() {
+  if (resolvedUvCommand) return resolvedUvCommand;
+  resolvedUvCommand = findUvOnPath() ?? findUvInKnownLocations() ?? "uv";
+  if (resolvedUvCommand !== "uv") {
+    console.log(`[dev] uv not on PATH — using ${resolvedUvCommand}`);
+  }
+  return resolvedUvCommand;
+}
+
 function startGateway() {
   if (!existsSync(BACKEND_DIR)) {
     console.warn(`[dev] backend dir not found: ${BACKEND_DIR} — skipping gateway`);
@@ -343,7 +448,15 @@ function startGateway() {
   console.log(`[dev]   QILIN_EXTENSIONS_CONFIG_PATH=${extensionsConfigPath}`);
   console.log(`[dev]   QILIN_HOST_BASE_DIR=${dataDir}`);
   console.log(`[dev]   QILIN_SKILLS_PATH=${skillsPath}`);
-  gatewayProcess = start("uv", ["run", "python", "-m", "uvicorn", "app.gateway.app:app", "--host", "127.0.0.1", "--port", GATEWAY_PORT], {
+  // Extras must match CI (release-desktop.yml): a bare `uv run` only syncs the
+  // base deps, leaving fastapi/uvicorn (gateway) and playwright (browser
+  // control) missing on a fresh clone — the gateway then dies in lifespan with
+  // "Playwright is not installed" (browser_capability.find_spec check) or
+  // straight ModuleNotFoundError.
+  gatewayProcess = start(
+    getUvCommand(),
+    ["run", "--extra", "gateway", "--extra", "browser", "python", "-m", "uvicorn", "app.gateway.app:app", "--host", "127.0.0.1", "--port", GATEWAY_PORT],
+    {
     cwd: BACKEND_DIR,
     env: {
       ...process.env,
@@ -401,7 +514,10 @@ function ensureFrontendDeps() {
   const installResult = spawnSync(
     process.platform === "win32" ? "pnpm.cmd" : "pnpm",
     ["install"],
-    { cwd: FRONTEND_DIR, stdio: "inherit" },
+    // shell is required on Windows: Node ≥ 20.12 refuses to spawn .cmd
+    // scripts directly (EINVAL, CVE-2024-27980 hardening). Same idiom as
+    // the start() helper below. Inert on macOS / Linux.
+    { cwd: FRONTEND_DIR, stdio: "inherit", shell: process.platform === "win32" },
   );
   if (installResult.status !== 0) {
     console.error(
@@ -500,7 +616,14 @@ async function main() {
     spawn(
       process.platform === "win32" ? "pnpm.cmd" : "pnpm",
       ["run", "build"],
-      { cwd: DESKTOP_DIR, stdio: "inherit" },
+      // shell is required on Windows: Node ≥ 20.12 refuses to spawn .cmd
+      // scripts directly (EINVAL, CVE-2024-27980 hardening). Same idiom as
+      // the start() helper above. Inert on macOS / Linux.
+      {
+        cwd: DESKTOP_DIR,
+        stdio: "inherit",
+        shell: process.platform === "win32",
+      },
     ).on("exit", (code) => {
       if (code !== 0) {
         console.error("[dev] TS build failed; aborting.");

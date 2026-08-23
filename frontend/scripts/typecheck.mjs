@@ -17,6 +17,9 @@ const result = spawnSync(pnpm, ["exec", "tsc", "--noEmit"], {
   cwd: ROOT,
   stdio: "inherit",
   windowsHide: true,
+  // shell is required on Windows: Node ≥ 20.12 refuses to spawn .cmd
+  // scripts directly (EINVAL, CVE-2024-27980 hardening). Inert on POSIX.
+  shell: process.platform === "win32",
 });
 
 if (result.error) {

@@ -223,8 +223,8 @@
    answers breathe instead of feeling dense. Applied via .streamdown-tight. */
 .streamdown-tight {
   color: var(--foreground);
-  font-size: 0.875rem;
-  line-height: 1.9;
+  font-size: var(--chat-message-font-size, 0.875rem);
+  line-height: var(--chat-message-line-height, 1.9);
   word-break: break-word;
 }
 
@@ -242,7 +242,7 @@
 
 .streamdown-tight p {
   margin: 0 0 1rem;
-  line-height: 1.9;
+  line-height: var(--chat-message-line-height, 1.9);
 }
 
 .streamdown-tight h1,
@@ -667,6 +667,12 @@
   --container-width-sm: calc(var(--spacing) * 144);
   --container-width-md: calc(var(--spacing) * 240);
   --container-width-lg: calc(var(--spacing) * 256);
+
+  /* 消息正文阅读外观 —— 默认值；常规设置会按用户选择在运行时覆盖。
+     宽度默认对齐 --container-width-md，字体/行距对齐 .streamdown-tight。 */
+  --chat-message-width: calc(var(--spacing) * 240);
+  --chat-message-font-size: 0.875rem;
+  --chat-message-line-height: 1.9;
 }
 
 /* Invisible scrollbar utility — keeps scroll functionality, hides the bar. */
@@ -740,4 +746,60 @@
   max-width: 9in;
   width: 100%;
   color: var(--foreground);
+}
+
+/* ── Windows frameless desktop shell ─────────────────────────────────────
+ *
+ * The Windows desktop shell runs frameless (“无痕”): the native title bar
+ * and menu bar are gone, and only the window-control overlay (minimize /
+ * maximize / close) remains pinned to the top-right corner. Everything
+ * below is inert on the web and on macOS / Linux desktop shells — the
+ * `data-desktop-platform` attribute is set synchronously by the root layout
+ * from the preload bridge and only equals "win32" on Windows.
+ */
+
+/* Horizontal space the native window-control overlay occupies at the
+   top-right; renderer content shifts left to stay clear of the buttons. */
+:root {
+  --kworks-titlebar-inset: 0px;
+}
+
+html[data-desktop-platform="win32"] {
+  --kworks-titlebar-inset: 148px;
+}
+
+/* Prefer the exact overlay geometry from the Window Controls Overlay CSS
+   environment variables when the engine exposes them. */
+@supports (width: env(titlebar-area-width)) {
+  html[data-desktop-platform="win32"] {
+    --kworks-titlebar-inset: calc(
+      100vw - env(titlebar-area-width) - env(titlebar-area-x)
+    );
+  }
+}
+
+/* Seamless drag strip for full-screen views without their own title bar
+   (auth pages, gateway fallback, settings). Invisible except on the Windows
+   frameless shell; the right edge stays clear of the overlay buttons. */
+.kworks-win-titlebar {
+  display: none;
+}
+
+html[data-desktop-platform="win32"] .kworks-win-titlebar {
+  display: block;
+  height: 48px; /* matches the native overlay height set in main.ts */
+  flex-shrink: 0;
+  -webkit-app-region: drag;
+  padding-right: var(--kworks-titlebar-inset);
+}
+
+/* Windows has no traffic-light buttons in the top-left, so the top padding
+   reserved for them on the sidebar / settings headers collapses. */
+html[data-desktop-platform="win32"] .kworks-win-pad-top {
+  padding-top: 0.5rem;
+}
+
+/* The landing header reserves pl-[80px] for the macOS traffic lights. */
+html[data-desktop-platform="win32"] .kworks-landing-header {
+  padding-left: 1.5rem;
 }
