@@ -1,5 +1,13 @@
 # Changelog
 
+## v1.0.8 - 2026-08-23
+
+Compare: `v1.0.7...v1.0.8`
+
+- 增加调试代码目录忽略 (fe65446)
+- chore: tray icon size, frameless overlay sync, settings UI (d08e75c)
+- 清理代码中残留调试日志代码 (00be1d3)
+
 ## v1.0.7 - 2026-08-18
 
 Compare: `v1.0.6...v1.0.7`
