@@ -62,6 +62,7 @@ next-env.d.ts
 # Package manager
 .pnp
 .pnp.js
+.pnpm-store/
 
 # Frontend testing
 coverage/
