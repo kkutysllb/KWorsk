@@ -1,5 +1,13 @@
 # Changelog
 
+## v1.0.9 - 2026-08-23
+
+Compare: `v1.0.8...v1.0.9`
+
+- chore(qilin): bump submodule to qilinmem config fixes (eea65a2)
+- fix(frontend): lift settings header into Windows titlebar drag region (df9d3df)
+- fix(desktop): map Next 16 directory-style RSC payloads to fix blank page on Explore navigation (f700ba0)
+
 ## v1.0.8 - 2026-08-23
 
 Compare: `v1.0.7...v1.0.8`
