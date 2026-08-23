@@ -1,0 +1,12 @@
+# pnpm >= 10 ignores the `pnpm` field in package.json; settings live here.
+# Single-package workspace: `packages: []` matches the pattern already used by
+# frontend/pnpm-workspace.yaml.
+packages: []
+# Whitelist of dependency build scripts pnpm is allowed to run. Without this,
+# electron's postinstall (downloads electron.exe) and node-pty's prebuild
+# install never run, leaving the desktop shell unable to start.
+# (pnpm 11 migrated the old onlyBuiltDependencies list to allowBuilds.)
+allowBuilds:
+  electron: true
+  node-pty: true
+

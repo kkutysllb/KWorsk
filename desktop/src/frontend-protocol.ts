@@ -58,20 +58,22 @@ function normalizeSafeRelativePath(input: string): string | null {
 }
 
 /**
- * Next.js App Router static-export RSC payload file naming.
+ * Next.js App Router static-export RSC payload file naming (Next 15+/16).
  *
  * During client-side navigation, App Router fetches the destination URL with
  * `RSC: 1` header to retrieve the RSC Flight payload.  In a static export,
- * each pre-rendered page emits a `__next.<segments>.__PAGE__.txt` file under
- * its own directory.  Dynamic segments (e.g. `[thread_id]`) are encoded as
- * `$d$<paramname>`.
+ * each pre-rendered page emits a DIRECTORY-form payload under its own route
+ * directory: `__next.<segment 1>/<segment 2>/.../__PAGE__.txt` (the root page
+ * is the flat `__next.__PAGE__.txt`).  Dynamic segments (e.g. `[thread_id]`)
+ * are encoded as `$d$<paramname>`.
  *
  * Only the placeholder variant is pre-rendered for dynamic routes
- * (e.g. /workspace/chats/new).  All other ids have no `.txt` file.  Without
- * a dedicated handler, the fetch returns the fallback HTML and Next.js logs
- * "Failed to fetch RSC payload for ... Falling back to browser navigation",
- * which triggers a full page reload — killing active SSE streams and
- * interrupting running chat tasks on tab switches.
+ * (e.g. /workspace/chats/new).  All other ids have no payload directory.
+ * Without a dedicated handler, the fetch returns the fallback HTML and
+ * Next.js cannot parse it as a Flight payload — the client-side navigation
+ * then renders a BLANK page (this was the 1.0.8 "探索平台 → blank" bug:
+ * the handler still used the legacy flat `__next.<segments>.__PAGE__.txt`
+ * naming, which Next 16 no longer emits).
  *
  * For RSC requests on dynamic routes, we therefore return the placeholder's
  * `__PAGE__.txt`.  Because `[thread_id]/page.tsx` is a client component, the
@@ -80,7 +82,14 @@ function normalizeSafeRelativePath(input: string): string | null {
  * placeholder payload for any id is safe.
  */
 const CHATS_DYNAMIC_RSC =
-  "workspace/chats/new/__next.workspace.chats.$d$thread_id.__PAGE__.txt";
+  "workspace/chats/new/__next.workspace/chats/$d$thread_id/__PAGE__.txt";
+const AGENTS_DYNAMIC_RSC =
+  "workspace/agents/__init__/chats/new/__next.workspace/agents/$d$agent_name/chats/$d$thread_id/__PAGE__.txt";
+// login / setup live inside the `(auth)` route group. Next 16 encodes route
+// groups in payload paths as `!` + base64(group name) — "(auth)" encodes to
+// "KGF1dGgp", hence the `__next.!KGF1dGgp` directory observed in the export.
+const LOGIN_RSC = "login/__next.!KGF1dGgp/login/__PAGE__.txt";
+const SETUP_RSC = "setup/__next.!KGF1dGgp/setup/__PAGE__.txt";
 
 export function resolveFrontendRequestPath(
   input: string,
@@ -91,8 +100,11 @@ export function resolveFrontendRequestPath(
     return "index.html";
   }
 
+  // Root path: HTML shell for page loads, but RSC navigation requests must
+  // get the root Flight payload — otherwise client-side navigation back to
+  // "/" receives HTML and renders blank.
   if (!clean || clean === "") {
-    return "index.html";
+    return isRsc ? "__next.__PAGE__.txt" : "index.html";
   }
 
   if (clean === "favicon.svg") {
@@ -120,13 +132,14 @@ export function resolveFrontendRequestPath(
   // ── RSC payload requests (Next.js App Router client-side navigation) ──
   // Next.js sends `RSC: 1` header during client-side navigation to fetch
   // the Flight payload instead of HTML.  In a static export each pre-rendered
-  // page directory contains a `__next.<segments>.__PAGE__.txt` file.
+  // page directory contains a directory-form payload:
+  // `__next.<segments...>/__PAGE__.txt`.
   //
-  // If we return HTML for an RSC request, Next.js logs
-  //   "Failed to fetch RSC payload for ... Falling back to browser navigation"
-  // and performs a FULL page reload — which kills every active SSE stream
-  // (chat replies, long-running agent runs).  This is the #1 cause of tab-switch
-  // task interruptions in the desktop packaged build.
+  // If we return HTML for an RSC request, the Next.js client cannot parse the
+  // Flight payload and the navigation renders a blank page (and a forced
+  // full reload would kill every active SSE stream — chat replies,
+  // long-running agent runs).  This was the #1 cause of tab-switch task
+  // interruptions in the desktop packaged build.
   //
   // For dynamic routes (e.g. /workspace/chats/<id>) only one placeholder
   // variant is pre-rendered, so we map every id to that placeholder's
@@ -143,18 +156,17 @@ export function resolveFrontendRequestPath(
       clean.startsWith("workspace/agents/") &&
       clean.includes("/chats/")
     ) {
-      // Agent chat routes share the ChatPage component; reuse chats RSC.
-      return CHATS_DYNAMIC_RSC;
+      // Agent chat routes have their own pre-rendered placeholder payload
+      // (component references differ from the plain chats route).
+      return AGENTS_DYNAMIC_RSC;
     }
 
-    // Static routes → canonical __PAGE__.txt path.
-    //   pathname ""               → "__next.__PAGE__.txt"
-    //   pathname "workspace"      → "workspace/__next.workspace.__PAGE__.txt"
-    if (!clean) {
-      return "__next.__PAGE__.txt";
-    }
-    const segments = clean.replaceAll("/", ".");
-    return `${clean}/__next.${segments}.__PAGE__.txt`;
+    // Static routes → canonical directory-form payload path.
+    //   pathname ""           → "__next.__PAGE__.txt" (handled above)
+    //   pathname "workspace"  → "workspace/__next.workspace/__PAGE__.txt"
+    if (clean === "login") return LOGIN_RSC;
+    if (clean === "setup") return SETUP_RSC;
+    return `${clean}/__next.${clean}/__PAGE__.txt`;
   }
 
   // Desktop dynamic route fallback (only for page navigations — paths

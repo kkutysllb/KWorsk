@@ -47,9 +47,9 @@ test("desktop dev gateway CORS includes Electron's Next dev origins", () => {
   assert.match(devLauncherSource, /GATEWAY_CORS_ORIGINS: DESKTOP_DEV_ORIGINS/);
 });
 
-test("desktop dev launcher seeds builtin skills from the qilin submodule", () => {
-  assert.match(devLauncherSource, /syncDesktopBuiltinSkills/);
-  assert.match(devLauncherSource, /join\(REPO_ROOT, "qilin", "skills", "builtin"\)/);
+test("desktop dev launcher seeds public skills from the repo root", () => {
+  assert.match(devLauncherSource, /syncDesktopPublicSkills/);
+  assert.match(devLauncherSource, /join\(REPO_ROOT, "skills", "public"\)/);
   // QiLin does not use the legacy KKOCLAW_PUBLIC_SKILLS_ONLY flag.
   assert.doesNotMatch(devLauncherSource, /KKOCLAW_PUBLIC_SKILLS_ONLY/);
 });

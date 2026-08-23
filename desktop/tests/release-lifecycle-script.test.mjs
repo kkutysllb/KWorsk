@@ -10,10 +10,40 @@ const releaseScriptSource = existsSync(releaseScriptUrl)
   ? readFileSync(releaseScriptUrl, "utf8")
   : "";
 
+/**
+ * Locate a usable bash. On Windows the `bash` on PATH may be the WSL relay
+ * stub (which fails when no WSL distro is installed); fall back to Git for
+ * Windows' bundled bash so the lifecycle script stays testable on dev
+ * machines.
+ */
+function resolveBashExecutable() {
+  const probe = spawnSync("bash", ["--version"], {
+    encoding: "utf8",
+    windowsHide: true,
+  });
+  if (probe.status === 0 && (probe.stdout ?? "").includes("GNU bash")) {
+    return "bash";
+  }
+  for (const candidate of [
+    "C:\\Program Files\\Git\\bin\\bash.exe",
+    "C:\\Program Files (x86)\\Git\\bin\\bash.exe",
+  ]) {
+    if (existsSync(candidate)) return candidate;
+  }
+  return null;
+}
+
 test("root release lifecycle script exposes a remote release flow", () => {
   assert.equal(existsSync(releaseScriptUrl), true);
 
-  const help = spawnSync("bash", [releaseScriptPath, "--help"], {
+  const bash = resolveBashExecutable();
+  if (bash === null) {
+    // No usable bash on this machine; the source-level assertions in the
+    // next test still cover the release-flow contract.
+    return;
+  }
+
+  const help = spawnSync(bash, [releaseScriptPath, "--help"], {
     encoding: "utf8",
     windowsHide: true,
   });

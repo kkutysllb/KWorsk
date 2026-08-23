@@ -12,8 +12,11 @@ test("renderer runs with node disabled, context isolation, and sandbox enabled",
 
 test("tray uses a small dedicated icon instead of the app icon", () => {
   assert.match(mainSource, /function resolveTrayIcon\(\): Electron\.NativeImage \| undefined/);
-  assert.match(mainSource, /build", "icons", "16x16\.png"/);
-  assert.match(mainSource, /build", "icons", "32x32\.png"/);
+  // Dedicated tray glyph shipped in three sizes (16 base + 2x/4x
+  // representations), NOT the full app icon.
+  assert.match(mainSource, /build", "tray-icons"/);
+  assert.match(mainSource, /join\(dir, "16x16\.png"\)/);
+  assert.match(mainSource, /join\(dir, "32x32\.png"\)/);
   assert.match(mainSource, /setTemplateImage\(true\)/);
   assert.match(mainSource, /const icon = resolveTrayIcon\(\) \?\? nativeImage\.createEmpty\(\)/);
 });

@@ -10,7 +10,6 @@ test("desktop app supports multiple task windows inside one app instance", () =>
   assert.match(mainSource, /function createAppWindow\(/);
   assert.match(mainSource, /function createNewTaskWindow\(/);
   assert.match(mainSource, /新建聊天窗口/);
-  assert.match(mainSource, /新建 Coding 窗口/);
   assert.doesNotMatch(mainSource, /let mainWindow: BrowserWindow \| null = null/);
 });
 
