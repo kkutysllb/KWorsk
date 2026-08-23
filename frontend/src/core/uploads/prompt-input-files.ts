@@ -41,7 +41,15 @@ export async function promptInputFilePartToFile(
     return new File([blob], filePart.filename, {
       type: filePart.mediaType || blob.type,
     });
-  } catch {
+  } catch (error) {
+    // Diagnostic, not debug noise: the fallback returning null is otherwise
+    // invisible — this is the only signal that an attachment was dropped
+    // because its preview URL could not be fetched (pinned by unit tests).
+    console.warn("promptInputFilePartToFile: fetch fallback failed", {
+      error,
+      url: filePart.url,
+      filename: filePart.filename,
+    });
     return null;
   }
 }
