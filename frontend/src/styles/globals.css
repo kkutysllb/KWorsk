@@ -793,8 +793,19 @@ html[data-desktop-platform="win32"] .kworks-win-titlebar {
   padding-right: var(--kworks-titlebar-inset);
 }
 
-/* Windows has no traffic-light buttons in the top-left, so the top padding
-   reserved for them on the sidebar / settings headers collapses. */
+/* Desktop top-padding for full-height views that draw under the window-chrome
+   (workspace sidebar, settings page). Per-platform tuning:
+   - macOS: native title bar holds the traffic-light buttons on the left, so
+     the sidebar / settings headers need ~2.5rem so the first row of content
+     doesn't sit underneath them.
+   - Windows: no top-left traffic lights, but the frameless shell's titleBarOverlay
+     still consumes 48px at the very top of the window (handled separately by
+     .kworks-win-titlebar spacer). 0.5rem is enough breathing room between the
+     topbar and the first sidebar row.
+   - Web/Linux: no chrome to clear; zero padding. */
+html[data-desktop-platform="darwin"] .kworks-win-pad-top {
+  padding-top: 2.5rem;
+}
 html[data-desktop-platform="win32"] .kworks-win-pad-top {
   padding-top: 0.5rem;
 }
@@ -802,4 +813,17 @@ html[data-desktop-platform="win32"] .kworks-win-pad-top {
 /* The landing header reserves pl-[80px] for the macOS traffic lights. */
 html[data-desktop-platform="win32"] .kworks-landing-header {
   padding-left: 1.5rem;
+}
+
+/* Settings view on the Windows frameless shell: drop the 48px spacer so the
+   whole page flows to the very top of the window (no blank band). The sidebar
+   logo row already doubles as a drag strip; the content header takes over the
+   same role on the right, keeping clear of the native overlay buttons. macOS /
+   Linux / web never match the win32 selector, so their layout is untouched. */
+html[data-desktop-platform="win32"] .kworks-settings-view > .kworks-win-titlebar {
+  display: none;
+}
+html[data-desktop-platform="win32"] .kworks-settings-header {
+  -webkit-app-region: drag;
+  padding-right: calc(var(--kworks-titlebar-inset) + 2rem);
 }

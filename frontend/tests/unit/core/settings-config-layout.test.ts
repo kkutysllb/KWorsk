@@ -38,7 +38,9 @@ describe("settings config layout", () => {
 
     // Header is a flex row; the title block is min-w-0 so long titles
     // truncate instead of pushing the content column sideways.
-    expect(source).toContain('className="flex items-center gap-3 border-b px-8 py-5"');
+    expect(source).toContain(
+      'className="kworks-settings-header flex items-center gap-3 border-b px-8 py-5"',
+    );
     expect(source).toContain('className="min-w-0"');
     expect(source).toMatch(/<h1 className="text-xl font-semibold">/);
   });

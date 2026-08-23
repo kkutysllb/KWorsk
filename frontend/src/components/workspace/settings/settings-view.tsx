@@ -169,13 +169,20 @@ export function SettingsView({
   const ActiveIcon = active.icon;
 
   return (
-    <div className="bg-background flex h-screen w-full flex-col overflow-hidden">
+    <div className="kworks-settings-view bg-background flex h-screen w-full flex-col overflow-hidden">
+      {/* Windows frameless shell: 48px spacer reserving the native title-bar
+          overlay area (hidden on the web and on macOS / Linux via globals.css;
+          also hidden on the Windows settings view, which flows to the very top
+          of the window instead — see globals.css). Without this, the main
+          content header gets covered by the native overlay strip and looks
+          like a top blank band. */}
+      <div className="kworks-win-titlebar" aria-hidden="true" />
       <div className="flex min-h-0 flex-1">
         {/* 左侧分组导航 */}
         <aside
           aria-label={t.settings.title}
           style={{ width: sidebarWidth }}
-          className="bg-sidebar kworks-win-pad-top flex shrink-0 flex-col pt-10"
+          className="bg-sidebar kworks-win-pad-top flex shrink-0 flex-col"
         >
           <div className="[-webkit-app-region:drag] flex items-center gap-2 px-4 py-3">
             <KWorksLogo size={24} className="shrink-0" />
@@ -248,7 +255,7 @@ export function SettingsView({
 
         {/* 右侧内容 */}
         <main className="flex min-w-0 flex-1 flex-col">
-          <div className="flex items-center gap-3 border-b px-8 py-5">
+          <div className="kworks-settings-header flex items-center gap-3 border-b px-8 py-5">
             <ActiveIcon className="text-primary size-6 shrink-0" />
             <div className="min-w-0">
               <h1 className="text-xl font-semibold">
